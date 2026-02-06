@@ -131,13 +131,13 @@ async function fetchLocalData(): Promise<DPEEntry[]> {
             throw new Error("Failed to fetch DPE data");
         }
         const data: DPEEntry[] = await response.json();
-        
+
         // Taguer la source
         const taggedData = data.map(entry => ({
             ...entry,
             source: "local_json" as const,
         }));
-        
+
         cachedLocalData = taggedData;
         return taggedData;
     } catch (error) {
@@ -304,8 +304,8 @@ export const dpeService = {
      * @param options - Options de recherche
      */
     async search(
-        query: string, 
-        limit = 5, 
+        query: string,
+        limit = 5,
         options?: DPESearchOptions
     ): Promise<DPEEntry[]> {
         if (!query || query.length < 3) return [];
@@ -332,11 +332,11 @@ export const dpeService = {
         // 2. Compléter avec le JSON local si besoin
         if (results.length < limit) {
             const localResults = await this.searchLocal(query, limit);
-            
+
             // Dédupliquer par ID
             const existingIds = new Set(results.map(r => r.id));
             const uniqueLocal = localResults.filter(r => !existingIds.has(r.id));
-            
+
             results = [...results, ...uniqueLocal];
         }
 
@@ -405,7 +405,7 @@ export const dpeService = {
      */
     async enrichAddress(
         address: string,
-        options?: DPESearchOptions & { 
+        options?: DPESearchOptions & {
             postalCode?: string;
             coordinates?: { lat: number; lon: number };
         }
@@ -429,8 +429,8 @@ export const dpeService = {
         // Priorité 1: Recherche par coordonnées si disponibles
         if (coordinates) {
             results = await this.searchByLocation(
-                coordinates.lat, 
-                coordinates.lon, 
+                coordinates.lat,
+                coordinates.lon,
                 { ...options, searchRadius: 200 }
             );
             if (results.length > 0) source = "ademe_api";
@@ -440,8 +440,8 @@ export const dpeService = {
         if (results.length === 0) {
             results = await this.search(address, 20, options);
             if (results.length > 0) {
-                source = results.some(r => r.source === "ademe_api") 
-                    ? "ademe_api" 
+                source = results.some(r => r.source === "ademe_api")
+                    ? "ademe_api"
                     : "local_json";
             }
         }
@@ -449,7 +449,7 @@ export const dpeService = {
         // Priorité 3: Recherche par code postal seul
         if (results.length === 0 && postalCode) {
             const localData = await fetchLocalData();
-            results = localData.filter(item => 
+            results = localData.filter(item =>
                 item.adresse.includes(postalCode)
             ).slice(0, 20);
             if (results.length > 0) source = "local_json";
@@ -516,16 +516,16 @@ export const dpeService = {
 
             const data = await response.json();
 
-            return data.features?.map((feature: { 
-                properties: { 
-                    label: string; 
-                    postcode: string; 
-                    city: string; 
-                    citycode?: string; 
-                    score?: number; 
-                    context?: string 
-                }; 
-                geometry: { coordinates: number[] } 
+            return data.features?.map((feature: {
+                properties: {
+                    label: string;
+                    postcode: string;
+                    city: string;
+                    citycode?: string;
+                    score?: number;
+                    context?: string
+                };
+                geometry: { coordinates: number[] }
             }) => ({
                 address: feature.properties.label,
                 postalCode: feature.properties.postcode,
@@ -539,7 +539,7 @@ export const dpeService = {
                 sourceType: 'api' as const
             })) || [];
         } catch (error) {
-            console.error("Error fetching from API Gouv:", error);
+            console.warn("API Adresse unavailable, continuing without autocomplete:", error);
             return [];
         }
     },
@@ -634,15 +634,15 @@ export const dpeService = {
     async getQuarterlyStats(postalCode: string, targetConso: number): Promise<QuarterlyStats> {
         // 🆕 AMÉLIORATION: Essayer d'abord l'API ADEME pour les stats de quartier
         try {
-            const ademeResults = await searchAdemeAPI("", { 
-                codePostal: postalCode, 
-                limit: 100 
+            const ademeResults = await searchAdemeAPI("", {
+                codePostal: postalCode,
+                limit: 100
             });
-            
+
             if (ademeResults.length >= 5) {
                 const consos = ademeResults.map(r => r.conso).filter(c => c > 0);
                 const avgConso = consos.reduce((a, b) => a + b, 0) / consos.length;
-                
+
                 return {
                     averageConso: avgConso,
                     targetConso,

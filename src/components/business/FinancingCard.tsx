@@ -202,7 +202,7 @@ export function FinancingCard({ financing, numberOfUnits }: FinancingCardProps) 
                                     Reste à charge {isMaPoche ? '(votre part)' : 'final'}
                                 </p>
                                 <p className="text-5xl md:text-6xl font-black text-gold financial-nums financial-nums tracking-tighter">
-                                    <AnimatedCurrency value={getAdjustedValue(financing.remainingCost)} />
+                                    <AnimatedCurrency value={Math.abs(getAdjustedValue(financing.remainingCost))} />
                                 </p>
                                 <p className="text-[10px] text-muted mt-1 opacity-70">
                                     (Après subventions)
