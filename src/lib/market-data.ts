@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient';
-import localData from '@/data/market_data.json';
+import localData from '../data/market_data.json';
 
 // --- TYPES ---
 export interface BT01Data {
