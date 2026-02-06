@@ -1,0 +1,569 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================================
+   VALO-SYNDIC — Premium Design System
+   Direction Artistique : "Wealth Management Premium"
+   Inspiration : Finary + Apple + Swiss Style
+   Mantra : "More Air, Less Noise"
+   ======================================== */
+
+@layer base {
+  :root {
+    /* Typography Stack */
+    --font-sans: var(--font-jakarta), "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    --font-mono: var(--font-mono), "JetBrains Mono", monospace;
+
+    /* Swiss Style Tracking */
+    --tracking-tight: -0.02em;
+    --tracking-financial: -0.03em;
+
+    /* Premium Spacing Scale (Multiplied) */
+    --space-section: 6rem;
+    /* py-24 */
+    --space-card: 2.5rem;
+    /* p-10 */
+    --space-content: 2rem;
+    /* gap-8 */
+  }
+
+  html {
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+    /* Obsidian Background - Pure Deep Black with extremely subtle gradient */
+    /* slightly lighter to reduce extreme contrast and white flash on overscroll */
+    background: linear-gradient(to bottom, #151515, #050505);
+    background-attachment: fixed;
+  }
+
+  body {
+    @apply bg-transparent text-main antialiased selection:bg-gold/20 selection:text-gold-light;
+    /* Ultra-subtle noise texture - lowered opacity for cleaner look */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+    background-attachment: fixed;
+    /* Brighter base to reduce perceived darkness by ~20% */
+    background-color: #0b0b0b;
+  }
+
+  /* Prevent white frames when overscrolling on macOS; keep background consistent */
+  html, body, #__next {
+    background-color: #0b0b0b;
+    overscroll-behavior: none;
+  }
+
+  /* Swiss Style Typography */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-medium text-white;
+    letter-spacing: var(--tracking-tight);
+    line-height: 1.1;
+  }
+
+  h1 {
+    @apply text-5xl md:text-6xl lg:text-7xl;
+  }
+
+  h2 {
+    @apply text-4xl md:text-5xl;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl;
+  }
+
+  /* Financial Numbers: Military Precision */
+  .financial-num,
+  .financial-nums {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--tracking-financial);
+    font-feature-settings: "tnum" on, "lnum" on;
+  }
+}
+
+@layer components {
+
+  /* Container with Premium Breathing Room */
+  .container-custom {
+    @apply max-w-[1400px] mx-auto px-8 md:px-16;
+  }
+
+  /* ================================================
+     PREMIUM CARD — Dark Glass Finary Style
+     ================================================ */
+  .card-premium {
+    @apply relative overflow-hidden rounded-3xl transition-all duration-500;
+    /* Base Glass */
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+
+    /* Ultra-fine Border */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    /* Inner Glow (Top Highlight) */
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+      0 10px 40px -10px rgba(0, 0, 0, 0.5);
+  }
+
+  .card-premium::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    opacity: 0.5;
+  }
+
+  .card-premium:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+      0 20px 40px -10px rgba(0, 0, 0, 0.6);
+    transition-duration: 300ms;
+  }
+
+  .card-glass:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+      0 20px 40px -10px rgba(0, 0, 0, 0.6);
+    transition-duration: 300ms;
+  }
+
+  /* Legacy card classes (aliased to premium) */
+  .card-tactile {
+    @apply card-premium;
+  }
+
+  .card-bento {
+    @apply card-premium h-full p-8;
+  }
+
+  .card-obsidian {
+    @apply card-premium;
+  }
+
+  /* Minimal Glass Card (even subtler) */
+  .card-glass {
+    @apply relative rounded-2xl;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .card-content {
+    @apply p-6 md:p-8;
+  }
+
+  /* ================================================
+     INPUTS & FORMS — Engraved Premium
+     ================================================ */
+  .input {
+    @apply w-full h-14 px-6 py-4 rounded-2xl text-main placeholder-subtle bg-black/30 border border-white/[0.06] transition-all duration-300 outline-none;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  .input:hover {
+    @apply border-white/[0.12] bg-black/40;
+  }
+
+  .input:focus {
+    @apply border-gold/40 bg-black/50;
+    box-shadow: 0 0 0 3px rgba(229, 192, 123, 0.08);
+  }
+
+  /* Hide native spinners */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  /* Select styling */
+  .input.appearance-none {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2371717A'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 18px;
+    padding-right: 52px;
+  }
+
+  /* ================================================
+     BUTTONS — Refined Tactile
+     ================================================ */
+  .btn-primary {
+    @apply px-8 py-4 bg-gold text-deep font-medium rounded-2xl transition-all duration-300 outline-none;
+    letter-spacing: var(--tracking-tight);
+    box-shadow: 0 4px 20px -4px rgba(229, 192, 123, 0.25);
+  }
+
+  .btn-primary:hover {
+    @apply bg-gold-light;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px -4px rgba(229, 192, 123, 0.35);
+  }
+
+  .btn-primary:focus {
+    @apply ring-2 ring-gold/30 ring-offset-2 ring-offset-deep;
+  }
+
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  .btn-primary:disabled {
+    @apply opacity-40 cursor-not-allowed;
+    transform: none;
+  }
+
+  .btn-secondary {
+    @apply px-8 py-4 bg-white/[0.04] text-main font-medium rounded-2xl border border-white/[0.08] transition-all duration-300 outline-none;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .btn-secondary:hover {
+    @apply bg-white/[0.08] border-white/[0.15];
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary:focus {
+    @apply ring-2 ring-white/10 ring-offset-2 ring-offset-deep;
+  }
+
+  .btn-secondary:active {
+    transform: scale(0.98);
+  }
+
+  /* Ghost button */
+  .btn-ghost {
+    @apply px-6 py-3 text-muted font-medium rounded-xl transition-all duration-300;
+  }
+
+  .btn-ghost:hover {
+    @apply text-main bg-white/[0.04];
+  }
+
+  .btn-ghost:active {
+    transform: scale(0.98);
+  }
+
+  /* ================================================
+     TYPOGRAPHY — Swiss Style Precision
+     ================================================ */
+  .label-technical {
+    @apply text-muted text-[11px] uppercase font-medium;
+    letter-spacing: 0.15em;
+    font-family: var(--font-sans);
+  }
+
+  /* Financial Values: Tabular Nums + Tight Tracking */
+  .text-value-lg {
+    @apply text-4xl font-medium text-main;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--tracking-financial);
+    line-height: 1.1;
+  }
+
+  .text-value-xl {
+    @apply text-5xl md:text-6xl font-medium text-main;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--tracking-financial);
+    line-height: 1;
+  }
+
+  /* Hero Gradient Text */
+  .text-gradient {
+    @apply bg-gradient-to-r from-white via-white/90 to-white/70 bg-clip-text text-transparent;
+  }
+
+  .text-gold-premium {
+    @apply text-gold;
+    text-shadow: 0 0 40px rgba(229, 192, 123, 0.2);
+  }
+
+  .text-gradient-gold {
+    @apply bg-gradient-to-br from-gold-light via-gold to-gold-dark bg-clip-text text-transparent;
+  }
+
+  /* ================================================
+     SECTION SPACING — Premium Breathing Room
+     ================================================ */
+  .section-premium {
+    @apply py-24 md:py-32;
+  }
+
+  .section-content {
+    @apply flex flex-col gap-16 md:gap-20;
+  }
+
+  /* ================================================
+     DATA BARS — Ultra-Fine Fintech Style
+     ================================================ */
+  .bar-thin {
+    @apply h-1 rounded-full bg-white/10;
+  }
+
+  .bar-medium {
+    @apply h-2 rounded-full bg-white/10;
+  }
+
+  /* ================================================
+     STATUS INDICATORS — Subtle Dots
+     ================================================ */
+  .status-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+
+  .status-dot-success {
+    @apply status-dot bg-emerald-400;
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+  }
+
+  .status-dot-warning {
+    @apply status-dot bg-amber-400;
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+  }
+
+  .status-dot-danger {
+    @apply status-dot bg-rose-400;
+    box-shadow: 0 0 8px rgba(251, 113, 133, 0.5);
+  }
+
+  /* ================================================
+     HORIZONTAL CARD ROW — Modern Table Alternative
+     ================================================ */
+  .data-row {
+    @apply flex items-center justify-between py-5 px-6 rounded-2xl bg-white/[0.02] border border-white/[0.04] transition-colors;
+  }
+
+  .data-row:hover {
+    @apply bg-white/[0.04];
+  }
+
+  .data-row-label {
+    @apply text-sm font-medium text-muted;
+  }
+
+  .data-row-value {
+    @apply text-lg font-medium text-main;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+  }
+}
+
+
+@layer utilities {
+
+  /* Text balance for titles */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Subtle Premium Grain */
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.01'/%3E%3C/svg%3E");
+  }
+
+  /* Smooth Entrance Animation */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fadeInUp {
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+  }
+
+  /* Custom marker and profile utilities (used by refactor RFC) */
+  .marker-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  }
+
+  .marker-danger { background-color: #EF4444; }
+  .marker-warning { background-color: #F59E0B; }
+  .marker-success { background-color: #10B981; }
+
+  /* Animation delay utilities */
+  .animate-delay-100 { animation-delay: 100ms; }
+
+  /* Profile-specific styles for SubsidyTable (avoid inline styles) */
+  .profile-Blue-border { border-color: rgba(96, 165, 250, 0.18); }
+  .profile-Blue-bg { background: linear-gradient(90deg, rgba(96,165,250,0.05), transparent); }
+  .profile-Blue-dot { background-color: #60A5FA; }
+
+  .profile-Yellow-border { border-color: rgba(217, 119, 6, 0.18); }
+  .profile-Yellow-bg { background: linear-gradient(90deg, rgba(217,119,6,0.05), transparent); }
+  .profile-Yellow-dot { background-color: #D97706; }
+
+  .profile-Purple-border { border-color: rgba(167, 139, 250, 0.18); }
+  .profile-Purple-bg { background: linear-gradient(90deg, rgba(167,139,250,0.05), transparent); }
+  .profile-Purple-dot { background-color: #A78BFA; }
+
+  .profile-Pink-border { border-color: rgba(229, 192, 123, 0.18); }
+  .profile-Pink-bg { background: linear-gradient(90deg, rgba(229,192,123,0.05), transparent); }
+  .profile-Pink-dot { background-color: #E0B976; }
+
+  /* Staggered delays */
+  .delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .delay-400 {
+    animation-delay: 400ms;
+  }
+
+  .delay-500 {
+    animation-delay: 500ms;
+  }
+
+  /* CountUp Animation Timing */
+  .ease-out-quart {
+    transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+  }
+}
+
+
+/* ================================================
+   MODE PROJECTION AG — Grand Ecran
+   ================================================ */
+.projection-mode {
+  /* Scale & Readability */
+  font-size: 150%;
+  --space-card: 3.5rem;
+}
+
+.projection-mode * {
+  /* Slow transitions for grandeur */
+  transition-duration: 400ms !important;
+}
+
+.projection-mode body {
+  /* Pure Black for infinite contrast ratio on projectors */
+  background: #000000 !important;
+  background-image: none !important;
+}
+
+.projection-mode .card-premium,
+.projection-mode .card-glass,
+.projection-mode .input {
+  /* Higher contrast borders and backgrounds */
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: none !important;
+  backdrop-filter: none !important; /* Performance & Clarity on low res */
+}
+
+.projection-mode h1,
+.projection-mode h2,
+.projection-mode h3 {
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* Better legibility against light leaks */
+}
+
+/* Hyper-legible values */
+.projection-mode .text-value-xl {
+  font-size: 6rem;
+  font-weight: 600;
+  text-shadow: 0 0 30px rgba(229, 192, 123, 0.3);
+}
+
+.projection-mode .text-value-lg {
+  font-size: 4rem;
+  font-weight: 600;
+}
+
+.projection-mode .label-technical {
+  font-size: 1rem;
+  letter-spacing: 0.15em;
+  opacity: 0.9;
+}
+
+.projection-mode .text-muted {
+  color: #a3a3a3 !important; /* Lighter grey for contrast */
+}
+
+/* Hide non-essential decorative elements */
+.projection-mode .bg-noise,
+.projection-mode [class*="dots-pattern"] {
+  opacity: 0 !important;
+}
+
+/* Header nav: avoid see-through in projection mode */
+.projection-mode .header-nav {
+  background: rgba(0, 0, 0, 0.7) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+
+/* QR Code toujours visible et GROS en mode projection */
+.projection-mode [data-qr-container] {
+  position: fixed !important;
+  bottom: 40px;
+  right: 40px;
+  z-index: 9999;
+  background: #FFF;
+  padding: 24px;
+  border-radius: 24px;
+  border: 4px solid #E5C07B;
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.8);
+  transform: scale(1.2);
+  transform-origin: bottom right;
+}
+
+/* Focus states ULTRA visibles (laser pointer style) */
+.projection-mode :focus-visible {
+  outline: 4px solid #E5C07B;
+  outline-offset: 6px;
+  box-shadow: 0 0 0 10px rgba(229, 192, 123, 0.2);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  .projection-mode * {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VALO-SYNDIC Ghost</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1>VALO-SYNDIC GHOST</h1>
+      <span class="subtitle">ERP Data Extractor</span>
+    </header>
+
+    <!-- Scan Button -->
+    <button id="scanBtn" class="scan-btn">
+      Scanner la Page
+    </button>
+
+    <!-- Status -->
+    <div id="status" class="status">
+      Ouvrez une page ERP et cliquez sur "Scanner"
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="results">
+      <div id="resultCount" class="result-count">0</div>
+      <div class="result-label">lots détectés</div>
+      <button id="copyBtn" class="copy-btn">
+        📋 Copier JSON
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      Compatible: ICS • Thetrawin • Powimo • Tables HTML
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>

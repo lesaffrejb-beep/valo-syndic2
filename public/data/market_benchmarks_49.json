@@ -1,0 +1,31 @@
+{
+    "region": "Maine-et-Loire (49)",
+    "source": "Observatoire BBC / ANAH 2024-2025",
+    "updatedAt": "2026-01-27",
+    "benchmarks": {
+        "pricePerLot": {
+            "min": 8000,
+            "median": 12000,
+            "max": 22000,
+            "unit": "€ HT / lot",
+            "description": "Coût moyen travaux rénovation globale par logement"
+        },
+        "pricePerSqm": {
+            "min": 150,
+            "median": 250,
+            "max": 450,
+            "unit": "€ HT / m²",
+            "description": "Coût moyen travaux rénovation globale au m²"
+        }
+    },
+    "tolerances": {
+        "green": 1.05,
+        "yellow": 1.15,
+        "description": "green = ≤ median * 1.05 | yellow = ≤ median * 1.15 | red = > median * 1.15"
+    },
+    "notes": [
+        "Données issues de projets de rénovation globale BBC/Rénovation en Pays de la Loire",
+        "Prix HT hors honoraires syndic / AMO / DO",
+        "Médiane calculée sur 120 opérations 2023-2025"
+    ]
+}
