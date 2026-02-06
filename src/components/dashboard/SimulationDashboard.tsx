@@ -298,7 +298,7 @@ export function SimulationDashboard({ marketData }: SimulationDashboardProps) {
                             </p>
                         </div>
 
-                        <div id="diagnostic-form" className="card-bento p-8 md:p-12 mb-12 shadow-none rounded-3xl group hover:border-white/10 transition-all duration-500 hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)]">
+                        <div id="diagnostic-form" className="card-bento p-6 md:p-12 mb-12 shadow-none rounded-3xl group hover:border-white/10 transition-all duration-500 hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)]">
                             <div className="w-full max-w-4xl mx-auto">
                                 <h3 className="text-center text-main font-semibold mb-8">
                                     Simulateur de Valorisation & Subventions
@@ -342,7 +342,7 @@ export function SimulationDashboard({ marketData }: SimulationDashboardProps) {
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
                         >
-                            <StaggerContainer staggerDelay={0.1} className="flex flex-col gap-24 md:gap-32">
+                            <StaggerContainer staggerDelay={0.1} className="flex flex-col gap-16 md:gap-32">
 
                                 {/* ACTE 1: LE DIAGNOSTIC */}
                                 <div className="space-y-8">
@@ -353,7 +353,7 @@ export function SimulationDashboard({ marketData }: SimulationDashboardProps) {
                                         />
                                     )}
 
-                                    <div className="card-bento p-8 md:p-10 gap-8 group hover:border-white/10 transition-all duration-500 hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)]">
+                                    <div className="card-bento p-6 md:p-10 gap-8 group hover:border-white/10 transition-all duration-500 hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)]">
                                         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 flex-wrap gap-y-4">
                                             <div>
                                                 <div className="flex items-center gap-2 mb-3">

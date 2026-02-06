@@ -3,6 +3,7 @@
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { PDFDocument } from './PDFDocument';
 import { PDFDocumentEnhanced } from './PDFDocumentEnhanced';
+import { PDFReportAG } from './PDFReportAG';
 import { type DiagnosticResult } from '@/lib/schemas';
 import { useBrandStore } from "@/stores/useBrandStore";
 import { type OwnerProfileType } from '@/lib/pdf-profiles';
@@ -10,7 +11,7 @@ import { FileText } from 'lucide-react';
 
 interface PdfButtonContentProps {
     result: DiagnosticResult;
-    variant?: 'standard' | 'enhanced' | undefined;
+    variant?: 'standard' | 'enhanced' | 'ag' | undefined;
     targetProfile?: OwnerProfileType | undefined;
     className?: string | undefined;
 }
@@ -33,7 +34,10 @@ export function PdfButtonContent({
     } : undefined;
 
     // Choose document based on variant
-    const DocumentComponent = variant === 'enhanced' ? PDFDocumentEnhanced : PDFDocument;
+    const DocumentComponent =
+        variant === 'ag' ? PDFReportAG :
+            variant === 'enhanced' ? PDFDocumentEnhanced :
+                PDFDocument;
 
     // Default class if none provided
     const buttonClass = className || "btn-primary flex items-center justify-center gap-2 group cursor-pointer hover:opacity-90 transition-all shadow-lg hover:shadow-xl";

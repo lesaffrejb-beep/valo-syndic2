@@ -72,9 +72,9 @@ const Section = ({ children, className = "", id }: { children: React.ReactNode; 
         whileInView="visible"
         viewport={{ once: true, margin: "-10%" }}
         variants={slideUp}
-        className={`min-h-[80vh] flex flex-col items-center justify-center py-32 md:py-40 relative z-20 ${className}`}
+        className={`min-h-[80vh] flex flex-col items-center justify-center py-20 md:py-40 relative z-20 ${className}`}
     >
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-8 flex flex-col gap-24 md:gap-32 relative z-10">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-8 flex flex-col gap-12 md:gap-32 relative z-10">
             {children}
         </div>
     </motion.section>

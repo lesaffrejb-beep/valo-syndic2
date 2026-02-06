@@ -20,7 +20,7 @@ const PdfButtonContent = dynamic(
 
 interface DownloadPdfButtonProps {
     result: DiagnosticResult;
-    variant?: string;
+    variant?: 'standard' | 'enhanced' | 'ag' | 'primary';
     className?: string;
 }
 
@@ -33,8 +33,10 @@ export function DownloadPdfButton({ result, variant, className }: DownloadPdfBut
 
     if (!isClient) return null;
 
-    // Map "primary" to "enhanced" for now, or pass through if it matches
-    const contentVariant: 'standard' | 'enhanced' = variant === 'primary' ? 'enhanced' : (variant as 'standard' | 'enhanced') || 'enhanced';
+    // Map variants: "primary" -> "enhanced", or pass through valid values
+    const contentVariant: 'standard' | 'enhanced' | 'ag' =
+        variant === 'primary' ? 'enhanced' :
+            (variant as 'standard' | 'enhanced' | 'ag') || 'ag'; // Default to AG report
 
     return <PdfButtonContent result={result} variant={contentVariant} className={className} />;
 }

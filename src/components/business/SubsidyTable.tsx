@@ -85,7 +85,7 @@ export function SubsidyTable({ inputs }: SubsidyTableProps) {
                 </div>
 
                 {/* HORIZONTAL CARDS */}
-                <div className="space-y-3">
+                <div className="space-y-4">
                     {profileOrder.map((profile, index) => {
                         const data = profiles[profile];
                         const config = PROFILE_CONFIG[profile];
@@ -103,7 +103,7 @@ export function SubsidyTable({ inputs }: SubsidyTableProps) {
                                 )}
                             >
                                 {/* Profil Badge & Mobile Label */}
-                                <div className="flex items-center justify-between md:justify-start md:w-1/4 mb-3 md:mb-0">
+                                <div className="flex items-center justify-between md:justify-start md:w-1/4 mb-3 md:mb-0 border-b md:border-none border-white/5 pb-3 md:pb-0">
                                     <div className="flex items-center gap-3">
                                         <div className={`w-2 h-8 rounded-full profile-${profile}-dot`} />
                                         <div>
@@ -111,8 +111,9 @@ export function SubsidyTable({ inputs }: SubsidyTableProps) {
                                         </div>
                                     </div>
                                     {/* Mobile Only: Reste à charge value shown prominently */}
-                                    <div className="md:hidden">
-                                        <p className="text-lg font-bold text-gold tabular-nums">{formatCurrency(data.remainingCost)}</p>
+                                    <div className="md:hidden text-right">
+                                        <p className="text-xs text-muted uppercase tracking-wider mb-0.5">Reste à charge</p>
+                                        <p className="text-xl font-bold text-gold tabular-nums">{formatCurrency(data.remainingCost)}</p>
                                     </div>
                                 </div>
 
@@ -145,7 +146,7 @@ export function SubsidyTable({ inputs }: SubsidyTableProps) {
 
                                 {/* Mensualité */}
                                 <div className="md:w-1/6 flex justify-between md:block text-right pt-1 md:pt-0">
-                                    <span className="md:hidden text-xs text-muted uppercase">Mensualité (20 ans)</span>
+                                    <span className="md:hidden text-xs text-muted uppercase font-bold">Mensualité</span>
                                     <div>
                                         <p className="text-sm font-bold text-white tabular-nums">{formatCurrency(data.monthlyPayment)}</p>
                                         <p className="text-[10px] text-gray-400 hidden md:block">/ mois</p>

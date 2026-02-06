@@ -35,7 +35,7 @@ export function ComparisonSplitScreen({ inactionCost, valuation, financing }: Co
             <Card variant="glass" className="border-danger/20 bg-danger/5 hover:border-white/10 transition-all duration-500 hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)] group relative overflow-hidden h-full">
                 {/* Subtle Radial Gradient for Depth */}
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(circle_at_center,rgba(224,122,95,0.15),transparent_70%)] blur-3xl pointer-events-none opacity-50" />
-                <CardContent className="p-8 md:p-10 flex flex-col justify-between h-full">
+                <CardContent className="p-6 md:p-10 flex flex-col justify-between h-full">
                     <div>
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-danger/10 border border-danger/20 text-danger text-xs font-bold uppercase tracking-wider mb-6">
                             <AlertTriangle className="w-3 h-3" /> Scénario Inaction
@@ -65,7 +65,7 @@ export function ComparisonSplitScreen({ inactionCost, valuation, financing }: Co
                         )}
                         <div className="pt-2">
                             <p className="text-xs font-bold text-danger/70 mb-1 uppercase tracking-widest">PERTE TOTALE ESTIMÉE</p>
-                            <p className="text-5xl md:text-6xl font-black bg-gradient-to-br from-danger to-danger/80 bg-clip-text text-transparent tracking-tighter financial-num">
+                            <p className="text-4xl md:text-6xl font-black bg-gradient-to-br from-danger to-danger/80 bg-clip-text text-transparent tracking-tighter financial-num">
                                 -<AnimatedCurrency value={totalLoss} />
                             </p>
                         </div>
@@ -78,7 +78,7 @@ export function ComparisonSplitScreen({ inactionCost, valuation, financing }: Co
                 {/* Decorative Glow */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none" />
 
-                <CardContent className="p-8 md:p-10 flex flex-col justify-between h-full relative z-10">
+                <CardContent className="p-6 md:p-10 flex flex-col justify-between h-full relative z-10">
                     <div>
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-6">
                             <TrendingUp className="w-3 h-3" /> Scénario Valo-Syndic
@@ -126,7 +126,7 @@ export function ComparisonSplitScreen({ inactionCost, valuation, financing }: Co
 
                         <div className="pt-2 border-t border-emerald-500/10">
                             <p className="text-xs font-bold text-emerald-400/70 mb-1 uppercase tracking-widest">ENRICHISSEMENT NET</p>
-                            <div className="text-5xl md:text-6xl font-black bg-gradient-to-br from-emerald-400 to-emerald-600 bg-clip-text text-transparent tracking-tighter flex items-center gap-2 financial-num">
+                            <div className="text-4xl md:text-6xl font-black bg-gradient-to-br from-emerald-400 to-emerald-600 bg-clip-text text-transparent tracking-tighter flex items-center gap-2 financial-num">
                                 +<AnimatedCurrency value={netGain} />
                             </div>
                         </div>
