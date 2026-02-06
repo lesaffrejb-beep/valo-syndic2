@@ -322,7 +322,7 @@ const Footer = ({ pageNum }: { pageNum: number }) => (
     <>
         <View style={styles.footer}>
             <Text style={styles.footerText}>
-                Document indicatif base sur les dispositions reglementaires 2026 - Sous reserve d'eligibilite
+                Document indicatif base sur les dispositions reglementaires 2026 - Sous reserve d&apos;eligibilite
             </Text>
         </View>
         <Text style={styles.pageNumber}>Page {pageNum}/3</Text>
@@ -447,12 +447,12 @@ export const PDFReportAG = ({ result }: PDFReportAGProps) => {
                 <View style={styles.heroBox}>
                     <Text style={styles.heroLabel}>Economies Energetiques</Text>
                     <Text style={styles.heroValue}>{formatCurrency(annualSavings)}</Text>
-                    <Text style={styles.heroUnit}>par an pour l'immeuble</Text>
+                    <Text style={styles.heroUnit}>par an pour l&apos;immeuble</Text>
                 </View>
 
                 <View style={styles.callout}>
                     <Text style={styles.calloutText}>
-                        Ce projet permet de realiser {formatPercent(result.financing.energyGainPercent)} d'economie d'energie
+                        Ce projet permet de realiser {formatPercent(result.financing.energyGainPercent)} d&apos;economie d&apos;energie
                         tout en augmentant la valeur patrimoniale de {formatCurrency(result.valuation.greenValueGain)}.
                     </Text>
                 </View>
@@ -470,7 +470,7 @@ export const PDFReportAG = ({ result }: PDFReportAGProps) => {
 
                 <Text style={styles.sectionTitle}>3. Detail du Financement</Text>
                 <Text style={{ fontSize: 9, color: COLORS.textMuted, marginBottom: 12 }}>
-                    Vote de l'Assemblee Generale - Montants collectifs
+                    Vote de l&apos;Assemblee Generale - Montants collectifs
                 </Text>
 
                 <View style={styles.table}>
@@ -490,7 +490,7 @@ export const PDFReportAG = ({ result }: PDFReportAGProps) => {
                     </View>
 
                     <View style={[styles.tableRow, { backgroundColor: '#ECFDF5' }]}>
-                        <Text style={styles.tableCell}>MaPrimeRenov' Copropriete</Text>
+                        <Text style={styles.tableCell}>MaPrimeRenov&apos; Copropriete</Text>
                         <Text style={[styles.tableCellRightBold, { color: COLORS.success }]}>
                             -{formatCurrency(result.financing.mprAmount)}
                         </Text>
@@ -548,7 +548,7 @@ export const PDFReportAG = ({ result }: PDFReportAGProps) => {
 
                 <View style={[styles.callout, { marginTop: 20 }]}>
                     <Text style={styles.calloutText}>
-                        INFORMATION IMPORTANTE : L'Eco-PTZ est un pret garanti par l'Etat a TAUX ZERO.
+                        INFORMATION IMPORTANTE : L&apos;Eco-PTZ est un pret garanti par l&apos;Etat a TAUX ZERO.
                         Aucun interet a payer pendant 20 ans. Mensualite fixe calculee sur la page suivante.
                     </Text>
                 </View>
@@ -576,7 +576,7 @@ export const PDFReportAG = ({ result }: PDFReportAGProps) => {
                         Comment lire ce tableau :
                     </Text>
                     <Text style={styles.calloutText}>
-                        • Tantiemes : Quote-part de propriete (ex: 100/1000 = 10% de l'immeuble)
+                        • Tantiemes : Quote-part de propriete (ex: 100/1000 = 10% de l&apos;immeuble)
                     </Text>
                     <Text style={styles.calloutText}>
                         • Quote-part : Part des travaux correspondant a votre lot
@@ -599,8 +599,8 @@ export const PDFReportAG = ({ result }: PDFReportAGProps) => {
                         {' '}→ Mensualite : {formatCurrency(profiles[1]?.monthly || 0)}/mois pendant 20 ans
                     </Text>
                     <Text style={{ fontSize: 9, color: COLORS.textSecondary, marginTop: 8, fontStyle: 'italic' }}>
-                        Avec les economies d'energie ({formatCurrency(result.financing.monthlyEnergySavings)}/mois estimees),
-                        l'effort reel est reduit.
+                        Avec les economies d&apos;energie ({formatCurrency(result.financing.monthlyEnergySavings)}/mois estimees),
+                        l&apos;effort reel est reduit.
                     </Text>
                 </View>
 
