@@ -63,7 +63,7 @@ export function SubsidyTable({ inputs }: SubsidyTableProps) {
 
     return (
         <Card variant="glass" className="overflow-visible border-white/5 bg-white/[0.02] group hover:border-white/10 transition-all duration-500 hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)]">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <div>
                     <CardTitle className="text-lg text-white flex items-center gap-2">
                         🎯 Tableau Décisionnel 2026
@@ -125,14 +125,14 @@ export function SubsidyTable({ inputs }: SubsidyTableProps) {
                                 {/* Aides */}
                                 <div className="md:w-1/6 flex justify-between md:block text-right mb-1 md:mb-0 border-b md:border-none border-white/5 pb-1 md:pb-0">
                                     <span className="md:hidden text-xs text-muted uppercase">Aides Publiques</span>
-                                    <p className="text-sm font-medium text-white tabular-nums">-{formatCurrency(data.totalPublicSubsidies)}</p>
+                                    <p className="text-sm font-medium text-white tabular-nums">{formatCurrency(Math.abs(data.totalPublicSubsidies))}</p>
                                 </div>
 
                                 {/* Boost */}
                                 <div className="md:w-1/6 flex justify-between md:block text-right mb-1 md:mb-0 border-b md:border-none border-white/5 pb-1 md:pb-0">
                                     <span className="md:hidden text-xs text-muted uppercase">Boost</span>
                                     {data.privateLocalBoost > 0 ? (
-                                        <p className="text-sm font-bold text-emerald-400 tabular-nums">-{formatCurrency(data.privateLocalBoost)}</p>
+                                        <p className="text-sm font-bold text-emerald-400 tabular-nums">{formatCurrency(Math.abs(data.privateLocalBoost))}</p>
                                     ) : (
                                         <span className="text-xs text-gray-500 hidden md:inline">—</span>
                                     )}

@@ -204,7 +204,7 @@ export function ValueShield({
                             <div className="flex justify-between items-center px-3 py-1.5">
                                 <span className="text-white/40">Reste à charge travaux</span>
                                 <span className="text-amber-400 font-bold tabular-nums">
-                                    -{formatCurrency(displayRemainingCost)}
+                                    {formatCurrency(Math.abs(displayRemainingCost))}
                                 </span>
                             </div>
                         )}

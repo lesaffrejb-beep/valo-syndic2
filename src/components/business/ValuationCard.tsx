@@ -123,7 +123,7 @@ export function ValuationCard({ valuation, financing, marketTrend, isPassoire = 
                 {financing && !isFullyFunded && (
                     <div className="flex justify-between items-center text-[10px] font-mono px-2 text-muted/50">
                         <span>Coût travaux déduit :</span>
-                        <span className="font-bold">-{formatCurrency(displayRemainingCost)}</span>
+                        <span className="font-bold">{formatCurrency(Math.abs(displayRemainingCost))}</span>
                     </div>
                 )}
             </CardContent>

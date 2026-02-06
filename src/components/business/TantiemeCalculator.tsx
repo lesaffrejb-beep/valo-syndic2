@@ -54,44 +54,43 @@ export function TantiemeCalculator({ financing, simulationInputs, className = ""
     }, [selectedProfile, profileData]);
 
     const calculation = useMemo(() => {
-        let partLotCash, partLotLoan, monthlyPayment;
+        const durationMonths = ECO_PTZ_COPRO.maxDurationYears * 12; // 240 months
 
         if (selectedProfile && profileData) {
             const nbUnits = simulationInputs?.nbLots || 1;
             const avgTantiemes = 1000 / nbUnits;
             const ratio = tantiemes / avgTantiemes;
 
-            partLotCash = profileData[selectedProfile].remainingCost * ratio; // Using remainingCost as base for visual simplicity
-            monthlyPayment = profileData[selectedProfile].monthlyPayment * ratio;
-            partLotLoan = (profileData[selectedProfile].workShareBeforeAid - profileData[selectedProfile].remainingCost) * ratio; // Conceptual aid part? No, let's keep it simple
+            const partLotCash = profileData[selectedProfile].remainingCost * ratio;
+            const partLotTotal = profileData[selectedProfile].workShareBeforeAid * ratio;
+            const aid = (profileData[selectedProfile].workShareBeforeAid - profileData[selectedProfile].remainingCost) * ratio;
 
-            // Re-deriving cleanly:
-            // Work Share = profileData.workShareBeforeAid * ratio
-            // Aid = (profileData.workShareBeforeAid - profileData.remainingCost) * ratio
-            // Loan/Cash = profileData.remainingCost * ratio
+            // CRITICAL: Éco-PTZ is 0% interest, so monthly payment = remaining cost / 240 months
+            const monthlyPayment = partLotCash / durationMonths;
 
             return {
-                partLotCash: profileData[selectedProfile].remainingCost * ratio,
-                partLotLoan: profileData[selectedProfile].remainingCost * ratio, // Assuming 100% financed by loan/cash mix, confusing prop names
-                monthlyPayment: profileData[selectedProfile].monthlyPayment * ratio,
+                partLotCash,
+                partLotLoan: partLotCash,
+                monthlyPayment,
                 durationYears: ECO_PTZ_COPRO.maxDurationYears,
-                partLotTotal: profileData[selectedProfile].workShareBeforeAid * ratio,
-                aid: (profileData[selectedProfile].workShareBeforeAid - profileData[selectedProfile].remainingCost) * ratio
+                partLotTotal,
+                aid
             };
         }
 
         // Default legacy calculation (Global Average)
         const shareRatio = tantiemes / 1000;
         const partLotCashCalc = financing.remainingCost * shareRatio;
-        const partLotLoanCalc = financing.ecoPtzAmount * shareRatio;
-        const monthlyPaymentCalc = financing.monthlyPayment * shareRatio;
+
+        // CRITICAL: Éco-PTZ is 0% interest, so monthly payment = remaining cost / 240 months
+        const monthlyPaymentCalc = partLotCashCalc / durationMonths;
 
         return {
             partLotCash: partLotCashCalc,
-            partLotLoan: partLotLoanCalc,
+            partLotLoan: financing.ecoPtzAmount * shareRatio,
             monthlyPayment: monthlyPaymentCalc,
             durationYears: ECO_PTZ_COPRO.maxDurationYears,
-            partLotTotal: financing.remainingCost * shareRatio, // Simplification
+            partLotTotal: financing.remainingCost * shareRatio,
             aid: 0
         };
     }, [financing, tantiemes, selectedProfile, profileData, simulationInputs]);
