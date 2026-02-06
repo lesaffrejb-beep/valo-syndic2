@@ -5,7 +5,7 @@ import { type FinancingPlan } from "@/lib/schemas";
 import { ECO_PTZ_COPRO } from "@/lib/constants";
 import { formatCurrency } from "@/lib/calculator";
 import { calculateSubsidies, type IncomeProfile, type SimulationInputs } from "@/lib/subsidy-calculator";
-import { Calculator, Euro, PiggyBank } from "lucide-react";
+import { Calculator, Euro, PiggyBank, Info } from "lucide-react";
 import { useViewModeStore } from "@/stores/useViewModeStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,22 @@ export function TantiemeCalculator({ financing, simulationInputs, className = ""
         if (!simulationInputs) return null;
         return calculateSubsidies(simulationInputs).profiles;
     }, [simulationInputs]);
+
+    // Debug logging to verify profile data
+    useEffect(() => {
+        if (profileData) {
+            console.log('🎯 TantiemeCalculator - Profile Data Available:', Object.keys(profileData));
+        }
+        if (selectedProfile) {
+            console.log('✅ Selected Profile:', selectedProfile);
+            if (profileData && profileData[selectedProfile]) {
+                console.log('💰 Profile Calculation:', {
+                    remainingCost: profileData[selectedProfile].remainingCost,
+                    monthlyPayment: profileData[selectedProfile].monthlyPayment,
+                });
+            }
+        }
+    }, [selectedProfile, profileData]);
 
     const calculation = useMemo(() => {
         let partLotCash, partLotLoan, monthlyPayment;
@@ -134,6 +150,26 @@ export function TantiemeCalculator({ financing, simulationInputs, className = ""
                 <div className="relative bg-gradient-to-br from-gold/10 via-gold/5 to-transparent border border-gold/20 rounded-3xl overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-gold/10 rounded-full blur-3xl -mr-32 -mt-32" />
                     <div className="relative flex flex-col items-center justify-center text-center space-y-4 p-8">
+                        {/* MODE INDICATOR */}
+                        {selectedProfile ? (
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-gold/20 border border-gold/30 rounded-full mb-1">
+                                <div className={cn(
+                                    "w-2 h-2 rounded-full",
+                                    PROFILE_OPTIONS.find(p => p.id === selectedProfile)?.color || "bg-gold"
+                                )} />
+                                <span className="text-xs font-bold text-gold uppercase tracking-wider">
+                                    Mode: {PROFILE_OPTIONS.find(p => p.id === selectedProfile)?.label}
+                                </span>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full mb-1">
+                                <Info className="w-3 h-3 text-muted" />
+                                <span className="text-xs font-medium text-muted uppercase tracking-wider">
+                                    Mode: Moyenne Copropriété
+                                </span>
+                            </div>
+                        )}
+
                         <div className="flex items-center gap-2 mb-2">
                             <div className="w-1 h-6 bg-gold rounded-full" />
                             <h4 className="text-sm font-bold uppercase tracking-wider text-white">Résultat Personnalisé</h4>
@@ -171,7 +207,3 @@ export function TantiemeCalculator({ financing, simulationInputs, className = ""
         </Card>
     );
 }
-
-// Added 'size="sm"' to Button which I didn't verify if I implemented, but standard shadcn has it.
-// I implemented 'variant' but not 'size' in my Button.tsx. I should fix that to avoid type error or just remove size prop.
-// I'll remove `size="sm"` and add class `h-8 px-3 text-xs` to match "sm" manually for safety.
