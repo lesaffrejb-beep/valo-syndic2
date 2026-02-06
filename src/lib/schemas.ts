@@ -62,6 +62,12 @@ export const DiagnosticInputSchema = z.object({
         .max(50_000_000, "Coût maximum 50 M€")
         .default(0),
 
+    /** true si le montant saisi est TTC (sera converti en HT automatiquement) */
+    isCostTTC: z.boolean().optional().default(false),
+
+    /** true pour inclure le forfait Honoraires & Aléas (+12%) dans le calcul */
+    includeHonoraires: z.boolean().optional().default(true),
+
     /** Système de chauffage actuel */
     heatingSystem: z.enum(['electrique', 'gaz', 'fioul', 'bois', 'urbain', 'autre']).optional(),
 
@@ -194,6 +200,9 @@ export const FinancingPlanSchema = z.object({
 
     /** Reste à charge par lot */
     remainingCostPerUnit: z.number(),
+
+    /** Écrêtement 80% TTC appliqué */
+    cappingApplied: z.boolean().default(false),
 });
 
 export type FinancingPlan = z.infer<typeof FinancingPlanSchema>;

@@ -93,12 +93,12 @@ export function TransparentReceipt({ financing }: TransparentReceiptProps) {
                 )}
             </div>
 
-            {/* FOOTER - THE MONEY SHOT (Effort Mensuel) */}
-            <div className="mt-8 pt-6 border-t border-dashed border-white/20">
+            {/* FOOTER - Mensualité Crédit + Effort Mensuel Réel */}
+            <div className="mt-8 pt-6 border-t border-dashed border-white/20 space-y-3">
                 <div className="bg-gradient-to-br from-gold/10 to-gold/5 rounded-xl p-5 border border-gold/20 flex justify-between items-center group shadow-[0_0_30px_rgba(217,119,6,0.1)]">
                     <div className="flex flex-col">
-                        <span className="text-[10px] uppercase tracking-widest text-gold font-bold mb-1">Effort d&apos;épargne</span>
-                        <span className="text-xs text-gold/70">Mensualité réelle</span>
+                        <span className="text-[10px] uppercase tracking-widest text-gold font-bold mb-1">Mensualité Crédit</span>
+                        <span className="text-xs text-gold/70">Éco-PTZ 0% • 20 ans • Apport 0€</span>
                     </div>
 
                     <div className="text-right">
@@ -109,11 +109,27 @@ export function TransparentReceipt({ financing }: TransparentReceiptProps) {
                     </div>
                 </div>
 
-                {financing.monthlyPayment < 50 && (
-                    <div className="text-center mt-3">
-                        <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20 uppercase tracking-widest">
-                            Moins cher qu&apos;un abonnement internet
-                        </span>
+                {/* Effort Mensuel Réel = Économie Énergie - Mensualité Crédit */}
+                {financing.monthlyEnergySavings > 0 && (
+                    <div className={`rounded-xl p-4 border flex justify-between items-center ${
+                        financing.netMonthlyCashFlow >= 0
+                            ? 'bg-emerald-500/5 border-emerald-500/20'
+                            : 'bg-white/[0.02] border-white/5'
+                    }`}>
+                        <div className="flex flex-col">
+                            <span className="text-[10px] uppercase tracking-widest text-muted font-bold mb-1">Effort Mensuel Réel</span>
+                            <span className="text-[10px] text-muted/70">
+                                Éco. énergie ({formatCurrency(financing.monthlyEnergySavings)}/m) - Mensualité
+                            </span>
+                        </div>
+                        <div className="text-right">
+                            <span className={`text-xl font-bold tracking-tighter financial-nums ${
+                                financing.netMonthlyCashFlow >= 0 ? 'text-emerald-400' : 'text-white'
+                            }`}>
+                                {financing.netMonthlyCashFlow >= 0 ? '+' : ''}{financing.netMonthlyCashFlow}€
+                            </span>
+                            <span className="text-xs text-muted ml-1">/mois</span>
+                        </div>
                     </div>
                 )}
             </div>

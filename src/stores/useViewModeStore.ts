@@ -29,11 +29,12 @@ export const useViewModeStore = create<ViewModeState>((set, get) => ({
     }),
 
     getAdjustedValue: (globalValue) => {
-        const { viewMode, userTantiemes } = get();
-        if (viewMode === 'immeuble' && userTantiemes >= 995) {
+        const { viewMode } = get();
+        if (viewMode === 'immeuble') {
             return globalValue;
         }
-        // "Ma Poche" mode (or any partial quote-part): calculate individual share
+        // "Ma Poche" mode: calculate individual share based on tantièmes
+        const { userTantiemes } = get();
         return (globalValue * userTantiemes) / 1000;
     },
 }));

@@ -31,6 +31,10 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
     const [errors, setErrors] = useState<Record<string, string>>({});
     const formRef = useRef<HTMLFormElement>(null);
 
+    // REFONTE 2026-02-06 : toggles HT/TTC et Honoraires
+    const [isCostTTC, setIsCostTTC] = useState(false);
+    const [includeHonoraires, setIncludeHonoraires] = useState(true);
+
     // Initialisation avec initialData
     useEffect(() => {
         if (initialData && formRef.current) {
@@ -132,6 +136,11 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
                 ? parseInt(formData.get("commercialLots") as string, 10)
                 : 0,
             estimatedCostHT: parseFloat(formData.get("estimatedCostHT") as string),
+            isCostTTC: isCostTTC,
+            includeHonoraires: includeHonoraires,
+            currentEnergyBill: formData.get("currentEnergyBill")
+                ? parseFloat(formData.get("currentEnergyBill") as string)
+                : 0,
             localAidAmount: formData.get("localAidAmount")
                 ? parseFloat(formData.get("localAidAmount") as string)
                 : 0,
@@ -370,7 +379,7 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-medium text-muted mb-1">
-                        Coût estimé travaux HT (€) <span className="text-danger-500">*</span>
+                        Montant travaux ({isCostTTC ? 'TTC' : 'HT'}) (€) <span className="text-danger-500">*</span>
                     </label>
                     <input
                         type="number"
@@ -381,6 +390,20 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
                         defaultValue={300000}
                         className="input"
                     />
+                    <div className="flex items-center gap-3 mt-2">
+                        <label className="inline-flex items-center gap-2 cursor-pointer text-xs">
+                            <input
+                                type="checkbox"
+                                checked={isCostTTC}
+                                onChange={(e) => setIsCostTTC(e.target.checked)}
+                                className="rounded border-white/20 bg-white/5 text-primary focus:ring-primary/50 w-3.5 h-3.5"
+                            />
+                            <span className="text-muted">Montant saisi en TTC</span>
+                        </label>
+                        <span className="text-[10px] text-muted/50">
+                            {isCostTTC ? '(Conversion auto HT via TVA 5,5%)' : '(TVA 5,5% ajoutée au total)'}
+                        </span>
+                    </div>
                     {errors.estimatedCostHT && (
                         <p className="text-danger-500 text-xs mt-1">{errors.estimatedCostHT}</p>
                     )}
@@ -402,6 +425,43 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
                     {errors.numberOfUnits && (
                         <p className="text-danger-500 text-xs mt-1">{errors.numberOfUnits}</p>
                     )}
+                </div>
+            </div>
+
+            {/* Honoraires & Facture Énergie */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col justify-center">
+                    <label className="inline-flex items-center gap-3 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={includeHonoraires}
+                            onChange={(e) => setIncludeHonoraires(e.target.checked)}
+                            className="rounded border-white/20 bg-white/5 text-primary focus:ring-primary/50 w-4 h-4"
+                        />
+                        <div>
+                            <span className="text-sm font-medium text-main">Inclure Honoraires & Aléas</span>
+                            <p className="text-[10px] text-muted mt-0.5">
+                                Syndic (3%) + Assurance DO (2%) + Aléas (5%) = +10% sur le devis
+                            </p>
+                        </div>
+                    </label>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-muted mb-1">
+                        Facture énergétique annuelle (€)
+                    </label>
+                    <input
+                        type="number"
+                        name="currentEnergyBill"
+                        min={0}
+                        step={500}
+                        placeholder="Ex: 45000"
+                        className="input"
+                    />
+                    <p className="text-[10px] text-muted mt-1">
+                        Charge énergie globale copro/an (pour calcul du cashflow).
+                    </p>
                 </div>
             </div>
 

@@ -384,9 +384,14 @@ describe('Règles Critiques MPR Copro 2026 — Blindage Mathématique', () => {
             }
         });
 
-        test('mensualité stricte pour ~178k€ sur 20 ans (~744€/mois)', () => {
+        test('mensualité stricte (Éco-PTZ 0% sur 20 ans)', () => {
+            // REFONTE 2026-02-06: signature (worksHT, totalTTC, lots, energyGain, ...)
+            // MPR/CEE sont maintenant calculés sur HT, ce qui augmente le RAC
+            const worksHT = 358_000;
+            const totalTTC = 378_723;
             const metrics = calculateProjectMetrics(
-                378_723, // montant total projet calibré pour ~178k€ de prêt
+                worksHT,
+                totalTTC,
                 10,
                 0.50,
                 0,
@@ -394,13 +399,14 @@ describe('Règles Critiques MPR Copro 2026 — Blindage Mathématique', () => {
                 3_000
             );
 
+            // RAC augmenté car MPR calculé sur HT (moins d'aides)
             expect(metrics.financing.loanAmount).toBeGreaterThan(175_000);
-            expect(metrics.financing.loanAmount).toBeLessThan(181_000);
+            expect(metrics.financing.loanAmount).toBeLessThan(200_000);
 
             const expectedMonthly = Math.round(metrics.financing.loanAmount / (20 * 12));
             expect(metrics.financing.monthlyLoanPayment).toBe(expectedMonthly);
             expect(metrics.financing.monthlyLoanPayment).toBeGreaterThan(700);
-            expect(metrics.financing.monthlyLoanPayment).toBeLessThan(780);
+            expect(metrics.financing.monthlyLoanPayment).toBeLessThan(850);
         });
 
         test('coût par lot cohérent avec coût global', () => {

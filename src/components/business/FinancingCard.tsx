@@ -199,22 +199,22 @@ export function FinancingCard({ financing, numberOfUnits }: FinancingCardProps) 
                         <div className="flex flex-col md:flex-row items-end justify-between gap-6 min-w-0">
                             <div className="w-full sm:w-auto">
                                 <p className="text-xs text-muted mb-1 uppercase tracking-wide">
-                                    Reste à charge {isMaPoche ? '(votre part)' : 'final'}
+                                    Reste à financer {isMaPoche ? '(votre part)' : '(Copro)'}
                                 </p>
-                                <p className="text-5xl md:text-6xl font-black text-gold financial-nums financial-nums tracking-tighter">
+                                <p className="text-5xl md:text-6xl font-black text-gold financial-nums tracking-tighter">
                                     <AnimatedCurrency value={getAdjustedValue(financing.remainingCost)} />
                                 </p>
                                 <p className="text-[10px] text-muted mt-1 opacity-70">
-                                    (Après subventions)
+                                    100% financé via Éco-PTZ • Apport : 0€
                                 </p>
                             </div>
 
                             <div className="text-right w-full sm:w-auto">
                                 <div className="inline-flex flex-col items-end p-3 bg-white/[0.05] rounded-xl border border-white/10 shadow-lg w-full sm:w-auto min-w-0">
                                     <span className="text-[10px] text-gold/80 font-bold uppercase tracking-wider mb-1">
-                                        Mensualité {isMaPoche ? 'estimée' : 'Copro'}
+                                        Mensualité Crédit {isMaPoche ? '(estimée)' : '(Copro)'}
                                     </span>
-                                    <span className="text-2xl font-bold text-white financial-nums financial-nums">
+                                    <span className="text-2xl font-bold text-white financial-nums">
                                         <span className="whitespace-nowrap">
                                             <AnimatedCurrency value={getAdjustedValue(financing.monthlyPayment)} />
                                             <span className="text-sm font-normal text-muted ml-1">/mois</span>

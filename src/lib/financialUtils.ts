@@ -2,6 +2,11 @@
  * VALO-SYNDIC — Financial Utils
  * =============================
  * Calculs financiers stricts et conservateurs (ANAH/BDF 2026).
+ *
+ * REFONTE 2026-02-06 :
+ * - MPR/CEE calcules sur HT (pas TTC)
+ * - Ecretement 80% TTC implemente (applyCapping)
+ * - Signature clarifiee : worksHT + totalTTC separes
  */
 
 import { FINANCES_2026 } from "./financialConstants";
@@ -11,26 +16,28 @@ export interface FinancialResult {
         mpr: number;
         cee: number;
         total: number;
+        /** true si l'ecretement 80% TTC a ete applique */
+        cappingApplied: boolean;
     };
     financing: {
-        /** Reste à charge AVANT emprunt (besoin de financement bancaire) */
+        /** Reste a charge AVANT emprunt (besoin de financement bancaire) */
         initialRac: number;
-        /** Montant Éco-PTZ (plafonné) */
+        /** Montant Eco-PTZ (plafonne) */
         loanAmount: number;
-        /** Apport cash immédiat si prêt insuffisant */
+        /** Apport cash immediat si pret insuffisant */
         cashDownPayment: number;
-        /** Mensualité réelle (Éco-PTZ à 0% = capital/durée) */
+        /** Mensualite reelle (Eco-PTZ a 0% = capital/duree) */
         monthlyLoanPayment: number;
     };
     kpi: {
-        /** Économies mensuelles estimées sur facture énergétique */
+        /** Economies mensuelles estimees sur facture energetique */
         monthlyEnergySavings: number;
-        /** Flux net mensuel (économie - mensualité) */
+        /** Flux net mensuel (economie - mensualite) */
         netMonthlyCashFlow: number;
         /** Valorisation patrimoniale (Valeur Verte) */
         greenValueIncrease: number;
     };
-    /** Alertes de conformité ou incohérences détectées */
+    /** Alertes de conformite ou incoherences detectees */
     alerts: string[];
 }
 
@@ -88,11 +95,11 @@ const calculateMonthlyPayment = (principal: number, annualRate: number, duration
     if (principal <= 0 || durationMonths <= 0) return 0;
 
     if (annualRate <= 0) {
-        // Éco-PTZ: taux 0%, mensualité = capital / durée
+        // Eco-PTZ: taux 0%, mensualite = capital / duree
         return principal / durationMonths;
     }
 
-    // Formule des annuités constantes (taux > 0)
+    // Formule des annuites constantes (taux > 0)
     const monthlyRate = annualRate / 12;
     const discountFactor = 1 - Math.pow(1 + monthlyRate, -durationMonths);
 
@@ -102,17 +109,58 @@ const calculateMonthlyPayment = (principal: number, annualRate: number, duration
 };
 
 /**
- * Calcule les métriques financières principales d'un projet de rénovation.
- * Entrées attendues:
- * - totalWorksAmount: montant total du projet (base de financement)
- * - numberOfLots: nombre de lots
- * - energyGainPercent: gain énergétique (0.45 = 45%)
- * - currentEnergyBill: facture énergétique annuelle globale (€)
- * - totalSurface: surface totale (m²)
- * - averagePricePerSqm: prix moyen au m²
+ * Ecretement legal : le cumul des aides publiques ne peut pas depasser
+ * 80% du montant TTC des travaux pour le syndicat des coproprietaires.
+ *
+ * Si le cumul depasse, on reduit MPR en premier (aide variable).
+ *
+ * @returns Le montant MPR apres ecretement
+ */
+function applyCapping(
+    mprAmount: number,
+    ceeAmount: number,
+    extraSubsidies: number,
+    totalTTC: number,
+    alerts: string[]
+): { mprCapped: number; cappingApplied: boolean } {
+    const cappingLimit = totalTTC * 0.80;
+    const totalAids = mprAmount + ceeAmount + extraSubsidies;
+
+    if (totalAids <= cappingLimit) {
+        return { mprCapped: mprAmount, cappingApplied: false };
+    }
+
+    // Ecretement : reduire MPR pour respecter le plafond 80% TTC
+    const excess = totalAids - cappingLimit;
+    const mprCapped = Math.max(0, mprAmount - excess);
+    alerts.push(
+        `Écrêtement appliqué : cumul aides (${Math.round(totalAids)}€) dépasse 80% TTC (${Math.round(cappingLimit)}€). ` +
+        `MPR réduit de ${Math.round(mprAmount)}€ à ${Math.round(mprCapped)}€.`
+    );
+
+    return { mprCapped, cappingApplied: true };
+}
+
+/**
+ * Calcule les metriques financieres principales d'un projet de renovation.
+ *
+ * REFONTE 2026-02-06 : Distinction stricte HT / TTC
+ * - worksHT : assiette pour le calcul MPR et CEE (regle ANAH)
+ * - totalTTC : base du financement reel et de l'ecretement 80%
+ *
+ * @param worksHT - Montant des travaux HT (assiette MPR/CEE)
+ * @param totalTTC - Cout total TTC du projet (travaux + honoraires + TVA)
+ * @param numberOfLots - Nombre de lots residentiels eligibles
+ * @param energyGainPercent - Gain energetique (0.45 = 45%)
+ * @param currentEnergyBill - Facture energetique annuelle globale (€)
+ * @param totalSurface - Surface totale (m2)
+ * @param averagePricePerSqm - Prix moyen au m2
+ * @param additionalSubsidies - Aides complementaires (AMO + locales)
+ * @param cashContribution - Apport cash (fonds ALUR, tresorerie)
  */
 export function calculateProjectMetrics(
-    totalWorksAmount: number,
+    worksHT: number,
+    totalTTC: number,
     numberOfLots: number,
     energyGainPercent: number,
     currentEnergyBill: number,
@@ -123,7 +171,8 @@ export function calculateProjectMetrics(
 ): FinancialResult {
     const alerts: string[] = [];
 
-    const worksAmount = normalizePositiveNumber(totalWorksAmount, "Montant travaux", alerts);
+    const htAmount = normalizePositiveNumber(worksHT, "Montant travaux HT", alerts);
+    const ttcAmount = normalizePositiveNumber(totalTTC, "Montant total TTC", alerts);
     const lots = normalizeLots(numberOfLots, alerts);
     const energyGain = normalizeEnergyGain(energyGainPercent, alerts);
     const annualEnergyBill = normalizePositiveNumber(currentEnergyBill, "Facture énergétique", alerts);
@@ -132,9 +181,9 @@ export function calculateProjectMetrics(
     const extraSubsidies = normalizePositiveNumber(additionalSubsidies, "Aides complémentaires", alerts);
     const cashInput = normalizePositiveNumber(cashContribution, "Apport cash", alerts);
 
-    if (worksAmount === 0 || lots === 0) {
+    if (htAmount === 0 || ttcAmount === 0 || lots === 0) {
         return {
-            subsidies: { mpr: 0, cee: 0, total: 0 },
+            subsidies: { mpr: 0, cee: 0, total: 0, cappingApplied: false },
             financing: { initialRac: 0, loanAmount: 0, cashDownPayment: 0, monthlyLoanPayment: 0 },
             kpi: { monthlyEnergySavings: 0, netMonthlyCashFlow: 0, greenValueIncrease: 0 },
             alerts,
@@ -142,7 +191,8 @@ export function calculateProjectMetrics(
     }
 
     // ==============================
-    // 1. MPR Copropriété (ANAH 2026)
+    // 1. MPR Copropriete (ANAH 2026)
+    //    Assiette = Travaux HT (LE_CENTRE.md §3.1)
     // ==============================
     let mprRate = 0;
     if (energyGain >= FINANCES_2026.MPR.MIN_ENERGY_GAIN) {
@@ -155,37 +205,48 @@ export function calculateProjectMetrics(
     }
 
     const mprCeiling = FINANCES_2026.MPR.CEILING_PER_LOT * lots;
-    const mprRaw = worksAmount * mprRate;
-    const mprAmount = Math.min(mprRaw, mprCeiling);
+    const mprRaw = htAmount * mprRate;
+    let mprAmount = Math.min(mprRaw, mprCeiling);
     if (mprRaw > mprCeiling) {
         alerts.push("Attention, plafond MPR atteint.");
     }
 
     // ==============================
     // 2. CEE (estimation conservatrice)
+    //    Assiette = Travaux HT (LE_CENTRE.md §3.1)
     // ==============================
-    const ceeRaw = worksAmount * FINANCES_2026.CEE.AVG_RATE_WORKS;
+    const ceeRaw = htAmount * FINANCES_2026.CEE.AVG_RATE_WORKS;
     const ceeCeiling = FINANCES_2026.CEE.MAX_PER_LOT * lots;
     const ceeAmount = Math.min(ceeRaw, ceeCeiling);
     if (ceeRaw > ceeCeiling) {
         alerts.push("Plafond CEE atteint (max 5 000€ par lot).");
     }
 
+    // ==============================
+    // 2b. ECRETEMENT 80% TTC (Regle d'or)
+    //     Le cumul des aides ne peut pas depasser 80% du TTC
+    // ==============================
+    const { mprCapped, cappingApplied } = applyCapping(
+        mprAmount, ceeAmount, extraSubsidies, ttcAmount, alerts
+    );
+    mprAmount = mprCapped;
+
     const totalSubsidies = mprAmount + ceeAmount + extraSubsidies;
 
     // ==============================
-    // 3. Reste à charge (besoin bancaire)
+    // 3. Reste a charge (besoin bancaire)
+    //    Base = TTC (ce que la copro doit reellement financer)
     // ==============================
-    const initialRac = Math.max(0, worksAmount - totalSubsidies - cashInput);
-    if (totalSubsidies > worksAmount) {
-        alerts.push("Subventions supérieures aux travaux: RAC ramené à 0.");
+    const initialRac = Math.max(0, ttcAmount - totalSubsidies - cashInput);
+    if (totalSubsidies + cashInput > ttcAmount) {
+        alerts.push("Subventions + apport supérieurs au TTC: RAC ramené à 0.");
     }
     if (cashInput > 0) {
         alerts.push("Apport cash déduit du reste à financer.");
     }
 
     // ==============================
-    // 4. Éco-PTZ (prêt collectif)
+    // 4. Eco-PTZ (pret collectif)
     // ==============================
     const ecoPtzCapPerLot =
         energyGain >= FINANCES_2026.MPR.MIN_ENERGY_GAIN
@@ -234,6 +295,7 @@ export function calculateProjectMetrics(
             mpr: roundEuro(mprAmount),
             cee: roundEuro(ceeAmount),
             total: roundEuro(totalSubsidies),
+            cappingApplied,
         },
         financing: {
             initialRac: roundEuro(initialRac),

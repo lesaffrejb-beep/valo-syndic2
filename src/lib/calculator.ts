@@ -126,7 +126,8 @@ export function simulateFinancing(
     _ceeBonus: number = 0,
     currentEnergyBill: number = 0,
     totalSurface?: number,
-    averagePricePerSqm?: number
+    averagePricePerSqm?: number,
+    includeHonoraires: boolean = true
 ): FinancingPlan {
     // Guard: prevent division by zero
     if (!nbLots || nbLots <= 0) {
@@ -139,11 +140,12 @@ export function simulateFinancing(
     // 1. Calcul des Coûts (HT et TTC)
 
     // a. Coûts Travaux + Frais proportionnels
-    const syndicFees = costHT * PROJECT_FEES.syndicRate;
-    const doFees = costHT * PROJECT_FEES.doRate;
-    const contingencyFees = costHT * PROJECT_FEES.contingencyRate;
+    // REFONTE 2026-02-06 : Honoraires conditionnels (toggle utilisateur)
+    const syndicFees = includeHonoraires ? costHT * PROJECT_FEES.syndicRate : 0;
+    const doFees = includeHonoraires ? costHT * PROJECT_FEES.doRate : 0;
+    const contingencyFees = includeHonoraires ? costHT * PROJECT_FEES.contingencyRate : 0;
 
-    // Sous-total Travaux + Frais (Assiette MPR)
+    // Sous-total Travaux + Frais
     const subtotalWorksFeesHT = costHT + syndicFees + doFees + contingencyFees;
 
     // b. Coût AMO (Assistance à Maîtrise d'Ouvrage) - Forfaitaire par lot
@@ -183,6 +185,8 @@ export function simulateFinancing(
     const amoAmount = Math.max(amoAmountRaw, AMO_PARAMS.minTotal);
 
     // --- Calcul strict via financialUtils (MPR/CEE/RAC/Éco-PTZ) ---
+    // REFONTE 2026-02-06 : On passe worksHT ET totalTTC séparément.
+    // MPR/CEE sont calculés sur HT, l'écrêtement et le RAC sur TTC.
     const residentialLots = Math.max(0, nbLots - commercialLots);
     const surfaceForMetrics = totalSurface ?? 0;
     const pricePerSqmForMetrics = averagePricePerSqm ?? VALUATION_PARAMS.BASE_PRICE_PER_SQM;
@@ -190,7 +194,8 @@ export function simulateFinancing(
 
     // NOTE: ceeBonus volontairement ignoré (calcul strict via CEE conservateur)
     const metrics = calculateProjectMetrics(
-        totalCostTTC,
+        costHT,          // Assiette HT pour MPR/CEE (travaux purs, AVANT honoraires)
+        totalCostTTC,    // Montant TTC pour écrêtement 80% et RAC
         residentialLots,
         energyGainPercent,
         currentEnergyBill,
@@ -208,14 +213,19 @@ export function simulateFinancing(
                 : FINANCES_2026.MPR.RATE_STANDARD;
     }
 
+    // REFONTE 2026-02-06 : remainingCost = RAC total (TTC - aides)
+    // cashDownPayment = apport cash nécessaire si Éco-PTZ insuffisant
+    const remainingCost = Math.round(metrics.financing.initialRac);
+    const cashDownPayment = Math.round(Math.max(0, metrics.financing.cashDownPayment));
+
     return {
         worksCostHT: Math.round(costHT),
-        totalCostHT: Math.round(totalCostHT), // On garde le HT pour info
-        totalCostTTC: Math.round(totalCostTTC), // Ajout pour le Ticket de Caisse TTC
+        totalCostHT: Math.round(totalCostHT),
+        totalCostTTC: Math.round(totalCostTTC),
         syndicFees: Math.round(syndicFees),
         doFees: Math.round(doFees),
         contingencyFees: Math.round(contingencyFees),
-        costPerUnit: Math.round(costPerUnit), // TTC !
+        costPerUnit: Math.round(costPerUnit),
         energyGainPercent,
         mprAmount: Math.round(metrics.subsidies.mpr),
         amoAmount: Math.round(amoAmount),
@@ -224,11 +234,12 @@ export function simulateFinancing(
         exitPassoireBonus: 0,
         ecoPtzAmount: Math.round(metrics.financing.loanAmount),
         ceeAmount: Math.round(metrics.subsidies.cee),
-        remainingCost: Math.round(Math.max(0, metrics.financing.cashDownPayment)), // TTC
+        remainingCost,
         monthlyPayment: Math.round(metrics.financing.monthlyLoanPayment),
         monthlyEnergySavings: Math.round(metrics.kpi.monthlyEnergySavings),
         netMonthlyCashFlow: Math.round(metrics.kpi.netMonthlyCashFlow),
-        remainingCostPerUnit: Math.round(Math.max(0, metrics.financing.cashDownPayment) / nbLots), // TTC
+        remainingCostPerUnit: Math.round(remainingCost / nbLots),
+        cappingApplied: metrics.subsidies.cappingApplied,
     };
 }
 
@@ -330,7 +341,8 @@ export function calculateValuation(
     const energyGainPercent = financing.energyGainPercent;
 
     const strictMetrics = calculateProjectMetrics(
-        financing.totalCostTTC,
+        financing.worksCostHT,  // Assiette HT
+        financing.totalCostTTC, // Montant TTC
         residentialLots,
         energyGainPercent,
         input.currentEnergyBill || 0,
@@ -381,19 +393,28 @@ export function generateDiagnostic(input: DiagnosticInput): DiagnosticResult {
     const compliance = calculateComplianceStatus(input.currentDPE);
 
     // 2. Simulation financement
-    // AUDIT 02/02/2026: Logic Priorité Coût Manuel vs Auto
+    // REFONTE 2026-02-06 : Gestion HT/TTC + toggle Honoraires
     const averageSurface = input.averageUnitSurface || 65;
     const totalSurface = input.numberOfUnits * averageSurface;
 
-    let workCostBase = input.estimatedCostHT;
+    let workCostHT = input.estimatedCostHT;
 
-    // Si pas de coût saisi (ou 0), on estime automatiquement
-    if (!workCostBase || workCostBase <= 0) {
-        workCostBase = totalSurface * VALUATION_PARAMS.ESTIMATED_RENO_COST_PER_SQM;
+    // Si le montant saisi est TTC, on le convertit en HT (TVA 5.5%)
+    if (input.isCostTTC && workCostHT > 0) {
+        workCostHT = workCostHT / (1 + TECHNICAL_PARAMS.TVA_RENOVATION);
     }
 
+    // Si pas de coût saisi (ou 0), on estime automatiquement
+    if (!workCostHT || workCostHT <= 0) {
+        workCostHT = totalSurface * VALUATION_PARAMS.ESTIMATED_RENO_COST_PER_SQM;
+    }
+
+    // Si l'utilisateur ne veut pas inclure les honoraires, on passe
+    // includeHonoraires=false au moteur
+    const includeHonoraires = input.includeHonoraires !== false;
+
     const financing = simulateFinancing(
-        workCostBase,
+        workCostHT,
         input.numberOfUnits,
         input.currentDPE,
         input.targetDPE,
@@ -403,12 +424,13 @@ export function generateDiagnostic(input: DiagnosticInput): DiagnosticResult {
         input.ceeBonus || 0,
         input.currentEnergyBill || 0,
         totalSurface,
-        input.averagePricePerSqm || VALUATION_PARAMS.BASE_PRICE_PER_SQM
+        input.averagePricePerSqm || VALUATION_PARAMS.BASE_PRICE_PER_SQM,
+        includeHonoraires
     );
 
     // 3. Coût de l'inaction
     const inactionCost = calculateInactionCost(
-        workCostBase,
+        workCostHT,
         input.numberOfUnits,
         input.currentDPE,
         input.averagePricePerSqm,
