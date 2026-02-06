@@ -212,13 +212,16 @@ export function FinancingCard({ financing, numberOfUnits }: FinancingCardProps) 
                             <div className="text-right w-full sm:w-auto">
                                 <div className="inline-flex flex-col items-end p-3 bg-white/[0.05] rounded-xl border border-white/10 shadow-lg w-full sm:w-auto min-w-0">
                                     <span className="text-[10px] text-gold/80 font-bold uppercase tracking-wider mb-1">
-                                        Mensualité {isMaPoche ? 'estimée' : 'Copro'}
+                                        Mensualité par lot
                                     </span>
                                     <span className="text-2xl font-bold text-white financial-nums financial-nums">
                                         <span className="whitespace-nowrap">
-                                            <AnimatedCurrency value={getAdjustedValue(financing.monthlyPayment)} />
+                                            <AnimatedCurrency value={getAdjustedValue(financing.monthlyPayment / numberOfUnits)} />
                                             <span className="text-sm font-normal text-muted ml-1">/mois</span>
                                         </span>
+                                    </span>
+                                    <span className="text-[9px] text-muted mt-1 opacity-60">
+                                        {Math.round(getAdjustedValue(financing.monthlyPayment))}€/mois total copro
                                     </span>
                                 </div>
                             </div>

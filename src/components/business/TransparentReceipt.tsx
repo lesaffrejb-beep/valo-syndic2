@@ -6,9 +6,12 @@ import { type FinancingPlan } from "@/lib/schemas";
 
 interface TransparentReceiptProps {
     financing: FinancingPlan;
+    numberOfUnits?: number;
 }
 
-export function TransparentReceipt({ financing }: TransparentReceiptProps) {
+export function TransparentReceipt({ financing, numberOfUnits = 1 }: TransparentReceiptProps) {
+    // Calculate per-unit monthly payment for display
+    const monthlyPaymentPerUnit = Math.round(financing.monthlyPayment / numberOfUnits);
     // 1. Dépense INITIALE
     const costItems = [
         { label: "Travaux & Honoraires TTC", value: financing.totalCostTTC, type: "cost", highlight: false },
@@ -47,6 +50,11 @@ export function TransparentReceipt({ financing }: TransparentReceiptProps) {
                 <div className="absolute left-0 top-2 bottom-2 w-px bg-gradient-to-b from-transparent via-white/10 to-transparent ml-[1px]" />
 
                 {/* 1. COÛT */}
+                <div className="mb-1">
+                    <span className="text-[9px] text-primary/60 font-bold uppercase tracking-widest pl-4 block mb-1">
+                        💰 Dépense Initiale
+                    </span>
+                </div>
                 {costItems.map((item, i) => (
                     <div key={`cost-${i}`} className="flex justify-between items-baseline py-1 group pl-4">
                         <span className="text-zinc-400 font-medium tracking-tight">{item.label}</span>
@@ -58,6 +66,11 @@ export function TransparentReceipt({ financing }: TransparentReceiptProps) {
                 <div className="border-b border-dashed border-white/10 my-2 opacity-50" />
 
                 {/* 2. DEDUCTIONS (AIDES) */}
+                <div className="mb-1">
+                    <span className="text-[9px] text-emerald-500/60 font-bold uppercase tracking-widest pl-4 block mb-1">
+                        ✓ Aides Déduites
+                    </span>
+                </div>
                 {grantItems.map((item, i) => (
                     <div key={`grant-${i}`} className="flex justify-between items-baseline py-1.5 group pl-4 relative">
                         <span className="absolute left-[-3px] top-1/2 -translate-y-1/2 text-[10px] text-emerald-500/80 font-bold opacity-0 group-hover:opacity-100 transition-opacity">›</span>
@@ -98,18 +111,18 @@ export function TransparentReceipt({ financing }: TransparentReceiptProps) {
                 <div className="bg-gradient-to-br from-gold/10 to-gold/5 rounded-xl p-5 border border-gold/20 flex justify-between items-center group shadow-[0_0_30px_rgba(217,119,6,0.1)]">
                     <div className="flex flex-col">
                         <span className="text-[10px] uppercase tracking-widest text-gold font-bold mb-1">Effort d&apos;épargne</span>
-                        <span className="text-xs text-gold/70">Mensualité réelle</span>
+                        <span className="text-xs text-gold/70">Par copropriétaire</span>
                     </div>
 
                     <div className="text-right">
                         <span className="text-3xl font-black text-white tracking-tighter financial-nums">
-                            {financing.monthlyPayment}€
+                            {monthlyPaymentPerUnit}€
                         </span>
                         <span className="text-sm text-gold/70 font-medium ml-1">/mois</span>
                     </div>
                 </div>
 
-                {financing.monthlyPayment < 50 && (
+                {monthlyPaymentPerUnit < 50 && (
                     <div className="text-center mt-3">
                         <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20 uppercase tracking-widest">
                             Moins cher qu&apos;un abonnement internet

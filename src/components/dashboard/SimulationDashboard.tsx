@@ -56,7 +56,6 @@ import { type MarketData } from "@/lib/market-data";
 import { JsonImporter } from "@/components/import/JsonImporter";
 
 // NEW Premium Components
-import { MprSuspensionAlert } from "@/components/business/MprSuspensionAlert";
 import { TransparentReceipt } from "@/components/business/TransparentReceipt";
 import { MarketLiquidityAlert } from "@/components/business/MarketLiquidityAlert";
 
@@ -236,7 +235,6 @@ export function SimulationDashboard({ marketData }: SimulationDashboardProps) {
 
     return (
         <div className="min-h-screen bg-app">
-            <MprSuspensionAlert isSuspended={marketData.regulation.isMprCoproSuspended} />
 
             <BrandingModal isOpen={showBrandingModal} onClose={() => setShowBrandingModal(false)} />
             <AuthModal
@@ -471,7 +469,10 @@ export function SimulationDashboard({ marketData }: SimulationDashboardProps) {
                                                     <SubsidyTable inputs={simulationInputs} />
                                                 </div>
                                                 <div className="lg:col-span-5">
-                                                    <TransparentReceipt financing={result.financing} />
+                                                    <TransparentReceipt
+                                                        financing={result.financing}
+                                                        numberOfUnits={result.input.numberOfUnits}
+                                                    />
                                                 </div>
                                             </div>
                                         </div>

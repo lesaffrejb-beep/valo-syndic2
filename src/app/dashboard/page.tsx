@@ -13,7 +13,6 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
 import type { SavedSimulation } from '@/lib/schemas';
-import { MprSuspensionAlert } from '@/components/business/MprSuspensionAlert';
 import { MarketLiquidityAlert } from '@/components/business/MarketLiquidityAlert';
 import { ComplianceTimeline } from '@/components/ComplianceTimeline';
 import { TransparentReceipt } from '@/components/business/TransparentReceipt';
@@ -131,9 +130,7 @@ export default function DashboardPage() {
 
             <div className="max-w-[1920px] mx-auto p-4 md:p-6 lg:p-8 space-y-6">
 
-                {/* ZONE A: ALERTES (Contextual) */}
                 <div className="space-y-3">
-                    <MprSuspensionAlert isSuspended={isMprCoproSuspended()} />
                     <MarketLiquidityAlert shareOfSales={getLocalPassoiresShare()} />
                 </div>
 
@@ -194,6 +191,7 @@ export default function DashboardPage() {
                             <div className="p-2 h-full">
                                 <TransparentReceipt
                                     financing={selectedProject?.json_data?.financing || MOCK_FINANCING}
+                                    numberOfUnits={20}
                                 />
                             </div>
                         </motion.div>

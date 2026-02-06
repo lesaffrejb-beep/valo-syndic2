@@ -38,7 +38,6 @@ import { ViewModeToggle } from '@/components/ui/ViewModeToggle';
 
 // --- BUSINESS COMPONENTS ---
 import { StreetViewHeader } from '@/components/business/StreetViewHeader';
-import { MprSuspensionAlert } from '@/components/business/MprSuspensionAlert';
 import { HeatingSystemAlert } from '@/components/business/HeatingSystemAlert';
 import { RisksCard } from '@/components/business/RisksCard';
 import { InactionCostCard } from '@/components/business/InactionCostCard';
@@ -315,10 +314,7 @@ export default function ScrollytellingPage() {
                 isSaving={isSaving}
             />
 
-            {/* Alert fixed below header */}
-            <div className="fixed top-20 left-0 right-0 z-[55] print:hidden">
-                <MprSuspensionAlert isSuspended={isMprCoproSuspended()} />
-            </div>
+
 
             {/* ================================================================
                 ZONE 0 — THE HOOK (Hero)
