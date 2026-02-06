@@ -1,0 +1,26 @@
+{
+    "bt01": {
+        "currentValue": 133.3,
+        "annualChangePercent": 1.37,
+        "referenceMonth": "2025-11",
+        "source": "INSEE"
+    },
+    "marketTrend": {
+        "national": -0.004,
+        "idf": -0.013,
+        "province": 0.001,
+        "comment": "Notaires de France T4 2025"
+    },
+    "passoires": {
+        "shareOfSales": 0.15,
+        "trendVs2023": -0.02,
+        "source": "Notaires DP 08.12.2025"
+    },
+    "regulation": {
+        "isLdF2026Voted": false,
+        "isMprCoproSuspended": true,
+        "suspensionDate": "2026-01-01",
+        "comment": "Attente LdF 2026",
+        "loiSpeciale": "Loi spéciale du 26/12/2025"
+    }
+}
