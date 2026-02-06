@@ -378,29 +378,31 @@ export default function ScrollytellingPage() {
                     subtitle="L'inaction a un coût invisible qui érode le patrimoine de vos copropriétaires."
                 />
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full items-stretch">
-                    {/* Left: Alerts & Context */}
-                    <div className="space-y-6">
-                        <HeatingSystemAlert heatingType={diagnosticInput.heatingSystem || null} />
+                <div className="w-full space-y-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full items-stretch">
+                        {/* Left: Alerts & Context */}
+                        <div className="space-y-6">
+                            <HeatingSystemAlert heatingType={diagnosticInput.heatingSystem || null} />
 
-                        {diagnosticInput.coordinates && (
-                            <RisksCard coordinates={diagnosticInput.coordinates} />
-                        )}
+                            {diagnosticInput.coordinates && (
+                                <RisksCard coordinates={diagnosticInput.coordinates} />
+                            )}
+                        </div>
+
+                        {/* Right: The Cost */}
+                        <div className="space-y-6">
+                            <InactionCostCard inactionCost={inactionCost} />
+                        </div>
                     </div>
 
-                    {/* Right: The Cost */}
-                    <div className="space-y-6">
-                        <InactionCostCard inactionCost={inactionCost} />
+                    {/* Benchmark Chart - Full Width (2 columns) */}
+                    <div className="w-full">
+                        <BenchmarkChart
+                            currentDPE={diagnosticInput.currentDPE}
+                            city={diagnosticInput.city}
+                            className="bg-white/[0.02] border border-white/5 rounded-3xl p-6"
+                        />
                     </div>
-                </div>
-
-                {/* Benchmark Chart - Full Width (2 columns) */}
-                <div className="w-full mt-8">
-                    <BenchmarkChart
-                        currentDPE={diagnosticInput.currentDPE}
-                        city={diagnosticInput.city}
-                        className="bg-white/[0.02] border border-white/5 rounded-3xl p-6"
-                    />
                 </div>
             </Section>
 
@@ -429,35 +431,37 @@ export default function ScrollytellingPage() {
                     title="Impact pour les copropriétaires"
                 />
 
-                {/* Quote-part Selector */}
-                <div className="w-full max-w-[600px] mx-auto mb-12 px-4">
-                    <div className="text-center mb-4">
-                        <span className="text-[10px] uppercase tracking-[0.3em] text-gold/60 font-semibold">Votre quote-part</span>
-                    </div>
-                    <ViewModeToggle
-                        totalUnits={diagnosticInput.numberOfUnits}
-                        avgSurface={diagnosticInput.averageUnitSurface || 65}
-                    />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-                    <Card className="md:col-span-2 border border-emerald-500/20 bg-emerald-500/5 backdrop-blur-xl">
-                        <CardContent className="p-6 md:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                            <div>
-                                <p className="text-[10px] uppercase tracking-[0.35em] text-emerald-300/80 font-semibold">Valeur verte estimée</p>
-                                <p className="text-sm text-white/70 mt-2">Valorisation patrimoniale directement issue du moteur de calcul.</p>
-                            </div>
-                            <div className="text-4xl md:text-5xl font-light text-emerald-300 tracking-tighter financial-num">
-                                +{greenValueDisplay}
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <div className="md:col-span-2">
-                        <TantiemeCalculator
-                            financing={financing}
-                            simulationInputs={simulationInputs}
-                            className="h-full bg-deep-light/30 border-white/5"
+                <div className="w-full flex flex-col gap-8">
+                    {/* Quote-part Selector */}
+                    <div className="w-full max-w-[600px] mx-auto px-4">
+                        <div className="text-center mb-4">
+                            <span className="text-[10px] uppercase tracking-[0.3em] text-gold/60 font-semibold">Votre quote-part</span>
+                        </div>
+                        <ViewModeToggle
+                            totalUnits={diagnosticInput.numberOfUnits}
+                            avgSurface={diagnosticInput.averageUnitSurface || 65}
                         />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+                        <Card className="md:col-span-2 border border-emerald-500/20 bg-emerald-500/5 backdrop-blur-xl">
+                            <CardContent className="p-6 md:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                                <div>
+                                    <p className="text-[10px] uppercase tracking-[0.35em] text-emerald-300/80 font-semibold">Valeur verte estimée</p>
+                                    <p className="text-sm text-white/70 mt-2">Valorisation patrimoniale directement issue du moteur de calcul.</p>
+                                </div>
+                                <div className="text-4xl md:text-5xl font-light text-emerald-300 tracking-tighter financial-num">
+                                    +{greenValueDisplay}
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <div className="md:col-span-2">
+                            <TantiemeCalculator
+                                financing={financing}
+                                simulationInputs={simulationInputs}
+                                className="h-full bg-deep-light/30 border-white/5"
+                            />
+                        </div>
                     </div>
                 </div>
             </Section>
@@ -487,33 +491,35 @@ export default function ScrollytellingPage() {
                 ZONE 5 — ACTION
                 ================================================================ */}
             <Section id="action" className="pb-40">
-                <div className="max-w-4xl mx-auto text-center">
-                    <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-none mb-10">
-                        Passez à l&apos;<span className="text-gold">action</span>.
-                    </h2>
+                <div className="max-w-4xl mx-auto text-center space-y-12">
+                    <div className="space-y-10">
+                        <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-none">
+                            Passez à l&apos;<span className="text-gold">action</span>.
+                        </h2>
 
-                    <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-                        <Button
-                            variant="outline"
-                            className="h-16 px-8 rounded-full border-white/10 hover:bg-white/5 text-white gap-3 transition-all duration-300"
-                            onClick={() => setShowObjections(!showObjections)}
-                        >
-                            <AlertTriangle className="w-5 h-5 text-muted" />
-                            <span className="font-semibold">Contrer les objections</span>
-                        </Button>
+                        <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+                            <Button
+                                variant="outline"
+                                className="h-16 px-8 rounded-full border-white/10 hover:bg-white/5 text-white gap-3 transition-all duration-300"
+                                onClick={() => setShowObjections(!showObjections)}
+                            >
+                                <AlertTriangle className="w-5 h-5 text-muted" />
+                                <span className="font-semibold">Contrer les objections</span>
+                            </Button>
 
-                        <DownloadPdfButton
-                            result={diagnosticResult}
-                            className="h-16 px-10 rounded-full bg-gold hover:bg-gold-light text-black font-bold text-lg transition-all duration-300 flex items-center gap-3"
-                        />
+                            <DownloadPdfButton
+                                result={diagnosticResult}
+                                className="h-16 px-10 rounded-full bg-gold hover:bg-gold-light text-black font-bold text-lg transition-all duration-300 flex items-center gap-3"
+                            />
 
-                        <DownloadPptxButton
-                            result={diagnosticResult}
-                            className="h-16 px-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold transition-all duration-300"
-                        />
+                            <DownloadPptxButton
+                                result={diagnosticResult}
+                                className="h-16 px-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold transition-all duration-300"
+                            />
+                        </div>
                     </div>
 
-                    <div className="mt-16 flex justify-center">
+                    <div className="flex justify-center">
                         <LegalWarning variant="inline" />
                     </div>
 
@@ -523,7 +529,7 @@ export default function ScrollytellingPage() {
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: "auto", opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                className="w-full max-w-2xl mx-auto mt-12 overflow-hidden text-left"
+                                className="w-full max-w-2xl mx-auto overflow-hidden text-left"
                             >
                                 <ObjectionHandler />
                             </motion.div>
