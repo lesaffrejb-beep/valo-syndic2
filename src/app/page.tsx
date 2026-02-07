@@ -38,9 +38,6 @@ import { ViewModeToggle } from '@/components/ui/ViewModeToggle';
 
 // --- BUSINESS COMPONENTS ---
 import { StreetViewHeader } from '@/components/business/StreetViewHeader';
-import { HeatingSystemAlert } from '@/components/business/HeatingSystemAlert';
-import { RisksCard } from '@/components/business/RisksCard';
-import { InactionCostCard } from '@/components/business/InactionCostCard';
 import { ComparisonSplitScreen } from '@/components/business/ComparisonSplitScreen';
 import { BenchmarkChart } from '@/components/business/BenchmarkChart';
 import { FinancingCard } from '@/components/business/FinancingCard';
@@ -129,7 +126,7 @@ export default function ScrollytellingPage() {
     const [showObjections, setShowObjections] = useState(false);
     const [showCsvModal, setShowCsvModal] = useState(false);
 
-    const [activeSection, setActiveSection] = useState<'diagnostic' | 'projection' | 'my-pocket' | 'finance' | 'action'>('diagnostic');
+    const [activeSection, setActiveSection] = useState<'diagnostic' | 'analyse' | 'finance' | 'action'>('diagnostic');
     const { saveProject, isLoading: isSaving, error: saveError, showAuthModal, setShowAuthModal } = useProjectSave();
     const isManualNavigating = useRef(false);
 
@@ -239,14 +236,14 @@ export default function ScrollytellingPage() {
     }, [diagnosticResult, diagnosticInput]);
 
     const scrollToPersonalImpact = useCallback(() => {
-        document.getElementById('my-pocket')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('analyse')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, []);
 
     const scrollToSection = useCallback((id: string) => {
         isManualNavigating.current = true;
         // Immediate visual update
         // Using explicit cast to match state type
-        setActiveSection(id as 'diagnostic' | 'projection' | 'my-pocket' | 'finance' | 'action');
+        setActiveSection(id as 'diagnostic' | 'analyse' | 'finance' | 'action');
 
         document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -257,7 +254,7 @@ export default function ScrollytellingPage() {
     }, []);
 
     useEffect(() => {
-        const sectionIds = ['diagnostic', 'projection', 'my-pocket', 'finance', 'action'] as const;
+        const sectionIds = ['diagnostic', 'analyse', 'finance', 'action'] as const;
 
         const observer = new IntersectionObserver(
             (entries) => {
@@ -369,33 +366,17 @@ export default function ScrollytellingPage() {
             </section>
 
             {/* ================================================================
-                ZONE 1 — THE DIAGNOSTIC (Risks)
+                ZONE 1 — THE DIAGNOSTIC (Benchmark + Projection)
                 ================================================================ */}
             <Section id="diagnostic">
                 <SectionHeader
                     label="Le Diagnostic"
-                    title={<>L&apos;Ingénierie Financière</>}
-                    subtitle="L'inaction a un coût invisible qui érode le patrimoine de vos copropriétaires."
+                    title={<>Ingénierie & <span className="text-white">Bascule</span></>}
+                    subtitle="Comparatif direct entre le marché actuel, le scénario du déclin et la valorisation."
                 />
 
-                <div className="w-full space-y-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full items-stretch">
-                        {/* Left: Alerts & Context */}
-                        <div className="space-y-6">
-                            <HeatingSystemAlert heatingType={diagnosticInput.heatingSystem || null} />
-
-                            {diagnosticInput.coordinates && (
-                                <RisksCard coordinates={diagnosticInput.coordinates} />
-                            )}
-                        </div>
-
-                        {/* Right: The Cost */}
-                        <div className="space-y-6">
-                            <InactionCostCard inactionCost={inactionCost} />
-                        </div>
-                    </div>
-
-                    {/* Benchmark Chart - Full Width (2 columns) */}
+                <div className="w-full space-y-12">
+                    {/* 1. Benchmark Chart (Top) */}
                     <div className="w-full">
                         <BenchmarkChart
                             currentDPE={diagnosticInput.currentDPE}
@@ -403,29 +384,20 @@ export default function ScrollytellingPage() {
                             className="bg-white/[0.02] border border-white/5 rounded-3xl p-6"
                         />
                     </div>
+
+                    {/* 2. Comparison Grid (Bottom) */}
+                    <ComparisonSplitScreen
+                        inactionCost={inactionCost}
+                        valuation={valuation}
+                        financing={financing}
+                    />
                 </div>
             </Section>
 
             {/* ================================================================
-                ZONE 2 — THE PROJECTION (Vision)
+                ZONE 2 — ANALYSE INDIVIDUELLE (Ex-My Pocket)
                 ================================================================ */}
-            <Section id="projection" className="bg-gradient-to-b from-deep to-deep-light/20">
-                <SectionHeader
-                    label="La Projection"
-                    title={<>Le point de <span className="text-white">bascule</span></>}
-                    subtitle="Comparatif direct entre le scénario du déclin et celui de la valorisation."
-                />
-                <ComparisonSplitScreen
-                    inactionCost={inactionCost}
-                    valuation={valuation}
-                    financing={financing}
-                />
-            </Section>
-
-            {/* ================================================================
-                ZONE 4 — DIAGNOSTIC PERSONNEL
-                ================================================================ */}
-            <Section id="my-pocket">
+            <Section id="analyse">
                 <SectionHeader
                     label="Analyse Individuelle"
                     title="Impact pour les copropriétaires"
