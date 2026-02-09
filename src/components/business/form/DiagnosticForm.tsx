@@ -57,6 +57,7 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
 
     // State pour DPE local trouvé
     const [localDpeData, setLocalDpeData] = useState<DPEEntry | null>(null);
+    const [investorRatio, setInvestorRatio] = useState(0);
 
     // State pour les coordonnées GPS (V3)
     const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | undefined>(undefined);
@@ -503,21 +504,39 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
 
                     <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-muted mb-2">
-                            👔 Part de Bailleurs Investisseurs: <span className="text-primary font-bold" id="investor-ratio-display">0%</span>
+                            👔 Part de Bailleurs Investisseurs: <span className="text-gold font-bold">{investorRatio}%</span>
                         </label>
-                        <input
-                            type="range"
-                            name="investorRatio"
-                            min={0}
-                            max={100}
-                            step={5}
-                            defaultValue={0}
-                            className="w-full h-2 bg-boundary rounded-lg appearance-none cursor-pointer accent-primary"
-                            onChange={(e) => {
-                                const display = document.getElementById("investor-ratio-display");
-                                if (display) display.textContent = `${e.target.value}%`;
-                            }}
-                        />
+
+                        <div className="relative h-6 w-full flex items-center group cursor-pointer">
+                            {/* Track */}
+                            <div className="absolute inset-x-0 h-2 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                                <div
+                                    className="h-full bg-gradient-to-r from-gold/50 to-gold transition-all duration-300 ease-out shadow-[0_0_10px_rgba(229,192,123,0.3)]"
+                                    style={{ width: `${investorRatio}%` }}
+                                />
+                            </div>
+
+                            {/* Input (invisible functional layer) */}
+                            <input
+                                type="range"
+                                name="investorRatio"
+                                min={0}
+                                max={100}
+                                step={5}
+                                value={investorRatio}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                                onChange={(e) => setInvestorRatio(parseInt(e.target.value))}
+                            />
+
+                            {/* Thumb (visual only) */}
+                            <div
+                                className="absolute h-5 w-5 bg-deep-light border border-gold shadow-[0_0_15px_rgba(229,192,123,0.5)] rounded-full z-10 pointer-events-none transition-all duration-100 ease-out group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(229,192,123,0.7)]"
+                                style={{
+                                    left: `${investorRatio}%`,
+                                    transform: `translateX(-${investorRatio}%)`
+                                }}
+                            />
+                        </div>
                         <p className="text-[10px] text-muted mt-1">
                             Si &gt; 40%, affiche l&apos;avantage fiscal (déficit foncier).
                         </p>

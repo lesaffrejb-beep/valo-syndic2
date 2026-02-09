@@ -116,6 +116,7 @@ const DEFAULT_DIAGNOSTIC_INPUT: DiagnosticInput = {
 
 // --- SERVICES ---
 import { initAudit, completeAudit, mapBackendToFrontend, type AuditFlashResult } from '@/services/auditService';
+import { FileText } from "lucide-react";
 
 // =============================================================================
 // MAIN PAGE COMPONENT
@@ -141,6 +142,16 @@ export default function ScrollytellingPage() {
     const [diagnosticInput, setDiagnosticInput] = useState<DiagnosticInput>(DEFAULT_DIAGNOSTIC_INPUT);
     // HYDRATION FIX: Initialize synchronously to allow SSR/first render to be populated
     const [diagnosticResult, setDiagnosticResult] = useState<DiagnosticResult | null>(() => generateDiagnostic(DEFAULT_DIAGNOSTIC_INPUT));
+
+    useEffect(() => {
+        console.log("Audit Page Mounted - Version Fix 2");
+    }, []);
+
+    // Callback de reset pour le formulaire de recherche
+    const handleResetSearch = () => {
+        setAuditStatus('idle');
+        setPrefillData(null);
+    };
 
     const [previewAddress, setPreviewAddress] = useState<string | undefined>(DEFAULT_DIAGNOSTIC_INPUT.address);
     const [previewCoordinates, setPreviewCoordinates] = useState<{ latitude: number; longitude: number } | undefined>(
@@ -364,6 +375,7 @@ export default function ScrollytellingPage() {
                 <div className="relative z-20 w-full max-w-4xl mx-auto pt-10">
                     <AuditSearchForm
                         onAuditInit={handleAuditInit}
+                        onReset={handleResetSearch}
                         isLoading={auditStatus === 'loading'}
                     />
                 </div>
@@ -382,7 +394,7 @@ export default function ScrollytellingPage() {
                                 <div className="p-8 pb-0 border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent">
                                     <div className="flex items-center gap-4 mb-6">
                                         <div className="w-10 h-10 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center shadow-neon">
-                                            <span className="text-gold text-lg">▼</span>
+                                            <FileText className="w-5 h-5 text-gold" />
                                         </div>
                                         <div>
                                             <h3 className="text-xl font-bold text-white tracking-tight">Finalisez l&apos;analyse</h3>

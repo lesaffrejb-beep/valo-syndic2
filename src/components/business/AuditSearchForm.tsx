@@ -9,12 +9,14 @@ import type { HybridSearchResult } from "@/services/dpeService";
 
 interface AuditSearchFormProps {
     onAuditInit: (address: string, result: HybridSearchResult) => void;
+    onReset?: () => void;
     isLoading?: boolean;
     className?: string;
 }
 
 export function AuditSearchForm({
     onAuditInit,
+    onReset,
     isLoading = false,
     className = "",
 }: AuditSearchFormProps) {
@@ -24,6 +26,11 @@ export function AuditSearchForm({
         form.setSearchQuerySilent(result.address);
         form.selectAddress(result); // Trigger internal form state update if needed for reuse
         onAuditInit(result.address, result);
+    };
+
+    const handleChange = (val: string) => {
+        form.setSearchQuery(val);
+        if (onReset) onReset();
     };
 
     return (
@@ -56,7 +63,7 @@ export function AuditSearchForm({
             <div className="relative">
                 <AddressSearch
                     value={form.searchQuery}
-                    onChange={form.setSearchQuery}
+                    onChange={handleChange}
                     onSelect={handleSelect}
                     results={form.searchResults}
                     isSearching={form.state === "SEARCHING"}
