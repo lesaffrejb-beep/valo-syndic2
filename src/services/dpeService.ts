@@ -27,6 +27,10 @@ export interface DPEEntry {
     surface: number;
     date: string;
     adresse: string;
+    /** 🆕 Code postal */
+    postalCode?: string;
+    /** 🆕 Ville */
+    city?: string;
     /** 🆕 Source de la donnée */
     source?: "ademe_api" | "local_json";
     /** 🆕 Date de récupération */
@@ -114,6 +118,8 @@ function ademeToLocalEntry(ademeEntry: AdemeDPEEntry): DPEEntry {
         surface: Math.round(ademeEntry.surface_habitable),
         date: ademeEntry.date_etablissement_dpe,
         adresse: ademeEntry.adresse_brute,
+        postalCode: ademeEntry.code_postal,
+        city: ademeEntry.nom_commune,
         source: "ademe_api",
         fetchedAt: new Date().toISOString(),
     };
@@ -329,6 +335,8 @@ export const dpeService = {
             }
         }
 
+        console.log(`[DPE Service] ADEME results: ${results.length}`);
+
         // 2. Compléter avec le JSON local si besoin
         if (results.length < limit) {
             const localResults = await this.searchLocal(query, limit);
@@ -385,7 +393,11 @@ export const dpeService = {
         if (postalCode) {
             const localData = await fetchLocalData();
             return localData
-                .filter(item => item.adresse.includes(postalCode))
+                .filter(item => {
+                    // Check structured postal code first, then address string
+                    if (item.postalCode) return item.postalCode.includes(postalCode);
+                    return item.adresse.includes(postalCode);
+                })
                 .slice(0, limit);
         }
 
@@ -559,16 +571,24 @@ export const dpeService = {
         if (!query || query.length < 3) return [];
 
         // 🆕 NOUVEAU: Utilise la recherche hybride ADEME + local
+        console.log(`[DPE Service] Hybrid search for: "${query}"`);
         const [dpeResults, apiResults] = await Promise.all([
             this.search(query, 3, { preferLiveData: true }),
             this.searchAPIGouv(query, 3)
         ]);
+        console.log(`[DPE Service] Hybrid results - DPE: ${dpeResults.length}, API: ${apiResults.length}`);
 
         // Transformer les résultats DPE
         const dpeHybrid: HybridSearchResult[] = dpeResults.map(entry => {
-            const match = entry.adresse.match(/(\d{5})\s*(.+)$/);
-            const postalCode = match?.[1] || '49000';
-            const city = match?.[2] || entry.adresse.split(' ').pop() || 'Angers';
+            // Utiliser les champs structurés s'ils existent, sinon fallback sur regex
+            let postalCode = entry.postalCode;
+            let city = entry.city;
+
+            if (!postalCode || !city) {
+                const match = entry.adresse.match(/(\d{5})\s*(.+)$/);
+                postalCode = postalCode || match?.[1] || '49000';
+                city = city || match?.[2] || entry.adresse.split(' ').pop() || 'Angers';
+            }
 
             return {
                 address: entry.adresse,

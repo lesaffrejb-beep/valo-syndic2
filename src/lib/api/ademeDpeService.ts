@@ -142,7 +142,10 @@ export async function searchDPEByAddress(
         // Tri par date d'établissement (plus récent d'abord)
         params.append("sort", "-date_etablissement_dpe");
 
-        const response = await fetch(`${API_BASE}/lines?${params}`, {
+        const url = `${API_BASE}/lines?${params.toString()}`;
+        console.log(`[ADEME API] URL: ${url}`);
+
+        const response = await fetch(url, {
             method: "GET",
             headers: {
                 "Accept": "application/json",
@@ -150,6 +153,7 @@ export async function searchDPEByAddress(
         });
 
         if (!response.ok) {
+            console.error(`[ADEME API] Error ${response.status}: ${response.statusText}`);
             // 404 = Pas de résultats ou dataset introuvable -> On ne plante pas, on renvoie une liste vide
             if (response.status === 404) {
                 return {
@@ -168,6 +172,7 @@ export async function searchDPEByAddress(
         }
 
         const data = await response.json();
+        console.log(`[ADEME API] Found ${data.total} results, returning ${data.results?.length || 0}`);
         const results: AdemeDPEEntry[] = (data.results || []).map((item: Record<string, unknown>) => ({
             numero_dpe: String(item.numero_dpe || ""),
             adresse_brute: String(item.adresse_brut || item.adresse_ban || item.adresse_brute || ""),
