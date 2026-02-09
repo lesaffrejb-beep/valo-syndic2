@@ -43,7 +43,7 @@ import { TantiemeCalculator } from '@/components/business/TantiemeCalculator';
 import { ObjectionHandler } from '@/components/business/ObjectionHandler';
 import { LegalWarning } from '@/components/business/LegalWarning';
 import { AuditSearchForm } from '@/components/business/AuditSearchForm';
-import { MissingDataModal } from '@/components/business/MissingDataModal';
+import { DiagnosticForm } from '@/components/business/form/DiagnosticForm';
 
 // --- PDF COMPONENTS ---
 import { DownloadPdfButton } from '@/components/pdf/DownloadPdfButton';
@@ -132,9 +132,10 @@ export default function ScrollytellingPage() {
     const isManualNavigating = useRef(false);
 
     // --- AUDIT FLOW STATE ---
-    const [auditStatus, setAuditStatus] = useState<'idle' | 'loading' | 'manual_req' | 'success'>('idle');
-    const [missingFields, setMissingFields] = useState<string[]>([]);
+    const [auditStatus, setAuditStatus] = useState<'idle' | 'loading' | 'form_open' | 'success'>('idle');
     const [tempAuditId, setTempAuditId] = useState<string | null>(null);
+    // Données pré-remplies depuis l'API (pour le formulaire déroulant)
+    const [prefillData, setPrefillData] = useState<Partial<DiagnosticInput> | null>(null);
 
     // --- DIAGNOSTIC STATE ---
     const [diagnosticInput, setDiagnosticInput] = useState<DiagnosticInput>(DEFAULT_DIAGNOSTIC_INPUT);
@@ -181,47 +182,47 @@ export default function ScrollytellingPage() {
                 setAuditStatus('success');
                 setTimeout(() => scrollToSection('diagnostic'), 500);
             } else if (response.status === 'MANUAL_REQ') {
-                setMissingFields(response.missingFields || []);
+                // NOUVEAU FLOW: on ouvre le formulaire pré-rempli au lieu du modal
+                const apiData = (response as any).prefillData || {};
                 setTempAuditId(response.tempId || "");
-                setAuditStatus('manual_req');
+
+                // Mapper les données API vers le format DiagnosticInput
+                const prefill: Partial<DiagnosticInput> = {
+                    address: apiData.address || address,
+                    postalCode: apiData.postalCode || '',
+                    city: apiData.city || '',
+                    coordinates: apiData.coordinates || result.coordinates,
+                    currentDPE: apiData.currentDPE || undefined,
+                    targetDPE: 'C' as DPELetter, // Toujours C par défaut
+                    numberOfUnits: apiData.numberOfUnits || undefined,
+                    averagePricePerSqm: apiData.pricePerSqm || undefined,
+                    averageUnitSurface: apiData.surfaceHabitable ? Math.round(apiData.surfaceHabitable / (apiData.numberOfUnits || 20)) : undefined,
+                    estimatedCostHT: 300000, // Valeur par défaut
+                };
+
+                setPrefillData(prefill);
+                setAuditStatus('form_open');
             } else {
-                // ERROR
-                console.error("Audit Init Error:", response);
-                alert("Erreur lors de l'initialisation de l'audit.");
-                setAuditStatus('idle');
+                // ERROR - mais on ouvre quand même le formulaire vide
+                console.warn("Audit Init Warning:", response);
+                setPrefillData({
+                    address: address,
+                    coordinates: result.coordinates,
+                    targetDPE: 'C' as DPELetter,
+                    estimatedCostHT: 300000,
+                });
+                setAuditStatus('form_open');
             }
         } catch (error) {
             console.error("Audit Init Exception:", error);
-            alert("Service indisponible, réessayez plus tard.");
-            setAuditStatus('idle');
-        }
-    };
-
-    const handleMissingDataSubmit = async (formData: Record<string, any>) => {
-        if (!tempAuditId) return;
-        setAuditStatus('loading');
-
-        try {
-            const response = await completeAudit(tempAuditId, formData);
-
-            if (response.status === 'COMPLETED') {
-                // MAPPING BACKEND -> FRONTEND
-                // @ts-ignore
-                const mappedResult = mapBackendToFrontend(response.result as AuditFlashResult);
-
-                setDiagnosticResult(mappedResult);
-                setDiagnosticInput(mappedResult.input);
-                setAuditStatus('success');
-                setTimeout(() => scrollToSection('diagnostic'), 500);
-            } else {
-                console.error("Audit Complete Error:", response);
-                alert("Erreur lors de la finalisation.");
-                setAuditStatus('manual_req');
-            }
-        } catch (error) {
-            console.error("Audit Complete Exception:", error);
-            alert("Erreur critique serveur.");
-            setAuditStatus('manual_req');
+            // Même en cas d'erreur, on ouvre le formulaire avec les données minimales
+            setPrefillData({
+                address: address,
+                coordinates: result.coordinates,
+                targetDPE: 'C' as DPELetter,
+                estimatedCostHT: 300000,
+            });
+            setAuditStatus('form_open');
         }
     };
 
@@ -264,6 +265,24 @@ export default function ScrollytellingPage() {
             isManualNavigating.current = false;
         }, 1000);
     }, []);
+
+    // Handler quand le formulaire est soumis
+    const handleFormSubmit = useCallback((data: DiagnosticInput) => {
+        setAuditStatus('loading');
+        try {
+            // Lancer le calcul avec les données soumises
+            const result = generateDiagnostic(data);
+            setDiagnosticResult(result);
+            setDiagnosticInput(data);
+            setAuditStatus('success');
+            setPrefillData(null); // Fermer le formulaire
+            setTimeout(() => scrollToSection('diagnostic'), 500);
+        } catch (error) {
+            console.error("Diagnostic calculation error:", error);
+            alert("Erreur de calcul. Vérifiez les données.");
+            setAuditStatus('form_open');
+        }
+    }, [scrollToSection]);
 
     useEffect(() => {
         const sectionIds = ['diagnostic', 'analyse', 'finance', 'action'] as const;
@@ -349,14 +368,39 @@ export default function ScrollytellingPage() {
                     />
                 </div>
 
-                {/* Plan B Modal */}
-                <MissingDataModal
-                    isOpen={auditStatus === 'manual_req'}
-                    missingFields={missingFields}
-                    onClose={() => setAuditStatus('idle')} // Or handle different close logic
-                    onSubmit={handleMissingDataSubmit}
-                    isLoading={auditStatus === 'loading'}
-                />
+                <AnimatePresence>
+                    {auditStatus === 'form_open' && prefillData && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0, y: -20 }}
+                            animate={{ opacity: 1, height: 'auto', y: 0 }}
+                            exit={{ opacity: 0, height: 0, y: -20 }}
+                            transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
+                            className="relative z-20 w-full max-w-3xl mx-auto mt-8 overflow-hidden"
+                        >
+                            <div className="card-premium bg-black/40 backdrop-blur-2xl border-white/10 shadow-2xl hover:translate-y-0 hover:bg-black/40 hover:border-white/10 hover:shadow-2xl transition-none">
+                                {/* Header Formulaire */}
+                                <div className="p-8 pb-0 border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className="w-10 h-10 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center shadow-neon">
+                                            <span className="text-gold text-lg">▼</span>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-white tracking-tight">Finalisez l&apos;analyse</h3>
+                                            <p className="text-sm text-muted">Vérifiez les données ci-dessous pour un résultat précis</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-8">
+                                    <DiagnosticForm
+                                        onSubmit={handleFormSubmit}
+                                        initialData={prefillData}
+                                    />
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* CSV Import Modal (kept for manual trigger if needed, though hidden nicely now) */}
                 <CsvImportModal

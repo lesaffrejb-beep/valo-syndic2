@@ -70,16 +70,49 @@ export async function POST(request: NextRequest) {
             }
         }
 
-
         // 3. Transformer la réponse pour le frontend
         // DRAFT -> MANUAL_REQ (frontend attend ce statut pour afficher le formulaire)
         // COMPLETED -> COMPLETED (données complètes, affichage des résultats)
         if (result.status === "DRAFT") {
-            // Cas DRAFT: données manquantes, demander à l'utilisateur
+            // Cas DRAFT: données manquantes, on retourne aussi les données TROUVÉES pour pré-remplir
+            const { goldenData, enrichment } = result;
+
+            // Construire l'objet prefillData avec toutes les données trouvées
+            const prefillData = {
+                // Adresse normalisée
+                address: result.normalizedAddress || parsed.data.address,
+                postalCode: result.postalCode || "",
+                city: result.city || "",
+                cityCode: result.cityCode || "",
+                coordinates: result.coordinates || null,
+
+                // Golden Data trouvées
+                currentDPE: goldenData.dpe.value || null,
+                surfaceHabitable: goldenData.surfaceHabitable.value || null,
+                constructionYear: goldenData.constructionYear.value || null,
+                pricePerSqm: goldenData.pricePerSqm.value || null,
+
+                // Enrichissement
+                numberOfUnits: enrichment.numberOfUnits || null,
+                heatingSystem: enrichment.heatingSystem || null,
+
+                // Méta: sources pour indication visuelle
+                sources: result.sources.map(s => s.name),
+
+                // DPE détails si trouvé
+                dpeDetails: goldenData.dpe.value ? {
+                    numeroDpe: goldenData.dpe.numeroDpe || null,
+                    dateEtablissement: goldenData.dpe.dateEtablissement || null,
+                    consommation: goldenData.dpe.consommation || null,
+                    ges: goldenData.dpe.ges || null,
+                } : null,
+            };
+
             return NextResponse.json({
                 status: "MANUAL_REQ",
                 missingFields: result.missingFields.map(f => f.field),
                 tempId: result.auditId,
+                prefillData, // <-- NOUVEAU: données pré-remplies
             }, {
                 status: 200,
                 headers: { "Cache-Control": "no-store" },

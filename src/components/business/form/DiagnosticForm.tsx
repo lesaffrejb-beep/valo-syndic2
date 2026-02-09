@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { type DPEEntry, dpeService, type DecennaleStatus, type QuarterlyStats } from "@/services/dpeService";
 import { DecennaleAlert } from "@/components/business/DecennaleAlert";
 import { EnergyBenchmark } from "@/components/business/EnergyBenchmark";
+import { CheckCircle2, MapPin, Sliders, TrendingUp, Zap, ChevronDown, Rocket } from "lucide-react";
 
 interface DiagnosticFormProps {
     onSubmit: (data: DiagnosticInput) => void;
@@ -175,146 +176,161 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
 
             {/* Adresse (optionnelle) */}
             {/* Adresse (Autocomplete & Enrichissement) */}
-            <div className="space-y-4">
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-main flex items-center gap-2">
-                        Adresse de la copropriété
-                        {enrichmentSources.length > 0 && (
-                            <span className="text-[10px] text-success bg-success/10 px-2 py-0.5 rounded-full border border-success/20">
-                                ✓ Vérifiée
-                            </span>
-                        )}
-                    </label>
-                    <AddressAutocomplete
-                        placeholder="Ex: 12 rue de la Paix, Paris"
-                        className="w-full"
-                        onSelect={(data) => {
-                            // Update hidden fields
-                            if (formRef.current) {
-                                const form = formRef.current;
-                                (form.elements.namedItem("address") as HTMLInputElement).value = data.address;
-                                (form.elements.namedItem("postalCode") as HTMLInputElement).value = data.postalCode;
-                                (form.elements.namedItem("city") as HTMLInputElement).value = data.city;
+            {/* Adresse (masquée si pré-remplie pour éviter la redondance visuelle) */}
+            {!initialData?.address && (
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-main flex items-center gap-2">
+                            Adresse de la copropriété
+                            {enrichmentSources.length > 0 && (
+                                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full border border-emerald-400/20">
+                                    <CheckCircle2 className="w-3 h-3" />
+                                    Vérifiée
+                                </span>
+                            )}
+                        </label>
+                        <AddressAutocomplete
+                            placeholder="Ex: 12 rue de la Paix, Paris"
+                            className="w-full"
+                            onSelect={(data) => {
+                                // Update hidden fields
+                                if (formRef.current) {
+                                    const form = formRef.current;
+                                    (form.elements.namedItem("address") as HTMLInputElement).value = data.address;
+                                    (form.elements.namedItem("postalCode") as HTMLInputElement).value = data.postalCode;
+                                    (form.elements.namedItem("city") as HTMLInputElement).value = data.city;
 
-                                // V3: Store coordinates from address selection
-                                if (data.coordinates) {
-                                    setCoordinates(data.coordinates);
-                                }
+                                    // V3: Store coordinates from address selection
+                                    if (data.coordinates) {
+                                        setCoordinates(data.coordinates);
+                                    }
 
-                                // Auto-fill DPE from local data if available
-                                if (data.dpeData && DPE_OPTIONS.includes(data.dpeData.dpe as any)) {
-                                    (form.elements.namedItem("currentDPE") as HTMLSelectElement).value = data.dpeData.dpe;
+                                    // Auto-fill DPE from local data if available
+                                    if (data.dpeData && DPE_OPTIONS.includes(data.dpeData.dpe as any)) {
+                                        (form.elements.namedItem("currentDPE") as HTMLSelectElement).value = data.dpeData.dpe;
 
-                                    // Check if we have full DPE data (ADEME/JSON) or just partial (RNIC)
-                                    // enriched data requires 'conso' and 'adresse' to function
-                                    if ('conso' in data.dpeData && 'adresse' in data.dpeData) {
-                                        setLocalDpeData(data.dpeData as DPEEntry);
+                                        // Check if we have full DPE data (ADEME/JSON) or just partial (RNIC)
+                                        // enriched data requires 'conso' and 'adresse' to function
+                                        if ('conso' in data.dpeData && 'adresse' in data.dpeData) {
+                                            setLocalDpeData(data.dpeData as DPEEntry);
+                                        } else {
+                                            setLocalDpeData(null);
+                                        }
                                     } else {
                                         setLocalDpeData(null);
                                     }
-                                } else {
-                                    setLocalDpeData(null);
+
+                                    checkLocalZone(data.postalCode);
                                 }
+                            }}
+                            onEnriched={(prop) => {
+                                if (!prop) return;
 
-                                checkLocalZone(data.postalCode);
-                            }
-                        }}
-                        onEnriched={(prop) => {
-                            if (!prop) return;
+                                // Update form limits/defaults based on enriched data
+                                if (formRef.current && prop.marketData?.averagePricePerSqm) {
+                                    (formRef.current.elements.namedItem("averagePricePerSqm") as HTMLInputElement).value =
+                                        String(prop.marketData.averagePricePerSqm);
+                                }
+                            }}
+                        />
 
-                            // Update form limits/defaults based on enriched data
-                            if (formRef.current && prop.marketData?.averagePricePerSqm) {
-                                (formRef.current.elements.namedItem("averagePricePerSqm") as HTMLInputElement).value =
-                                    String(prop.marketData.averagePricePerSqm);
-                            }
-                        }}
-                    />
+                        {/* Hidden fields required for native form submission */}
+                        <input type="hidden" name="address" />
+                        <input type="hidden" name="postalCode" />
+                        <input type="hidden" name="city" />
+                    </div>
 
-                    {/* Hidden fields required for native form submission */}
-                    <input type="hidden" name="address" />
-                    <input type="hidden" name="postalCode" />
-                    <input type="hidden" name="city" />
-                </div>
+                    {/* Enrichment Status & Cards */}
+                    <EnrichmentProgress isEnriching={isEnriching} />
 
-                {/* Enrichment Status & Cards */}
-                <EnrichmentProgress isEnriching={isEnriching} />
+                    <AnimatePresence>
+                        {(enrichedProperty || localDpeData) && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="grid grid-cols-1 sm:grid-cols-2 gap-3 overflow-hidden"
+                            >
+                                {/* Local DPE Card */}
+                                {localDpeData && (
+                                    <EnrichedDataCard
+                                        icon="⚡"
+                                        title="DPE Local (49)"
+                                        value={`Classe ${localDpeData.dpe}`}
+                                        description={`Construit en ${localDpeData.annee} • ${localDpeData.surface} m²`}
+                                        source={{
+                                            name: "ADEME 49 (Local)",
+                                            url: "/data/dpe-49.json",
+                                            status: "success",
+                                            fetchedAt: new Date(),
+                                            dataPoints: ["DPE", "Année construction"]
+                                        }}
+                                    />
+                                )}
 
-                <AnimatePresence>
-                    {(enrichedProperty || localDpeData) && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="grid grid-cols-1 sm:grid-cols-2 gap-3 overflow-hidden"
-                        >
-                            {/* Local DPE Card */}
-                            {localDpeData && (
-                                <EnrichedDataCard
-                                    icon="⚡"
-                                    title="DPE Local (49)"
-                                    value={`Classe ${localDpeData.dpe}`}
-                                    description={`Construit en ${localDpeData.annee} • ${localDpeData.surface} m²`}
-                                    source={{
-                                        name: "ADEME 49 (Local)",
-                                        url: "/data/dpe-49.json",
-                                        status: "success",
-                                        fetchedAt: new Date(),
-                                        dataPoints: ["DPE", "Année construction"]
-                                    }}
-                                />
-                            )}
+                                {enrichedProperty?.cadastre && (
+                                    <EnrichedDataCard
+                                        icon="📐"
+                                        title="Cadastre"
+                                        value={`${enrichedProperty.cadastre.section} ${enrichedProperty.cadastre.numero}`}
+                                        description={`Parcelle de ${enrichedProperty.cadastre.surface} m²`}
+                                        source={enrichmentSources.find(s => s.name.includes("Cadastre"))!}
+                                    />
+                                )}
 
-                            {enrichedProperty?.cadastre && (
-                                <EnrichedDataCard
-                                    icon="📐"
-                                    title="Cadastre"
-                                    value={`${enrichedProperty.cadastre.section} ${enrichedProperty.cadastre.numero}`}
-                                    description={`Parcelle de ${enrichedProperty.cadastre.surface} m²`}
-                                    source={enrichmentSources.find(s => s.name.includes("Cadastre"))!}
-                                />
-                            )}
+                                {enrichedProperty?.marketData && (
+                                    <EnrichedDataCard
+                                        icon="📈"
+                                        title="Marché Local"
+                                        value={enrichedProperty.marketData.averagePricePerSqm}
+                                        unit="€/m²"
+                                        description={`${enrichedProperty.marketData.transactionCount} ventes analysées`}
+                                        source={enrichmentSources.find(s => s.name.includes("DVF"))!}
+                                    />
+                                )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
-                            {enrichedProperty?.marketData && (
-                                <EnrichedDataCard
-                                    icon="📈"
-                                    title="Marché Local"
-                                    value={enrichedProperty.marketData.averagePricePerSqm}
-                                    unit="€/m²"
-                                    description={`${enrichedProperty.marketData.transactionCount} ventes analysées`}
-                                    source={enrichmentSources.find(s => s.name.includes("DVF"))!}
-                                />
-                            )}
-                        </motion.div>
+                    {enrichmentSources.length > 0 && (
+                        <DataSourceBadge sources={enrichmentSources} />
                     )}
-                </AnimatePresence>
 
-                {enrichmentSources.length > 0 && (
-                    <DataSourceBadge sources={enrichmentSources} />
-                )}
+                    {/* V2 Quick Wins: Decennale Alert */}
+                    {decennaleStatus && decennaleStatus.isActive && (
+                        <DecennaleAlert status={decennaleStatus} />
+                    )}
 
-                {/* V2 Quick Wins: Decennale Alert */}
-                {decennaleStatus && decennaleStatus.isActive && (
-                    <DecennaleAlert status={decennaleStatus} />
-                )}
+                    {/* V2 Quick Wins: Energy Benchmark */}
+                    {quarterlyStats && localDpeData && (
+                        <EnergyBenchmark
+                            stats={quarterlyStats}
+                            surface={localDpeData.surface || 100}
+                        />
+                    )}
+                </div>
+            )}
 
-                {/* V2 Quick Wins: Energy Benchmark */}
-                {quarterlyStats && localDpeData && (
-                    <EnergyBenchmark
-                        stats={quarterlyStats}
-                        surface={localDpeData.surface || 100}
-                    />
-                )}
-            </div>
+            {/* Si adresse masquée, on garde quand même les inputs hidden pour le submit */}
+            {initialData?.address && (
+                <>
+                    <input type="hidden" name="address" defaultValue={initialData.address} />
+                    <input type="hidden" name="postalCode" defaultValue={initialData.postalCode} />
+                    <input type="hidden" name="city" defaultValue={initialData.city} />
+                </>
+            )}
 
-            {/* Aides Locales Badge (Conditionnel) */}
+            {/* Aides Locales Badge (Style épuré - sans bordure blanche moche) */}
             {localZone && (
-                <div className="bg-primary-900/10 border border-primary-500/20 rounded-lg p-3 flex items-start gap-3 animate-fade-in">
-                    <span className="text-xl">📍</span>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-500/5 border border-blue-500/10 backdrop-blur-sm">
+                    <div className="p-2 rounded-lg bg-blue-500/10">
+                        <MapPin className="w-4 h-4 text-blue-400" />
+                    </div>
                     <div>
-                        <p className="text-sm font-bold text-main">
+                        <p className="text-sm font-medium text-blue-100">
                             Zone {localZone === "ANGERS" ? "Angers Loire Métropole" : "Nantes Métropole"} détectée
                         </p>
-                        <p className="text-xs text-muted mt-1">
+                        <p className="text-xs text-blue-300/60">
                             Pensez à vérifier les aides locales spécifiques (Mieux Chez Moi, etc.).
                         </p>
                     </div>
@@ -406,10 +422,15 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
             </div>
 
             {/* Options Avancées (Structure & Aides) */}
-            <details className="bg-surface-highlight rounded-lg p-4 border border-boundary group">
-                <summary className="text-sm font-medium text-main cursor-pointer hover:text-primary transition-colors flex items-center justify-between">
-                    <span>⚙️ Options Techniques & Aides Locales</span>
-                    <span className="text-xs text-muted group-open:rotate-180 transition-transform">▼</span>
+            <details className="bg-white/[0.02] rounded-2xl p-6 border border-white/5 group open:bg-white/[0.04] transition-all duration-300">
+                <summary className="text-sm font-medium text-main cursor-pointer hover:text-gold transition-colors flex items-center justify-between list-none">
+                    <span className="flex items-center gap-3">
+                        <div className="p-1.5 rounded-lg bg-gold/10 text-gold">
+                            <Sliders className="w-4 h-4" />
+                        </div>
+                        Options Techniques & Aides Locales
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-muted group-open:rotate-180 transition-transform duration-300" />
                 </summary>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -505,10 +526,15 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
             </details>
 
             {/* Données optionnelles pour valeur verte */}
-            <details className="bg-surface-highlight rounded-lg p-4 border border-boundary group">
-                <summary className="text-sm font-medium text-main cursor-pointer hover:text-primary transition-colors flex items-center justify-between">
-                    <span>📊 Données Valorisation (Optionnel)</span>
-                    <span className="text-xs text-muted group-open:rotate-180 transition-transform">▼</span>
+            <details className="bg-white/[0.02] rounded-2xl p-6 border border-white/5 group open:bg-white/[0.04] transition-all duration-300">
+                <summary className="text-sm font-medium text-main cursor-pointer hover:text-gold transition-colors flex items-center justify-between list-none">
+                    <span className="flex items-center gap-3">
+                        <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+                            <TrendingUp className="w-4 h-4" />
+                        </div>
+                        Données Valorisation (Optionnel)
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-muted group-open:rotate-180 transition-transform duration-300" />
                 </summary>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div>
@@ -541,13 +567,25 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
             </details>
 
             {/* Submit */}
-            <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-3 px-6 bg-primary hover:bg-primary-600 text-gray-900 font-bold rounded-lg shadow-glow hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
-            >
-                {isLoading ? "Analyse en cours..." : "🚀 Lancer le Diagnostic Flash"}
-            </button>
+            <div className="pt-4">
+                <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="btn-primary w-full text-lg font-bold uppercase tracking-widest shadow-neon hover:shadow-[0_0_30px_rgba(229,192,123,0.4)] flex items-center justify-center gap-3"
+                >
+                    {isLoading ? (
+                        <>
+                            <span className="w-5 h-5 border-2 border-deep border-t-transparent rounded-full animate-spin" />
+                            Analyse en cours...
+                        </>
+                    ) : (
+                        <>
+                            <Zap className="w-5 h-5 fill-current" />
+                            Lancer le Diagnostic Flash
+                        </>
+                    )}
+                </button>
+            </div>
 
             <p className="text-xs text-muted text-center">
                 Calcul 100% local — Aucune donnée envoyée à un serveur
