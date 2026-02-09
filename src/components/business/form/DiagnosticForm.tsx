@@ -528,20 +528,22 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
                                 onChange={(e) => setInvestorRatio(parseInt(e.target.value))}
                             />
 
-                            {/* Thumb (visual only) - High-end Multi-layered design */}
+                            {/* Thumb (visual only) - Expert Polish Design */}
                             <div
-                                className="absolute h-6 w-6 flex items-center justify-center z-10 pointer-events-none transition-all duration-200 ease-out group-hover:scale-110"
+                                className="absolute h-7 w-7 flex items-center justify-center z-10 pointer-events-none transition-all duration-200 ease-out group-hover:scale-110"
                                 style={{
                                     left: `${investorRatio}%`,
                                     transform: `translateX(-50%)`
                                 }}
                             >
-                                {/* Outer Glass Ring */}
-                                <div className="absolute inset-0 bg-black/40 backdrop-blur-md rounded-full border border-gold/30 shadow-[0_0_15px_rgba(0,0,0,0.5)]" />
-                                {/* Halo effect */}
-                                <div className="absolute inset-0 bg-gold/10 rounded-full blur-[4px] group-hover:bg-gold/20 transition-colors" />
-                                {/* Inner sharp core */}
-                                <div className="h-2 w-2 bg-gradient-to-br from-white to-gold rounded-full shadow-[0_0_10px_rgba(229,192,123,0.8)]" />
+                                {/* Glow Layer */}
+                                <div className="absolute inset-0 bg-gold/30 rounded-full blur-[10px] opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                                {/* The 'Expert' Nucleus */}
+                                <div className="h-6 w-6 bg-white rounded-full border-2 border-gold shadow-[0_0_20px_rgba(229,192,123,0.4)] flex items-center justify-center">
+                                    {/* Tactile detail: Vertical ridge */}
+                                    <div className="w-0.5 h-3 bg-gold/30 rounded-full" />
+                                </div>
                             </div>
                         </div>
                         <p className="text-[10px] text-muted mt-1">
