@@ -198,17 +198,32 @@ export default function ScrollytellingPage() {
                 setTempAuditId(response.tempId || "");
 
                 // Mapper les données API vers le format DiagnosticInput
+                // CRITICAL FIX: Map ALL available fields, not just basic ones
                 const prefill: Partial<DiagnosticInput> = {
+                    // Address data
                     address: apiData.address || address,
                     postalCode: apiData.postalCode || '',
                     city: apiData.city || '',
                     coordinates: apiData.coordinates || result.coordinates,
+
+                    // Golden Data from APIs (with proper fallbacks)
                     currentDPE: apiData.currentDPE || undefined,
                     targetDPE: 'C' as DPELetter, // Toujours C par défaut
+
+                    // Property details
                     numberOfUnits: apiData.numberOfUnits || undefined,
-                    averagePricePerSqm: apiData.pricePerSqm || undefined,
-                    averageUnitSurface: apiData.surfaceHabitable ? Math.round(apiData.surfaceHabitable / (apiData.numberOfUnits || 20)) : undefined,
-                    estimatedCostHT: 300000, // Valeur par défaut
+                    averagePricePerSqm: apiData.pricePerSqm || undefined, // CRITICAL: was missing before
+                    averageUnitSurface: apiData.surfaceHabitable && apiData.numberOfUnits
+                        ? Math.round(apiData.surfaceHabitable / apiData.numberOfUnits)
+                        : undefined,
+
+                    // Financial estimates
+                    estimatedCostHT: apiData.surfaceHabitable
+                        ? Math.round(apiData.surfaceHabitable * 400) // 400€/m² estimation
+                        : 300000, // Fallback
+
+                    // Optional enrichment
+                    priceSource: apiData.sources?.includes('DVF') ? 'DVF Etalab' : undefined,
                 };
 
                 setPrefillData(prefill);
@@ -219,8 +234,11 @@ export default function ScrollytellingPage() {
                 setPrefillData({
                     address: address,
                     coordinates: result.coordinates,
+                    postalCode: result.postalCode || '',
+                    city: result.city || '',
                     targetDPE: 'C' as DPELetter,
                     estimatedCostHT: 300000,
+                    numberOfUnits: 20, // Default reasonable value
                 });
                 setAuditStatus('form_open');
             }
@@ -230,8 +248,11 @@ export default function ScrollytellingPage() {
             setPrefillData({
                 address: address,
                 coordinates: result.coordinates,
+                postalCode: result.postalCode || '',
+                city: result.city || '',
                 targetDPE: 'C' as DPELetter,
                 estimatedCostHT: 300000,
+                numberOfUnits: 20,
             });
             setAuditStatus('form_open');
         }

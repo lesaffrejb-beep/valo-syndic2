@@ -386,8 +386,14 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
             {/* Données financières */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium text-muted mb-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-muted mb-1">
                         Coût estimé travaux HT (€) <span className="text-danger-500">*</span>
+                        {initialData?.estimatedCostHT && initialData.estimatedCostHT !== 300000 && (
+                            <span className="inline-flex items-center gap-1 text-[10px] text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded-full border border-blue-400/20">
+                                <Zap className="w-3 h-3" />
+                                Estimé
+                            </span>
+                        )}
                     </label>
                     <input
                         type="number"
@@ -395,7 +401,7 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
                         required
                         min={1000}
                         step={1000}
-                        defaultValue={300000}
+                        defaultValue={initialData?.estimatedCostHT || 300000}
                         className="input"
                     />
                     {errors.estimatedCostHT && (
@@ -404,8 +410,14 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-muted mb-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-muted mb-1">
                         Nombre total de lots <span className="text-danger-500">*</span>
+                        {initialData?.numberOfUnits && (
+                            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full border border-emerald-400/20">
+                                <Zap className="w-3 h-3" />
+                                Auto-rempli
+                            </span>
+                        )}
                     </label>
                     <input
                         type="number"
@@ -413,7 +425,7 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
                         required
                         min={2}
                         max={500}
-                        defaultValue={20}
+                        defaultValue={initialData?.numberOfUnits || 20}
                         className="input"
                     />
                     {errors.numberOfUnits && (
@@ -557,27 +569,46 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
                 </summary>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div>
-                        <label className="block text-sm font-medium text-muted mb-1">
+                        <label className="flex items-center gap-2 text-sm font-medium text-muted mb-1">
                             Prix moyen m² quartier (€)
+                            {initialData?.averagePricePerSqm && (
+                                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full border border-emerald-400/20">
+                                    <Zap className="w-3 h-3" />
+                                    Auto-rempli
+                                </span>
+                            )}
                         </label>
                         <input
                             type="number"
                             name="averagePricePerSqm"
                             min={500}
                             step={100}
+                            defaultValue={initialData?.averagePricePerSqm}
                             placeholder="3200"
                             className="input"
                         />
+                        {initialData?.priceSource && (
+                            <p className="text-[10px] text-muted mt-1 flex items-center gap-1">
+                                <span className="text-emerald-400">✓</span> Source: {initialData.priceSource}
+                            </p>
+                        )}
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-muted mb-1">
+                        <label className="flex items-center gap-2 text-sm font-medium text-muted mb-1">
                             Surface moyenne lot (m²)
+                            {initialData?.averageUnitSurface && (
+                                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full border border-emerald-400/20">
+                                    <Zap className="w-3 h-3" />
+                                    Auto-rempli
+                                </span>
+                            )}
                         </label>
                         <input
                             type="number"
                             name="averageUnitSurface"
                             min={10}
                             step={5}
+                            defaultValue={initialData?.averageUnitSurface}
                             placeholder="65"
                             className="input"
                         />

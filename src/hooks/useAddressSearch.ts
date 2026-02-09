@@ -12,6 +12,8 @@ export interface AddressResult {
     postcode: string;
     street: string;
     housenumber?: string;
+    type?: "housenumber" | "street" | "locality" | "municipality";
+    score?: number;
     coordinates: {
         lat: number;
         lon: number;
@@ -55,7 +57,7 @@ export function useAddressSearch() {
             const response = await fetch(
                 `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(
                     searchQuery
-                )}&limit=5&type=housenumber`
+                )}&limit=5`
             );
             const data = await response.json();
 
@@ -65,6 +67,8 @@ export function useAddressSearch() {
                 postcode: feature.properties.postcode,
                 street: feature.properties.street,
                 housenumber: feature.properties.housenumber,
+                type: feature.properties.type as "housenumber" | "street" | "locality" | "municipality",
+                score: feature.properties.score,
                 coordinates: {
                     lon: feature.geometry.coordinates[0],
                     lat: feature.geometry.coordinates[1],

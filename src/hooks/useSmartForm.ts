@@ -453,8 +453,19 @@ export function useSmartForm(options: UseSmartFormOptions = {}): UseSmartFormRet
                   coordinates: f.geometry ? { latitude: f.geometry.coordinates[1], longitude: f.geometry.coordinates[0] } : undefined,
                   sourceType: 'api',
                   score: f.properties.score,
+                  type: f.properties.type, // Add type for prioritization
+                  housenumber: f.properties.housenumber, // Preserve housenumber if present
                 }));
-                results = apiResults as any;
+                // Sort results to prioritize housenumber matches
+                results = apiResults.sort((a: any, b: any) => {
+                  // Prioritize by type: housenumber > street > locality > municipality
+                  const typeOrder: Record<string, number> = { housenumber: 0, street: 1, locality: 2, municipality: 3 };
+                  const aOrder = typeOrder[a.type] ?? 999;
+                  const bOrder = typeOrder[b.type] ?? 999;
+                  if (aOrder !== bOrder) return aOrder - bOrder;
+                  // Then by score
+                  return (b.score || 0) - (a.score || 0);
+                }) as any;
               }
             } catch (err) {
               console.warn('Fallback API Adresse failed', err);
