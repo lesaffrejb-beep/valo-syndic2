@@ -26,6 +26,7 @@ import type { EnrichmentSource } from "@/lib/api/types";
 import type { DPELetter } from "@/lib/constants";
 import { generateDiagnostic } from "@/lib/calculator";
 import type { DiagnosticInput } from "@/lib/schemas";
+import { getGlobalSettings } from "./settings";
 
 import type {
     AuditFlashStatus,
@@ -45,7 +46,6 @@ import type {
 // =============================================================================
 
 const API_TIMEOUT_MS = 10_000;
-const RENO_COST_PER_SQM = 180;
 
 // =============================================================================
 // HELPERS
@@ -125,7 +125,7 @@ interface HuntContext {
     apiResponses: Record<string, APIHuntResult>;
 }
 
-async function executeHunt(request: AuditFlashInitRequest): Promise<HuntContext> {
+async function executeHunt(request: AuditFlashInitRequest, settings: Awaited<ReturnType<typeof getGlobalSettings>>): Promise<HuntContext> {
     const now = new Date().toISOString();
     const emptyHunt = (s: string): APIHuntResult => ({
         source: s, status: "error", fetchedAt: now, durationMs: 0, data: null,
@@ -239,6 +239,16 @@ async function executeHunt(request: AuditFlashInitRequest): Promise<HuntContext>
         } else {
             ctx.apiResponses.dvf = dvf.hunt;
         }
+    }
+
+    // DVF FALLBACK: Si aucun prix trouvé, utiliser base_price_per_sqm depuis global_settings
+    if (!ctx.goldenData.pricePerSqm.value || ctx.goldenData.pricePerSqm.value <= 0) {
+        ctx.goldenData.pricePerSqm = makeSourced(
+            settings.base_price_per_sqm,
+            "fallback",
+            "Valeur par défaut (global_settings)",
+            0.50
+        );
     }
 
     // EXTRACTION: ADEME (peut fournir 3 Golden Datas d'un coup)
@@ -380,7 +390,8 @@ function checkpointDeVerite(goldenData: GoldenData): { status: "DRAFT" | "READY"
 function runValoSyndicEngine(
     goldenData: GoldenData,
     enrichment: AuditEnrichment,
-    targetDPE: DPELetter
+    targetDPE: DPELetter,
+    settings: Awaited<ReturnType<typeof getGlobalSettings>>
 ): AuditComputation | null {
     const surface = goldenData.surfaceHabitable.value;
     const dpeCurrent = goldenData.dpe.value;
@@ -389,14 +400,22 @@ function runValoSyndicEngine(
     if (!surface || !dpeCurrent || !pricePerSqm) return null;
 
     const numberOfUnits = enrichment.numberOfUnits ?? Math.max(1, Math.round(surface / 65));
-    const estimatedCostHT = surface * RENO_COST_PER_SQM;
+    const estimatedCostHT = surface * settings.reno_cost_per_sqm;
     const averageUnitSurface = numberOfUnits > 0 ? surface / numberOfUnits : surface;
 
     const input: DiagnosticInput = {
         currentDPE: dpeCurrent,
         targetDPE: targetDPE,
         numberOfUnits: numberOfUnits,
+        commercialLots: 0,
         estimatedCostHT: estimatedCostHT,
+        localAidAmount: 0,
+        alurFund: 0,
+        ceeBonus: 0,
+        currentEnergyBill: 0,
+        investorRatio: 0,
+        isCostTTC: true,
+        includeHonoraires: true,
         averageUnitSurface: averageUnitSurface,
         averagePricePerSqm: pricePerSqm,
         priceSource: goldenData.pricePerSqm.origin === "api" ? "DVF" : "Manuel",
@@ -458,8 +477,11 @@ export async function initAuditFlash(
 ): Promise<AuditFlashInitResponse> {
     const targetDPE: DPELetter = request.targetDPE ?? "C";
 
+    // ETAPE 0: Récupérer les paramètres globaux
+    const settings = await getGlobalSettings();
+
     // ETAPE 1: Tir de barrage
-    const ctx = await executeHunt(request);
+    const ctx = await executeHunt(request, settings);
 
     // ETAPE 2: Checkpoint de verite
     const checkpoint = checkpointDeVerite(ctx.goldenData);
@@ -469,7 +491,7 @@ export async function initAuditFlash(
     let finalStatus: AuditFlashStatus = checkpoint.status;
 
     if (checkpoint.status === "READY") {
-        computation = runValoSyndicEngine(ctx.goldenData, ctx.enrichment, targetDPE);
+        computation = runValoSyndicEngine(ctx.goldenData, ctx.enrichment, targetDPE, settings);
         if (computation) {
             finalStatus = "COMPLETED" as AuditFlashStatus;
         }
@@ -499,18 +521,18 @@ export async function initAuditFlash(
 // POINT D'ENTREE: completeAuditFlash
 // =============================================================================
 
-export function completeAuditFlash(
+export async function completeAuditFlash(
     existingGoldenData: GoldenData,
     existingEnrichment: AuditEnrichment,
     manualData: {
-        surfaceHabitable?: number;
-        constructionYear?: number;
-        dpeCurrent?: DPELetter;
-        pricePerSqm?: number;
-        numberOfUnits?: number;
+        surfaceHabitable?: number | undefined;
+        constructionYear?: number | undefined;
+        dpeCurrent?: DPELetter | undefined;
+        pricePerSqm?: number | undefined;
+        numberOfUnits?: number | undefined;
     },
     targetDPE: DPELetter = "C"
-): { goldenData: GoldenData; enrichment: AuditEnrichment; computation: AuditComputation | null; missingFields: MissingField[] } {
+): Promise<{ goldenData: GoldenData; enrichment: AuditEnrichment; computation: AuditComputation | null; missingFields: MissingField[] }> {
     const merged: GoldenData = {
         surfaceHabitable: existingGoldenData.surfaceHabitable.value
             ? existingGoldenData.surfaceHabitable
@@ -539,10 +561,13 @@ export function completeAuditFlash(
         numberOfUnits: manualData.numberOfUnits ?? existingEnrichment.numberOfUnits,
     };
 
+    // Récupérer les paramètres globaux
+    const settings = await getGlobalSettings();
+
     const checkpoint = checkpointDeVerite(merged);
     let computation: AuditComputation | null = null;
     if (checkpoint.status === "READY") {
-        computation = runValoSyndicEngine(merged, mergedEnrichment, targetDPE);
+        computation = runValoSyndicEngine(merged, mergedEnrichment, targetDPE, settings);
     }
 
     return { goldenData: merged, enrichment: mergedEnrichment, computation, missingFields: checkpoint.missingFields };

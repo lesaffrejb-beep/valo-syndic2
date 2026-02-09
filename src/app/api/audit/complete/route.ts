@@ -138,10 +138,16 @@ export async function POST(request: NextRequest) {
         }
 
         // 2. Fusionner et recalculer
-        const result = completeAuditFlash(
+        const result = await completeAuditFlash(
             existingGoldenData,
             existingEnrichment,
-            parsed.data.manualData,
+            {
+                surfaceHabitable: parsed.data.manualData.surfaceHabitable,
+                constructionYear: parsed.data.manualData.constructionYear,
+                dpeCurrent: parsed.data.manualData.dpeCurrent,
+                pricePerSqm: parsed.data.manualData.pricePerSqm,
+                numberOfUnits: parsed.data.manualData.numberOfUnits
+            },
             parsed.data.targetDPE
         );
 

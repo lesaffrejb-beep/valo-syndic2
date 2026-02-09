@@ -504,10 +504,15 @@ export const dpeService = {
     async searchAPIGouv(query: string, limit = 3): Promise<APIAddressResult[]> {
         if (!query || query.length < 3) return [];
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
         try {
             const response = await fetch(
-                `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=${limit}`
+                `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=${limit}`,
+                { signal: controller.signal }
             );
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
                 console.error("API Gouv search failed:", response.status);
@@ -539,8 +544,14 @@ export const dpeService = {
                 sourceType: 'api' as const
             })) || [];
         } catch (error) {
-            console.warn("API Adresse unavailable, continuing without autocomplete:", error);
+            if (error instanceof Error && error.name === 'AbortError') {
+                console.warn("API Adresse timeout (5s), returning empty results.");
+            } else {
+                console.warn("API Adresse unavailable, continuing without autocomplete:", error);
+            }
             return [];
+        } finally {
+            clearTimeout(timeoutId);
         }
     },
 

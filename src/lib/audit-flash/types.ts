@@ -57,8 +57,8 @@ export interface GoldenData {
 
 export interface AuditFlashInitRequest {
     address: string;
-    numberOfUnits?: number;
-    targetDPE?: DPELetter;
+    numberOfUnits?: number | undefined;
+    targetDPE?: DPELetter | undefined;
 }
 
 /** Reponse du endpoint /api/audit/init */
