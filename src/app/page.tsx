@@ -13,26 +13,23 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Building2, TrendingUp, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 // --- CORE IMPORTS ---
-import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjectSave } from '@/hooks/useProjectSave';
 import { generateDiagnostic } from '@/lib/calculator';
-import { isMprCoproSuspended, getMarketTrend } from '@/lib/market-data';
+import { getMarketTrend } from '@/lib/market-data';
 import { useViewModeStore } from '@/stores/useViewModeStore';
-import { ValoSaveSchema, type SavedSimulation, type DiagnosticInput, type DiagnosticResult, type ValoSaveData, type GhostExtensionImport } from '@/lib/schemas';
+import { type SavedSimulation, type DiagnosticInput, type DiagnosticResult, type GhostExtensionImport } from '@/lib/schemas';
 import type { DPELetter } from '@/lib/constants';
 import type { SimulationInputs } from '@/lib/subsidy-calculator';
 import { formatCurrency } from '@/lib/calculator';
+import type { HybridSearchResult } from "@/services/dpeService";
 
 // --- UI COMPONENTS ---
-import { AddressAutocomplete } from '@/components/ui/AddressAutocomplete';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { JsonImporter } from '@/components/import/JsonImporter';
-import { ProjectionModeToggle } from '@/components/ui/ProjectionModeToggle';
 import { Header } from '@/components/layout/Header';
 import { ViewModeToggle } from '@/components/ui/ViewModeToggle';
 
@@ -45,13 +42,15 @@ import { FinancingCard } from '@/components/business/FinancingCard';
 import { TantiemeCalculator } from '@/components/business/TantiemeCalculator';
 import { ObjectionHandler } from '@/components/business/ObjectionHandler';
 import { LegalWarning } from '@/components/business/LegalWarning';
+import { AuditSearchForm } from '@/components/business/AuditSearchForm';
+import { MissingDataModal } from '@/components/business/MissingDataModal';
 
 // --- PDF COMPONENTS ---
 import { DownloadPdfButton } from '@/components/pdf/DownloadPdfButton';
 import { DownloadPptxButton } from '@/components/pdf/DownloadPptxButton';
 
 // --- NEW ONBOARDING COMPONENTS (FEV 2026) ---
-import { SmartAddressForm, CsvImportModal } from '@/components/onboarding';
+import { CsvImportModal } from '@/components/onboarding';
 
 // =============================================================================
 // ANIMATION & LAYOUT
@@ -115,70 +114,122 @@ const DEFAULT_DIAGNOSTIC_INPUT: DiagnosticInput = {
     includeHonoraires: true,
 };
 
+// --- SERVICES ---
+import { initAudit, completeAudit, mapBackendToFrontend, type AuditFlashResult } from '@/services/auditService';
+
 // =============================================================================
 // MAIN PAGE COMPONENT
 // =============================================================================
 
 export default function ScrollytellingPage() {
-    const { user, loading: authLoading } = useAuth();
-    const [loading, setLoading] = useState(true);
-    const [selectedProject, setSelectedProject] = useState<SavedSimulation | null>(null);
+    const { user } = useAuth();
+    // const [loading, setLoading] = useState(true); // Unused for now
     const [showObjections, setShowObjections] = useState(false);
     const [showCsvModal, setShowCsvModal] = useState(false);
 
     const [activeSection, setActiveSection] = useState<'diagnostic' | 'analyse' | 'finance' | 'action'>('diagnostic');
-    const { saveProject, isLoading: isSaving, error: saveError, showAuthModal, setShowAuthModal } = useProjectSave();
+    const { saveProject, isLoading: isSaving, showAuthModal, setShowAuthModal } = useProjectSave();
     const isManualNavigating = useRef(false);
+
+    // --- AUDIT FLOW STATE ---
+    const [auditStatus, setAuditStatus] = useState<'idle' | 'loading' | 'manual_req' | 'success'>('idle');
+    const [missingFields, setMissingFields] = useState<string[]>([]);
+    const [tempAuditId, setTempAuditId] = useState<string | null>(null);
 
     // --- DIAGNOSTIC STATE ---
     const [diagnosticInput, setDiagnosticInput] = useState<DiagnosticInput>(DEFAULT_DIAGNOSTIC_INPUT);
     // HYDRATION FIX: Initialize synchronously to allow SSR/first render to be populated
     const [diagnosticResult, setDiagnosticResult] = useState<DiagnosticResult | null>(() => generateDiagnostic(DEFAULT_DIAGNOSTIC_INPUT));
-    const [calculationError, setCalculationError] = useState<string | null>(null);
+
     const [previewAddress, setPreviewAddress] = useState<string | undefined>(DEFAULT_DIAGNOSTIC_INPUT.address);
     const [previewCoordinates, setPreviewCoordinates] = useState<{ latitude: number; longitude: number } | undefined>(
         DEFAULT_DIAGNOSTIC_INPUT.coordinates
     );
 
     // --- VIEW MODE STORE ---
-    const { viewMode, getAdjustedValue } = useViewModeStore();
+    const { getAdjustedValue } = useViewModeStore();
 
     // --- CALCULATION ENGINE ---
+    // Note: In the new flow, calculation is driven by the API response, 
+    // but we keep this for manual adjustments if needed later.
     const runCalculation = useCallback((input: DiagnosticInput) => {
         try {
-            setCalculationError(null);
             const result = generateDiagnostic(input);
             setDiagnosticResult(result);
         } catch (err) {
             console.error("Calculation error:", err);
-            setCalculationError(err instanceof Error ? err.message : "Erreur de calcul");
         }
     }, []);
 
-    useEffect(() => {
-        runCalculation(diagnosticInput);
-    }, [diagnosticInput, runCalculation]);
+    // --- NEW AUDIT FLOW HANDLERS ---
 
-    useEffect(() => {
-        setPreviewAddress(diagnosticInput.address);
-        setPreviewCoordinates(diagnosticInput.coordinates);
-    }, [diagnosticInput.address, diagnosticInput.coordinates]);
+    const handleAuditInit = async (address: string, result: HybridSearchResult) => {
+        setAuditStatus('loading');
+        setPreviewAddress(address);
+        if (result.coordinates) setPreviewCoordinates(result.coordinates);
 
+        try {
+            const response = await initAudit(address);
 
-    // --- PROJECT LOADING ---
-    useEffect(() => {
-        if (!user) { setLoading(false); return; }
-        const fetchProjects = async () => {
-            // simplified for brevity - kept logic
-            setLoading(false);
-        };
-        fetchProjects();
-    }, [user]);
+            if (response.status === 'COMPLETED') {
+                // MAPPING BACKEND -> FRONTEND
+                // @ts-ignore - response.result is AuditFlashResult, mapping utility handles it
+                const mappedResult = mapBackendToFrontend(response.result as AuditFlashResult);
 
-    // --- MARKET TREND ---
-    const marketTrend = useMemo(() => getMarketTrend(), []);
+                setDiagnosticResult(mappedResult);
+                setDiagnosticInput(mappedResult.input);
+                setAuditStatus('success');
+                setTimeout(() => scrollToSection('diagnostic'), 500);
+            } else if (response.status === 'MANUAL_REQ') {
+                setMissingFields(response.missingFields || []);
+                setTempAuditId(response.tempId || "");
+                setAuditStatus('manual_req');
+            } else {
+                // ERROR
+                console.error("Audit Init Error:", response);
+                alert("Erreur lors de l'initialisation de l'audit.");
+                setAuditStatus('idle');
+            }
+        } catch (error) {
+            console.error("Audit Init Exception:", error);
+            alert("Service indisponible, réessayez plus tard.");
+            setAuditStatus('idle');
+        }
+    };
 
-    // --- EXPORT / IMPORT LOGIC ---
+    const handleMissingDataSubmit = async (formData: Record<string, any>) => {
+        if (!tempAuditId) return;
+        setAuditStatus('loading');
+
+        try {
+            const response = await completeAudit(tempAuditId, formData);
+
+            if (response.status === 'COMPLETED') {
+                // MAPPING BACKEND -> FRONTEND
+                // @ts-ignore
+                const mappedResult = mapBackendToFrontend(response.result as AuditFlashResult);
+
+                setDiagnosticResult(mappedResult);
+                setDiagnosticInput(mappedResult.input);
+                setAuditStatus('success');
+                setTimeout(() => scrollToSection('diagnostic'), 500);
+            } else {
+                console.error("Audit Complete Error:", response);
+                alert("Erreur lors de la finalisation.");
+                setAuditStatus('manual_req');
+            }
+        } catch (error) {
+            console.error("Audit Complete Exception:", error);
+            alert("Erreur critique serveur.");
+            setAuditStatus('manual_req');
+        }
+    };
+
+    const handleGhostImport = useCallback((data: GhostExtensionImport) => {
+        console.log("Ghost import:", data);
+        // Implement Ghost import logic here if needed
+    }, []);
+
     const handleSaveProject = useCallback(async () => {
         if (!diagnosticResult) return;
         const projectId = await saveProject(diagnosticResult, `Projet ${diagnosticResult.input.address}`);
@@ -187,39 +238,60 @@ export default function ScrollytellingPage() {
         }
     }, [diagnosticResult, saveProject]);
 
-    const handleGhostImport = useCallback((data: GhostExtensionImport) => {
-        // Logic to handle Ghost Extension import
-        console.log("Ghost import:", data);
-    }, []);
-
-    const handleFormSubmit = useCallback((data: DiagnosticInput, opts?: { userInitiated?: boolean }) => {
-        setDiagnosticInput(data);
-        // Only scroll when the user explicitly submitted the form
-        if (opts?.userInitiated) {
-            document.getElementById('diagnostic')?.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, []);
-
-    const handleAddressPreview = useCallback((data: { address: string; coordinates?: { latitude: number; longitude: number } }) => {
-        setPreviewAddress(data.address);
-        setPreviewCoordinates(data.coordinates);
-    }, []);
-
     const handleCsvImport = useCallback((data: Array<{ address: string; postalCode: string; city: string }>) => {
         console.log("CSV import:", data);
-        // Pour l'instant, on prend juste le premier immeuble
         const first = data[0];
         if (first) {
+            // Trigger audit flow for the first imported address
+            // Ideally we would loop or ask user, but for now let's just create a dummy result for the first one
             setDiagnosticInput(prev => ({
                 ...prev,
                 address: first.address,
                 postalCode: first.postalCode,
                 city: first.city,
             }));
+            // Trigger init manually if needed or just let user click
         }
     }, []);
 
-    // --- SIMULATION INPUTS FOR SUBSIDY TABLE ---
+    // --- SCROLL & NAV ---
+
+    const scrollToSection = useCallback((id: string) => {
+        isManualNavigating.current = true;
+        setActiveSection(id as 'diagnostic' | 'analyse' | 'finance' | 'action');
+        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => {
+            isManualNavigating.current = false;
+        }, 1000);
+    }, []);
+
+    useEffect(() => {
+        const sectionIds = ['diagnostic', 'analyse', 'finance', 'action'] as const;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (isManualNavigating.current) return;
+                const visible = entries
+                    .filter((e) => e.isIntersecting)
+                    .sort((a, b) => b.intersectionRect.height - a.intersectionRect.height);
+                const top = visible[0];
+                const id = top?.target?.id as typeof sectionIds[number] | undefined;
+                if (id) setActiveSection(id);
+            },
+            {
+                root: null,
+                threshold: [0, 0.1, 0.5],
+                rootMargin: '-45% 0px -45% 0px',
+            }
+        );
+        sectionIds.forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) observer.observe(el);
+        });
+        return () => observer.disconnect();
+    }, []);
+
+
+    // --- SIMULATION INPUTS FOR TANTIEME ---
     const simulationInputs: SimulationInputs = useMemo(() => {
         if (!diagnosticResult) return { workAmountHT: 0, amoAmountHT: 0, nbLots: diagnosticInput.numberOfUnits, energyGain: 0, initialDPE: diagnosticInput.currentDPE, targetDPE: diagnosticInput.targetDPE, ceePerLot: 0, localAidPerLot: 0 };
         const { financing } = diagnosticResult;
@@ -235,68 +307,13 @@ export default function ScrollytellingPage() {
         };
     }, [diagnosticResult, diagnosticInput]);
 
-    const scrollToPersonalImpact = useCallback(() => {
-        document.getElementById('analyse')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, []);
-
-    const scrollToSection = useCallback((id: string) => {
-        isManualNavigating.current = true;
-        // Immediate visual update
-        // Using explicit cast to match state type
-        setActiveSection(id as 'diagnostic' | 'analyse' | 'finance' | 'action');
-
-        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-        // Reset lock after scroll animation finishes (approx 1000ms)
-        setTimeout(() => {
-            isManualNavigating.current = false;
-        }, 1000);
-    }, []);
-
-    useEffect(() => {
-        const sectionIds = ['diagnostic', 'analyse', 'finance', 'action'] as const;
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (isManualNavigating.current) return;
-
-                const visible = entries
-                    .filter((e) => e.isIntersecting)
-                    .sort((a, b) => b.intersectionRect.height - a.intersectionRect.height);
-
-                const top = visible[0];
-                const id = top?.target?.id as typeof sectionIds[number] | undefined;
-                if (id) setActiveSection(id);
-            },
-            {
-                root: null,
-                threshold: [0, 0.1, 0.5],
-                rootMargin: '-45% 0px -45% 0px',
-            }
-        );
-
-        sectionIds.forEach((id) => {
-            const el = document.getElementById(id);
-            if (el) observer.observe(el);
-        });
-
-        return () => observer.disconnect();
-    }, []);
-
-
-    // --- RENDERING ---
-    if (!diagnosticResult) return null; // Or loader
-
-    const { financing, valuation, inactionCost } = diagnosticResult;
-    const isPassoire = diagnosticInput.currentDPE === "F" || diagnosticInput.currentDPE === "G";
-    const greenValueGain = valuation?.greenValueGain ?? null;
+    // --- RENDERING VARS ---
+    const greenValueGain = diagnosticResult?.valuation?.greenValueGain ?? null;
     const adjustedGreenValueGain = greenValueGain === null ? null : getAdjustedValue(greenValueGain);
     const greenValueDisplay = adjustedGreenValueGain === null || Number.isNaN(adjustedGreenValueGain)
         ? "0000"
         : formatCurrency(adjustedGreenValueGain);
-    const averagePriceDisplay = diagnosticInput.averagePricePerSqm
-        ? formatCurrency(diagnosticInput.averagePricePerSqm)
-        : "0000";
+
 
     return (
         <div className="min-h-screen font-sans selection:bg-gold/30 selection:text-gold-light bg-deep text-white overflow-hidden">
@@ -311,204 +328,202 @@ export default function ScrollytellingPage() {
                 isSaving={isSaving}
             />
 
-
-
             {/* ================================================================
                 ZONE 0 — THE HOOK (Hero)
                 ================================================================ */}
             <section className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden pt-20 transition-all duration-700">
-                {/* Background */}
+
                 <StreetViewHeader
                     address={previewAddress || diagnosticInput.address}
                     coordinates={previewCoordinates || diagnosticInput.coordinates}
                 />
                 <div className="absolute inset-0 z-10 bg-gradient-to-b from-deep/90 via-deep/60 to-deep" />
-                {/* Top Spotlight */}
+
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
 
-                {/* Top Actions */}
-                <div className="absolute inset-0 z-10 bg-gradient-to-b from-deep/90 via-deep/60 to-deep" />
-
-                <div className="absolute top-24 right-6 z-50 flex gap-3">
-                    {/* Buttons hidden for cleanliness until interaction? kept as is but styled */}
-                </div>
-
-                {/* Smart Form Container - NOUVEAU FEV 2026 */}
+                {/* Main Audit Form Container */}
                 <div className="relative z-20 w-full max-w-4xl mx-auto pt-10">
-                    <SmartAddressForm
-                        initialData={diagnosticInput}
-                        onSubmit={handleFormSubmit}
-                        onAddressSelected={handleAddressPreview}
-                        onCsvImport={() => setShowCsvModal(true)}
+                    <AuditSearchForm
+                        onAuditInit={handleAuditInit}
+                        isLoading={auditStatus === 'loading'}
                     />
-                    {/* Tantième Calculator moved up for immediate personal impact (above the fold) */}
-                    {/* Tantième calculator restored to personal section (see "my-pocket") */}
                 </div>
 
-                {/* CSV Import Modal */}
+                {/* Plan B Modal */}
+                <MissingDataModal
+                    isOpen={auditStatus === 'manual_req'}
+                    missingFields={missingFields}
+                    onClose={() => setAuditStatus('idle')} // Or handle different close logic
+                    onSubmit={handleMissingDataSubmit}
+                    isLoading={auditStatus === 'loading'}
+                />
+
+                {/* CSV Import Modal (kept for manual trigger if needed, though hidden nicely now) */}
                 <CsvImportModal
                     isOpen={showCsvModal}
                     onClose={() => setShowCsvModal(false)}
                     onImport={handleCsvImport}
                 />
 
-
-
-
-                {/* Scroll Indicator */}
-                <motion.div
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2, duration: 1 }}
-                    className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted/50"
-                >
-                    <span className="text-[10px] uppercase tracking-widest">Diagnostic</span>
-                    <div className="w-px h-12 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
-                </motion.div>
+                {/* Scroll Indicator (Only show if we have results/success) */}
+                {auditStatus === 'success' && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 1 }}
+                        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted/50 cursor-pointer"
+                        onClick={() => scrollToSection('diagnostic')}
+                    >
+                        <span className="text-[10px] uppercase tracking-widest">Voir le Diagnostic</span>
+                        <div className="w-px h-12 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+                    </motion.div>
+                )}
             </section>
 
             {/* ================================================================
                 ZONE 1 — THE DIAGNOSTIC (Benchmark + Projection)
                 ================================================================ */}
-            <Section id="diagnostic">
-                <SectionHeader
-                    label="Le Diagnostic"
-                    title={<>Ingénierie & <span className="text-white">Bascule</span></>}
-                    subtitle="Comparatif direct entre le marché actuel, le scénario du déclin et la valorisation."
-                />
-
-                <div className="w-full space-y-12">
-                    {/* 1. Benchmark Chart (Top) */}
-                    <div className="w-full">
-                        <BenchmarkChart
-                            currentDPE={diagnosticInput.currentDPE}
-                            city={diagnosticInput.city}
-                            className="bg-white/[0.02] border border-white/5 rounded-3xl p-6"
+            {diagnosticResult && (
+                <>
+                    <Section id="diagnostic">
+                        <SectionHeader
+                            label="Le Diagnostic"
+                            title={<>Ingénierie & <span className="text-white">Bascule</span></>}
+                            subtitle="Comparatif direct entre le marché actuel, le scénario du déclin et la valorisation."
                         />
-                    </div>
 
-                    {/* 2. Comparison Grid (Bottom) */}
-                    <ComparisonSplitScreen
-                        inactionCost={inactionCost}
-                        valuation={valuation}
-                        financing={financing}
-                    />
-                </div>
-            </Section>
+                        <div className="w-full space-y-12">
+                            {/* 1. Benchmark Chart (Top) */}
+                            <div className="w-full">
+                                <BenchmarkChart
+                                    currentDPE={diagnosticInput.currentDPE}
+                                    city={diagnosticInput.city}
+                                    className="bg-white/[0.02] border border-white/5 rounded-3xl p-6"
+                                />
+                            </div>
 
-            {/* ================================================================
-                ZONE 2 — ANALYSE INDIVIDUELLE (Ex-My Pocket)
-                ================================================================ */}
-            <Section id="analyse">
-                <SectionHeader
-                    label="Analyse Individuelle"
-                    title="Impact pour les copropriétaires"
-                />
-
-                <div className="w-full flex flex-col gap-8">
-                    {/* Quote-part Selector */}
-                    <div className="w-full max-w-[600px] mx-auto px-4">
-                        <div className="text-center mb-4">
-                            <span className="text-[10px] uppercase tracking-[0.3em] text-gold/60 font-semibold">Votre quote-part</span>
+                            {/* 2. Comparison Grid (Bottom) */}
+                            <ComparisonSplitScreen
+                                inactionCost={diagnosticResult.inactionCost}
+                                valuation={diagnosticResult.valuation}
+                                financing={diagnosticResult.financing}
+                            />
                         </div>
-                        <ViewModeToggle
-                            totalUnits={diagnosticInput.numberOfUnits}
-                            avgSurface={diagnosticInput.averageUnitSurface || 65}
-                        />
-                    </div>
+                    </Section>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-                        <Card className="md:col-span-2 border border-emerald-500/20 bg-emerald-500/5 backdrop-blur-xl">
-                            <CardContent className="p-6 md:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                                <div>
-                                    <p className="text-[10px] uppercase tracking-[0.35em] text-emerald-300/80 font-semibold">Valeur verte estimée</p>
-                                    <p className="text-sm text-white/70 mt-2">Valorisation patrimoniale directement issue du moteur de calcul.</p>
+                    {/* ================================================================
+                    ZONE 2 — ANALYSE INDIVIDUELLE (Ex-My Pocket)
+                    ================================================================ */}
+                    <Section id="analyse">
+                        <SectionHeader
+                            label="Analyse Individuelle"
+                            title="Impact pour les copropriétaires"
+                        />
+
+                        <div className="w-full flex flex-col gap-8">
+                            {/* Quote-part Selector */}
+                            <div className="w-full max-w-[600px] mx-auto px-4">
+                                <div className="text-center mb-4">
+                                    <span className="text-[10px] uppercase tracking-[0.3em] text-gold/60 font-semibold">Votre quote-part</span>
                                 </div>
-                                <div className="text-4xl md:text-5xl font-light text-emerald-300 tracking-tighter financial-num">
-                                    +{greenValueDisplay}
+                                <ViewModeToggle
+                                    totalUnits={diagnosticInput.numberOfUnits}
+                                    avgSurface={diagnosticInput.averageUnitSurface || 65}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+                                <Card className="md:col-span-2 border border-emerald-500/20 bg-emerald-500/5 backdrop-blur-xl">
+                                    <CardContent className="p-6 md:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                                        <div>
+                                            <p className="text-[10px] uppercase tracking-[0.35em] text-emerald-300/80 font-semibold">Valeur verte estimée</p>
+                                            <p className="text-sm text-white/70 mt-2">Valorisation patrimoniale directement issue du moteur de calcul.</p>
+                                        </div>
+                                        <div className="text-4xl md:text-5xl font-light text-emerald-300 tracking-tighter financial-num">
+                                            +{greenValueDisplay}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                                <div className="md:col-span-2">
+                                    <TantiemeCalculator
+                                        financing={diagnosticResult.financing}
+                                        simulationInputs={simulationInputs}
+                                        className="h-full bg-deep-light/30 border-white/5"
+                                    />
                                 </div>
-                            </CardContent>
-                        </Card>
-                        <div className="md:col-span-2">
-                            <TantiemeCalculator
-                                financing={financing}
-                                simulationInputs={simulationInputs}
-                                className="h-full bg-deep-light/30 border-white/5"
-                            />
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </Section>
+                    </Section>
 
-            {/* ================================================================
-                ZONE 3 — THE FINANCING (Logic)
-                ================================================================ */}
-            <Section id="finance">
-                <SectionHeader
-                    label="L'Ingénierie Financière"
-                    title={<>Trésorerie Positive <span className="text-white">immédiate</span></>}
-                />
-
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 w-full">
-                    <div className="xl:col-span-12">
-                        <FinancingCard
-                            financing={financing}
-                            numberOfUnits={diagnosticInput.numberOfUnits}
+                    {/* ================================================================
+                    ZONE 3 — THE FINANCING (Logic)
+                    ================================================================ */}
+                    <Section id="finance">
+                        <SectionHeader
+                            label="L'Ingénierie Financière"
+                            title={<>Trésorerie Positive <span className="text-white">immédiate</span></>}
                         />
-                    </div>
 
-
-                </div>
-            </Section>
-
-            {/* ================================================================
-                ZONE 5 — ACTION
-                ================================================================ */}
-            <Section id="action" className="pb-40">
-                <div className="max-w-4xl mx-auto text-center space-y-12">
-                    <div className="space-y-10">
-                        <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-none">
-                            Passez à l&apos;<span className="text-gold">action</span>.
-                        </h2>
-
-                        <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-                            <Button
-                                variant="outline"
-                                className="h-16 px-8 rounded-full border-white/10 hover:bg-white/5 text-white gap-3 transition-all duration-300"
-                                onClick={() => setShowObjections(!showObjections)}
-                            >
-                                <AlertTriangle className="w-5 h-5 text-muted" />
-                                <span className="font-semibold">Contrer les objections</span>
-                            </Button>
-
-                            <DownloadPdfButton
-                                result={diagnosticResult}
-                                className="h-16 px-10 rounded-full bg-gold hover:bg-gold-light text-black font-bold text-lg transition-all duration-300 flex items-center gap-3"
-                            />
-
-                            <DownloadPptxButton
-                                result={diagnosticResult}
-                                className="h-16 px-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold transition-all duration-300"
-                            />
+                        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 w-full">
+                            <div className="xl:col-span-12">
+                                <FinancingCard
+                                    financing={diagnosticResult.financing}
+                                    numberOfUnits={diagnosticInput.numberOfUnits}
+                                />
+                            </div>
                         </div>
-                    </div>
+                    </Section>
 
-                    <div className="flex justify-center">
-                        <LegalWarning variant="inline" />
-                    </div>
+                    {/* ================================================================
+                    ZONE 5 — ACTION
+                    ================================================================ */}
+                    <Section id="action" className="pb-40">
+                        <div className="max-w-4xl mx-auto text-center space-y-12">
+                            <div className="space-y-10">
+                                <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-none">
+                                    Passez à l&apos;<span className="text-gold">action</span>.
+                                </h2>
 
-                    <AnimatePresence>
-                        {showObjections && (
-                            <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="w-full max-w-2xl mx-auto overflow-hidden text-left"
-                            >
-                                <ObjectionHandler />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
-            </Section>
+                                <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+                                    <Button
+                                        variant="outline"
+                                        className="h-16 px-8 rounded-full border-white/10 hover:bg-white/5 text-white gap-3 transition-all duration-300"
+                                        onClick={() => setShowObjections(!showObjections)}
+                                    >
+                                        <AlertTriangle className="w-5 h-5 text-muted" />
+                                        <span className="font-semibold">Contrer les objections</span>
+                                    </Button>
+
+                                    <DownloadPdfButton
+                                        result={diagnosticResult}
+                                        className="h-16 px-10 rounded-full bg-gold hover:bg-gold-light text-black font-bold text-lg transition-all duration-300 flex items-center gap-3"
+                                    />
+
+                                    <DownloadPptxButton
+                                        result={diagnosticResult}
+                                        className="h-16 px-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold transition-all duration-300"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-center">
+                                <LegalWarning variant="inline" />
+                            </div>
+
+                            <AnimatePresence>
+                                {showObjections && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: "auto", opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="w-full max-w-2xl mx-auto overflow-hidden text-left"
+                                    >
+                                        <ObjectionHandler />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </Section>
+                </>
+            )}
 
         </div>
     );
