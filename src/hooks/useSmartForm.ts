@@ -507,14 +507,20 @@ export function useSmartForm(options: UseSmartFormOptions = {}): UseSmartFormRet
     try {
       const sources: EnrichmentSources = {};
 
-      // Récupérer DPE si pas déjà présent
-      if (result.dpeData) {
-        sources.dpe = result.dpeData;
-      } else if (result.postalCode) {
-        const dpeResults = await dpeService.searchLocal(result.address);
-        if (dpeResults.length > 0) {
-          sources.dpe = dpeResults[0]!;
-        }
+      // 🆕 ENRICHISSEMENT ROBUSTE (ADEME + Local)
+      // Utilise les coordonnées pour trouver le DPE même si l'adresse exacte diffère
+      const enrichment = await dpeService.enrichAddress(result.address, {
+        postalCode: result.postalCode,
+        ...(result.coordinates && {
+          coordinates: {
+            lat: result.coordinates.latitude,
+            lon: result.coordinates.longitude
+          }
+        })
+      });
+
+      if (enrichment.dpe) {
+        sources.dpe = enrichment.dpe;
       }
 
       // Coordonnées

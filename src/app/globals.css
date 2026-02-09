@@ -567,3 +567,43 @@
     animation-duration: 0ms !important;
   }
 }
+
+/* ================================================
+   FIXES AG MODE TRUNCATION & SIZING
+   ================================================ */
+
+.projection-mode .input,
+.projection-mode .btn-primary,
+.projection-mode .btn-secondary,
+.projection-mode .btn-ghost {
+  /* Fluid height to accommodate larger text */
+  height: auto !important;
+  min-height: 4.5rem; /* ~72px */
+  
+  /* Vertical breathing room */
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
+
+  /* Prevent text cutoff */
+  line-height: 1.4;
+  white-space: normal;
+}
+
+/* Fix dropdown arrow position in AG Mode */
+.projection-mode .input.appearance-none {
+  background-position: right 24px center !important;
+  background-size: 24px !important;
+  padding-right: 64px !important;
+}
+
+/* Adjust grid gaps for larger elements */
+.projection-mode .grid {
+  gap: 2rem !important;
+}
+
+/* Larger checkboxes/radios */
+.projection-mode input[type="radio"],
+.projection-mode input[type="checkbox"] {
+  transform: scale(1.5);
+  margin-right: 0.5rem;
+}
