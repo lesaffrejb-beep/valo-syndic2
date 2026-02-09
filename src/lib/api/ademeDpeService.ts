@@ -150,6 +150,20 @@ export async function searchDPEByAddress(
         });
 
         if (!response.ok) {
+            // 404 = Pas de résultats ou dataset introuvable -> On ne plante pas, on renvoie une liste vide
+            if (response.status === 404) {
+                return {
+                    success: true,
+                    data: [],
+                    source: {
+                        name: "API DPE (ADEME)",
+                        url: "https://data.ademe.fr",
+                        fetchedAt: new Date(),
+                        status: "partial",
+                        dataPoints: [],
+                    },
+                };
+            }
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
@@ -245,6 +259,20 @@ export async function searchDPEByLocation(
         });
 
         if (!response.ok) {
+            // 404 = Pas de résultats ou dataset introuvable
+            if (response.status === 404) {
+                return {
+                    success: true,
+                    data: [],
+                    source: {
+                        name: "API DPE (ADEME)",
+                        url: "https://data.ademe.fr",
+                        fetchedAt: new Date(),
+                        status: "partial",
+                        dataPoints: [],
+                    },
+                };
+            }
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 

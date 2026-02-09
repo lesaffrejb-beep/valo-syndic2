@@ -172,6 +172,11 @@ async function executeHunt(request: AuditFlashInitRequest, settings: Awaited<Ret
         ctx.apiResponses.ban = { ...banResult.hunt, status: "success", data: ad as unknown as Record<string, unknown> };
     } else {
         ctx.apiResponses.ban = banResult.hunt;
+        // FALLBACK: Tentative d'extraction du Code Postal via Regex si BAN échoue
+        const cpMatch = request.address.match(/\b\d{5}\b/);
+        if (cpMatch) {
+            ctx.postalCode = cpMatch[0];
+        }
     }
 
     // TIR 2-4: Parallele (Cadastre, DVF, ADEME)
