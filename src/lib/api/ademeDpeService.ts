@@ -13,7 +13,7 @@
 import type { DPELetter } from "@/lib/constants";
 import type { APIResult, EnrichmentSource, APIError } from "./types";
 
-const API_BASE = "https://data.ademe.fr/data-fair/api/v1/datasets/dpe-v2-logements-existants";
+const API_BASE = "https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant";
 
 // =============================================================================
 // TYPES
@@ -170,26 +170,26 @@ export async function searchDPEByAddress(
         const data = await response.json();
         const results: AdemeDPEEntry[] = (data.results || []).map((item: Record<string, unknown>) => ({
             numero_dpe: String(item.numero_dpe || ""),
-            adresse_brute: String(item.adresse_brute || ""),
-            code_postal: String(item.code_postal || ""),
-            nom_commune: String(item.nom_commune || ""),
-            code_insee_commune: String(item.code_insee_commune || ""),
-            coordonnees: Array.isArray(item.coordonnees)
-                ? [Number(item.coordonnees[0]), Number(item.coordonnees[1])]
-                : null,
+            adresse_brute: String(item.adresse_brut || item.adresse_ban || item.adresse_brute || ""),
+            code_postal: String(item.code_postal_brut || item.code_postal_ban || item.code_postal || ""),
+            nom_commune: String(item.nom_commune_brut || item.nom_commune_ban || item.nom_commune || ""),
+            code_insee_commune: String(item.code_insee_ban || item.code_insee_commune || ""),
+            coordonnees: item._geopoint
+                ? (String(item._geopoint).split(',').map(Number).reverse() as [number, number]) // _geopoint is "lat,lon", we need [lon, lat]
+                : (Array.isArray(item.coordonnees) ? [Number(item.coordonnees[0]), Number(item.coordonnees[1])] : null),
             etiquette_dpe: String(item.etiquette_dpe || "N") as DPELetter,
             etiquette_ges: String(item.etiquette_ges || "N"),
             consommation_energie_finale: Number(item.consommation_energie_finale || 0),
             emission_ges: Number(item.emission_ges || 0),
-            surface_habitable: Number(item.surface_habitable || 0),
+            surface_habitable: Number(item.surface_habitable_logement || item.surface_habitable || 0),
             date_etablissement_dpe: String(item.date_etablissement_dpe || ""),
             date_fin_validite_dpe: String(item.date_fin_validite_dpe || ""),
             type_batiment: (String(item.type_batiment || "appartement") as AdemeDPEEntry["type_batiment"]),
             periode_construction: item.periode_construction ? String(item.periode_construction) : undefined,
             annee_construction: item.annee_construction ? Number(item.annee_construction) : undefined,
-            type_chauffage: item.type_chauffage ? String(item.type_chauffage) : undefined,
-            energie_chauffage: item.energie_chauffage ? String(item.energie_chauffage) : undefined,
-            type_ecs: item.type_ecs ? String(item.type_ecs) : undefined,
+            type_chauffage: item.type_installation_chauffage ? String(item.type_installation_chauffage) : undefined,
+            energie_chauffage: item.type_energie_principale_chauffage ? String(item.type_energie_principale_chauffage) : undefined,
+            type_ecs: item.type_installation_ecs ? String(item.type_installation_ecs) : undefined,
             is_valid: new Date(String(item.date_fin_validite_dpe || "2000-01-01")) > new Date(),
         }));
 
@@ -279,26 +279,26 @@ export async function searchDPEByLocation(
         const data = await response.json();
         const results: AdemeDPEEntry[] = (data.results || []).map((item: Record<string, unknown>) => ({
             numero_dpe: String(item.numero_dpe || ""),
-            adresse_brute: String(item.adresse_brute || ""),
-            code_postal: String(item.code_postal || ""),
-            nom_commune: String(item.nom_commune || ""),
-            code_insee_commune: String(item.code_insee_commune || ""),
-            coordonnees: Array.isArray(item.coordonnees)
-                ? [Number(item.coordonnees[0]), Number(item.coordonnees[1])]
-                : null,
+            adresse_brute: String(item.adresse_brut || item.adresse_ban || item.adresse_brute || ""),
+            code_postal: String(item.code_postal_brut || item.code_postal_ban || item.code_postal || ""),
+            nom_commune: String(item.nom_commune_brut || item.nom_commune_ban || item.nom_commune || ""),
+            code_insee_commune: String(item.code_insee_ban || item.code_insee_commune || ""),
+            coordonnees: item._geopoint
+                ? (String(item._geopoint).split(',').map(Number).reverse() as [number, number]) // _geopoint is "lat,lon", we need [lon, lat]
+                : (Array.isArray(item.coordonnees) ? [Number(item.coordonnees[0]), Number(item.coordonnees[1])] : null),
             etiquette_dpe: String(item.etiquette_dpe || "N") as DPELetter,
             etiquette_ges: String(item.etiquette_ges || "N"),
             consommation_energie_finale: Number(item.consommation_energie_finale || 0),
             emission_ges: Number(item.emission_ges || 0),
-            surface_habitable: Number(item.surface_habitable || 0),
+            surface_habitable: Number(item.surface_habitable_logement || item.surface_habitable || 0),
             date_etablissement_dpe: String(item.date_etablissement_dpe || ""),
             date_fin_validite_dpe: String(item.date_fin_validite_dpe || ""),
             type_batiment: (String(item.type_batiment || "appartement") as AdemeDPEEntry["type_batiment"]),
             periode_construction: item.periode_construction ? String(item.periode_construction) : undefined,
             annee_construction: item.annee_construction ? Number(item.annee_construction) : undefined,
-            type_chauffage: item.type_chauffage ? String(item.type_chauffage) : undefined,
-            energie_chauffage: item.energie_chauffage ? String(item.energie_chauffage) : undefined,
-            type_ecs: item.type_ecs ? String(item.type_ecs) : undefined,
+            type_chauffage: item.type_installation_chauffage ? String(item.type_installation_chauffage) : undefined, // Field changed
+            energie_chauffage: item.type_energie_principale_chauffage ? String(item.type_energie_principale_chauffage) : undefined, // Field changed
+            type_ecs: item.type_installation_ecs ? String(item.type_installation_ecs) : undefined, // Field changed
             is_valid: new Date(String(item.date_fin_validite_dpe || "2000-01-01")) > new Date(),
         }));
 
@@ -383,26 +383,26 @@ export async function getDPEByNumber(
 
         const result: AdemeDPEEntry = {
             numero_dpe: String(item.numero_dpe || ""),
-            adresse_brute: String(item.adresse_brute || ""),
-            code_postal: String(item.code_postal || ""),
-            nom_commune: String(item.nom_commune || ""),
-            code_insee_commune: String(item.code_insee_commune || ""),
-            coordonnees: Array.isArray(item.coordonnees)
-                ? [Number(item.coordonnees[0]), Number(item.coordonnees[1])]
-                : null,
+            adresse_brute: String(item.adresse_brut || item.adresse_ban || item.adresse_brute || ""),
+            code_postal: String(item.code_postal_brut || item.code_postal_ban || item.code_postal || ""),
+            nom_commune: String(item.nom_commune_brut || item.nom_commune_ban || item.nom_commune || ""),
+            code_insee_commune: String(item.code_insee_ban || item.code_insee_commune || ""),
+            coordonnees: item._geopoint
+                ? (String(item._geopoint).split(',').map(Number).reverse() as [number, number]) // _geopoint is "lat,lon", we need [lon, lat]
+                : (Array.isArray(item.coordonnees) ? [Number(item.coordonnees[0]), Number(item.coordonnees[1])] : null),
             etiquette_dpe: String(item.etiquette_dpe || "N") as DPELetter,
             etiquette_ges: String(item.etiquette_ges || "N"),
             consommation_energie_finale: Number(item.consommation_energie_finale || 0),
             emission_ges: Number(item.emission_ges || 0),
-            surface_habitable: Number(item.surface_habitable || 0),
+            surface_habitable: Number(item.surface_habitable_logement || item.surface_habitable || 0),
             date_etablissement_dpe: String(item.date_etablissement_dpe || ""),
             date_fin_validite_dpe: String(item.date_fin_validite_dpe || ""),
             type_batiment: (String(item.type_batiment || "appartement") as AdemeDPEEntry["type_batiment"]),
             periode_construction: item.periode_construction ? String(item.periode_construction) : undefined,
             annee_construction: item.annee_construction ? Number(item.annee_construction) : undefined,
-            type_chauffage: item.type_chauffage ? String(item.type_chauffage) : undefined,
-            energie_chauffage: item.energie_chauffage ? String(item.energie_chauffage) : undefined,
-            type_ecs: item.type_ecs ? String(item.type_ecs) : undefined,
+            type_chauffage: item.type_installation_chauffage ? String(item.type_installation_chauffage) : undefined,
+            energie_chauffage: item.type_energie_principale_chauffage ? String(item.type_energie_principale_chauffage) : undefined,
+            type_ecs: item.type_installation_ecs ? String(item.type_installation_ecs) : undefined,
             is_valid: new Date(String(item.date_fin_validite_dpe || "2000-01-01")) > new Date(),
         };
 
