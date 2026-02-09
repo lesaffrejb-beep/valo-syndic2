@@ -1,14 +1,13 @@
 /**
  * VALO-SYNDIC — Module Audit Flash
  * =================================
- * Point d'entree unique pour le module Audit Flash.
+ * Point d'entree unique.
  *
  * Usage:
- *   import { initAuditFlash, completeAuditFlash } from "@/lib/audit-flash";
- *   import type { AuditFlashInitRequest, AuditFlashInitResponse } from "@/lib/audit-flash";
+ *   import { initAuditFlash, completeAuditFlash, toSupabaseRow } from "@/lib/audit-flash";
  */
 
-export { initAuditFlash, completeAuditFlash } from "./engine";
+export { initAuditFlash, completeAuditFlash, toSupabaseRow } from "./engine";
 export type {
     AuditFlashStatus,
     DataOrigin,
@@ -21,5 +20,5 @@ export type {
     AuditEnrichment,
     AuditComputation,
     APIHuntResult,
-    HuntResults,
+    AuditFlashRow,
 } from "./types";
