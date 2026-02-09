@@ -509,7 +509,7 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
 
                         <div className="relative h-6 w-full flex items-center group cursor-pointer">
                             {/* Track */}
-                            <div className="absolute inset-x-0 h-2 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                            <div className="absolute inset-x-0 h-2 bg-black/40 rounded-full overflow-hidden border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]">
                                 <div
                                     className="h-full bg-gradient-to-r from-gold/50 to-gold transition-all duration-300 ease-out shadow-[0_0_10px_rgba(229,192,123,0.3)]"
                                     style={{ width: `${investorRatio}%` }}
@@ -528,14 +528,21 @@ export function DiagnosticForm({ onSubmit, isLoading = false, initialData }: Dia
                                 onChange={(e) => setInvestorRatio(parseInt(e.target.value))}
                             />
 
-                            {/* Thumb (visual only) */}
+                            {/* Thumb (visual only) - High-end Multi-layered design */}
                             <div
-                                className="absolute h-5 w-5 bg-deep-light border border-gold shadow-[0_0_15px_rgba(229,192,123,0.5)] rounded-full z-10 pointer-events-none transition-all duration-100 ease-out group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(229,192,123,0.7)]"
+                                className="absolute h-6 w-6 flex items-center justify-center z-10 pointer-events-none transition-all duration-200 ease-out group-hover:scale-110"
                                 style={{
                                     left: `${investorRatio}%`,
-                                    transform: `translateX(-${investorRatio}%)`
+                                    transform: `translateX(-50%)`
                                 }}
-                            />
+                            >
+                                {/* Outer Glass Ring */}
+                                <div className="absolute inset-0 bg-black/40 backdrop-blur-md rounded-full border border-gold/30 shadow-[0_0_15px_rgba(0,0,0,0.5)]" />
+                                {/* Halo effect */}
+                                <div className="absolute inset-0 bg-gold/10 rounded-full blur-[4px] group-hover:bg-gold/20 transition-colors" />
+                                {/* Inner sharp core */}
+                                <div className="h-2 w-2 bg-gradient-to-br from-white to-gold rounded-full shadow-[0_0_10px_rgba(229,192,123,0.8)]" />
+                            </div>
                         </div>
                         <p className="text-[10px] text-muted mt-1">
                             Si &gt; 40%, affiche l&apos;avantage fiscal (déficit foncier).
