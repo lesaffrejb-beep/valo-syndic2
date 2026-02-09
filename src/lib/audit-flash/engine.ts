@@ -481,45 +481,113 @@ export async function initAuditFlash(
     request: AuditFlashInitRequest
 ): Promise<AuditFlashInitResponse> {
     const targetDPE: DPELetter = request.targetDPE ?? "C";
-
-    // ETAPE 0: Récupérer les paramètres globaux
-    const settings = await getGlobalSettings();
-
-    // ETAPE 1: Tir de barrage
-    const ctx = await executeHunt(request, settings);
-
-    // ETAPE 2: Checkpoint de verite
-    const checkpoint = checkpointDeVerite(ctx.goldenData);
-
-    // ETAPE 3: Moteur ValoSyndic (si READY)
-    let computation: AuditComputation | null = null;
-    let finalStatus: AuditFlashStatus = checkpoint.status;
-
-    if (checkpoint.status === "READY") {
-        computation = runValoSyndicEngine(ctx.goldenData, ctx.enrichment, targetDPE, settings);
-        if (computation) {
-            finalStatus = "COMPLETED" as AuditFlashStatus;
-        }
-    }
-
     const auditId = crypto.randomUUID();
 
-    return {
-        auditId,
-        status: finalStatus,
-        normalizedAddress: ctx.normalizedAddress,
-        coordinates: ctx.coordinates,
-        postalCode: ctx.postalCode,
-        city: ctx.city,
-        cityCode: ctx.cityCode,
-        goldenData: ctx.goldenData,
-        missingFields: checkpoint.missingFields,
-        enrichment: ctx.enrichment,
-        computation,
-        sources: ctx.sources,
-        apiResponses: ctx.apiResponses,
-        createdAt: new Date().toISOString(),
-    };
+    try {
+        // ETAPE 0: Récupérer les paramètres globaux
+        const settings = await getGlobalSettings();
+
+        // ETAPE 1: Tir de barrage
+        const ctx = await executeHunt(request, settings);
+
+        // ETAPE 2: Checkpoint de verite
+        const checkpoint = checkpointDeVerite(ctx.goldenData);
+
+        // ETAPE 3: Moteur ValoSyndic (si READY)
+        let computation: AuditComputation | null = null;
+        let finalStatus: AuditFlashStatus = checkpoint.status;
+
+        if (checkpoint.status === "READY") {
+            computation = runValoSyndicEngine(ctx.goldenData, ctx.enrichment, targetDPE, settings);
+            if (computation) {
+                finalStatus = "COMPLETED" as AuditFlashStatus;
+            }
+        }
+
+        return {
+            auditId,
+            status: finalStatus,
+            normalizedAddress: ctx.normalizedAddress,
+            coordinates: ctx.coordinates,
+            postalCode: ctx.postalCode,
+            city: ctx.city,
+            cityCode: ctx.cityCode,
+            goldenData: ctx.goldenData,
+            missingFields: checkpoint.missingFields,
+            enrichment: ctx.enrichment,
+            computation,
+            sources: ctx.sources,
+            apiResponses: ctx.apiResponses,
+            createdAt: new Date().toISOString(),
+        };
+    } catch (error) {
+        // PLAN B: En cas d'échec complet, retourner un état DRAFT avec toutes les données manquantes
+        console.error("[AUDIT FLASH] Fatal error during initialization, returning DRAFT state:", error);
+
+        const now = new Date().toISOString();
+        const emptySourced = <T,>(v: T | null): SourcedData<T> => ({
+            value: v,
+            origin: null,
+            source: null,
+            confidence: null,
+        });
+
+        return {
+            auditId,
+            status: "DRAFT",
+            normalizedAddress: null,
+            coordinates: null,
+            postalCode: null,
+            city: null,
+            cityCode: null,
+            goldenData: {
+                surfaceHabitable: emptySourced<number>(null),
+                constructionYear: emptySourced<number>(null),
+                dpe: emptySourced<DPELetter>(null),
+                pricePerSqm: emptySourced<number>(null),
+            },
+            missingFields: [
+                {
+                    field: "surface_habitable",
+                    label: "Surface habitable (m²)",
+                    reason: "APIs indisponibles, veuillez saisir manuellement.",
+                    inputType: "number",
+                    placeholder: "Ex: 2500",
+                },
+                {
+                    field: "construction_year",
+                    label: "Année de construction",
+                    reason: "APIs indisponibles, veuillez saisir manuellement.",
+                    inputType: "number",
+                    placeholder: "Ex: 1975",
+                },
+                {
+                    field: "dpe_current",
+                    label: "Classe DPE actuelle",
+                    reason: "APIs indisponibles, veuillez saisir manuellement.",
+                    inputType: "select",
+                    options: ["A", "B", "C", "D", "E", "F", "G"],
+                },
+                {
+                    field: "price_per_sqm",
+                    label: "Prix au m² du quartier",
+                    reason: "APIs indisponibles, veuillez saisir manuellement.",
+                    inputType: "number",
+                    placeholder: "Ex: 3200",
+                },
+            ],
+            enrichment: {
+                cadastreParcelId: null,
+                cadastreSurfaceTerrain: null,
+                numberOfUnits: request.numberOfUnits ?? null,
+                heatingSystem: null,
+            },
+            computation: null,
+            sources: [],
+            apiResponses: {},
+            createdAt: now,
+        };
+    }
 }
 
 // =============================================================================

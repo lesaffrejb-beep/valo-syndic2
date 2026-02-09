@@ -70,11 +70,79 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // 3. Reponse
-        return NextResponse.json(result, {
-            status: 200,
-            headers: { "Cache-Control": "no-store", "X-Audit-Status": result.status },
-        });
+
+        // 3. Transformer la réponse pour le frontend
+        // DRAFT -> MANUAL_REQ (frontend attend ce statut pour afficher le formulaire)
+        // COMPLETED -> COMPLETED (données complètes, affichage des résultats)
+        if (result.status === "DRAFT") {
+            // Cas DRAFT: données manquantes, demander à l'utilisateur
+            return NextResponse.json({
+                status: "MANUAL_REQ",
+                missingFields: result.missingFields.map(f => f.field),
+                tempId: result.auditId,
+            }, {
+                status: 200,
+                headers: { "Cache-Control": "no-store" },
+            });
+        } else if (result.status === "COMPLETED") {
+            // Cas COMPLETED: transformer en format AuditFlashResult pour le frontend
+            const { computation, goldenData, enrichment } = result;
+
+            if (!computation) {
+                // Pas de computation malgré status COMPLETED? Fallback DRAFT
+                return NextResponse.json({
+                    status: "MANUAL_REQ",
+                    missingFields: result.missingFields.map(f => f.field),
+                    tempId: result.auditId,
+                }, {
+                    status: 200,
+                    headers: { "Cache-Control": "no-store" },
+                });
+            }
+
+            const auditFlashResult = {
+                audit_id: result.auditId,
+                created_at: result.createdAt,
+                address: result.normalizedAddress || parsed.data.address,
+                city: result.city || "",
+                postal_code: result.postalCode || "",
+                number_of_units: enrichment.numberOfUnits || 1,
+                surface_habitable: goldenData.surfaceHabitable.value || 0,
+                current_dpe: goldenData.dpe.value || "F",
+                target_dpe: parsed.data.targetDPE,
+
+                // Financement
+                renovation_cost: computation.simulation.worksCostTTC,
+                works_cost_ht: computation.simulation.worksCostHT,
+                subventions_mpr: computation.simulation.mprAmount,
+                cee_amount: computation.simulation.ceeAmount,
+                eco_ptz_amount: computation.simulation.ecoPtzAmount,
+
+                // Valorisation
+                valuation_current: computation.valuation.currentValue,
+                valuation_projected: computation.valuation.projectedValue,
+
+                // Énergie (estimation basée sur le saut de DPE)
+                energy_gain_percent: computation.valuation.greenValuePercent || 0,
+            };
+
+            return NextResponse.json({
+                status: "COMPLETED",
+                result: auditFlashResult,
+            }, {
+                status: 200,
+                headers: { "Cache-Control": "no-store" },
+            });
+        } else {
+            // Statut inconnu, traiter comme une erreur
+            return NextResponse.json({
+                status: "ERROR",
+                message: "Statut d'audit inconnu",
+            }, {
+                status: 200,
+                headers: { "Cache-Control": "no-store" },
+            });
+        }
     } catch (error) {
         console.error("[AUDIT FLASH] Erreur fatale:", error);
         return NextResponse.json(
