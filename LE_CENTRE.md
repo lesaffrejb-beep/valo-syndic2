@@ -911,6 +911,80 @@ Table clé-valeur (JSONB) — "Source of Truth" unique pour constantes financiè
 | `regulation` | Statut Lois |
 | **Sécurité** | Lecture publique (App), Écriture restreinte (Admin/Service Role) |
 
+## 9.5 Audit Flash (`audits_flash`)
+
+Table centrale du module Audit Flash — transforme une adresse en analyse financière.
+
+| Attribut | Détail |
+|----------|--------|
+| **Statut** | Machine à états `DRAFT` → `READY` → `COMPLETED` (enum `audit_flash_status`) |
+| **Golden Data** | 4 données critiques avec traçabilité : `surface_habitable`, `construction_year`, `dpe_current`, `price_per_sqm` |
+| **Traçabilité** | Chaque Golden Data porte `_origin` (api/manual/estimated/fallback), `_source` (texte), `_confidence` (0-1) |
+| **Résultats** | Colonne JSONB `computation` contient simulation, valuation, inaction_cost, compliance |
+| **Audit trail** | `api_responses` (JSONB) et `enrichment_sources` (JSONB) tracent chaque appel API |
+| **Sécurité** | RLS ouvert en dev (SELECT/INSERT/UPDATE publics) — à durcir en prod |
+| **Vue** | `audits_flash_summary` : vue résumé avec les KPI extraits du JSONB |
+
+**Colonnes enrichissement :** `number_of_units`, `heating_system`, `cadastre_parcel_id`, `cadastre_surface_terrain`, `target_dpe`
+
+## 9.6 Paramétrage (`global_settings`)
+
+Table clé-valeur pour les constantes métier modifiables sans redéploiement.
+
+| Catégorie | Clés | Valeurs par défaut |
+|-----------|------|-------------------|
+| `aids` | `mpr_rate_standard`, `mpr_rate_high_perf`, `mpr_ceiling_per_lot`, `mpr_min_energy_gain`, `cee_rate`, `cee_max_per_lot`, `eco_ptz_max_per_lot`, `eco_ptz_duration_months` | 30%, 45%, 25000€, 35%, 8%, 5000€, 50000€, 240 mois |
+| `technical` | `reno_cost_per_sqm`, `tva_renovation` | 180€/m², 5.5% |
+| `inflation` | `bt01_inflation_rate` | 2% |
+| `market` | `green_value_high`, `green_value_standard` | 12%, 8% |
+| `pricing` | `base_price_per_sqm` | 3500€ |
+| `regulation` | `mpr_copro_active` | false (MPR Copro suspendue) |
+
+**Accès :** Fonction SQL `get_setting('cle')` retourne directement le JSONB.
+
+## 9.7 Script SQL Unique : `reset_and_init.sql`
+
+**Fichier :** `supabase/migrations/reset_and_init.sql`
+
+Ce script est **idempotent** et conçu pour être copié-collé directement dans l'éditeur SQL de Supabase.
+
+| Action | Détail |
+|--------|--------|
+| **GARDE** | `reference_dpe` (~4000 DPE dept 49), `coproperty_data` (RNIC), vues matérialisées, cron |
+| **NETTOIE** | `market_data` (drop + recreate avec schema propre), `global_settings` (drop + recreate) |
+| **CREE** | `audits_flash` + enums `audit_flash_status` / `data_origin` + vue `audits_flash_summary` |
+| **INSERE** | Seed data dans `market_data` (bt01, tendances) et `global_settings` (constantes métier) |
+
+**Usage :**
+1. Ouvrir l'éditeur SQL Supabase
+2. Copier-coller l'intégralité de `reset_and_init.sql`
+3. Exécuter
+4. Vérifier avec le SELECT commenté en bas du fichier
+
+## 9.8 Module Audit Flash (Backend)
+
+**Fichiers :**
+- `src/lib/audit-flash/types.ts` — Types alignés 1:1 avec SQL
+- `src/lib/audit-flash/engine.ts` — Orchestrateur (hunt API → checkpoint → calcul)
+- `src/lib/audit-flash/index.ts` — Barrel export
+- `src/app/api/audit/init/route.ts` — `POST /api/audit/init`
+- `src/app/api/audit/complete/route.ts` — `POST /api/audit/complete`
+
+**Flow :**
+```
+POST /api/audit/init { address, numberOfUnits?, targetDPE? }
+  → BAN (géocodage) [séquentiel]
+  → Cadastre + DVF + ADEME [parallèle, 10s timeout chacun]
+  → Checkpoint de Vérité (4 Golden Data complètes ?)
+    → OUI : calcul ValoSyndic → status: COMPLETED
+    → NON : status: DRAFT + missingFields[]
+
+POST /api/audit/complete { auditId, manualData, targetDPE? }
+  → Lit le DRAFT depuis Supabase
+  → Fusionne les données manuelles
+  → Recalcule → status: COMPLETED
+```
+
 ---
 
 # 10. CATALOGUE DES WIDGETS (BENTO UI)
@@ -1630,6 +1704,7 @@ mv docs/VERIFICATION_MATHEMATIQUE_MPR_2026.md docs/archive/
 | 2026-02-06 | Antigravity AI | Ajout Quick Start (installation, Node.js v20+), section 4.5 Modèles de Données Cœurs (TypeScript types), section 4.6 Résilience & Cache. | §0, §4.5, §4.6 |
 | 2026-02-06 | Antigravity AI | Durcissement section 3.1 règles ANAH 2026 (MPR plafonds, Éco-PTZ strict, CEE configurable, distinction Flux/Stock), correction Golden Master (§8.5). | §3.1, §8.5 |
 | 2026-02-06 | Antigravity AI | Audit complet & corrections : Next.js 16+, React 19+, paths corrigés (riskService, file tree), ajout engines node dans package.json. | §7.1, §3.2, §13.0 |
+| 2026-02-09 | Claude (Anthropic) | Module Audit Flash backend : table `audits_flash` + enums, engine.ts (hunt API parallèle + checkpoint + calcul), routes `/api/audit/init` et `/api/audit/complete`, script SQL unique `reset_and_init.sql` idempotent. | §9.5, §9.6, §9.7, §9.8 |
 
 **Comment ajouter une entrée :**
 ```

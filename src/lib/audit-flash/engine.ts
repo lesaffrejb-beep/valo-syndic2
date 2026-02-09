@@ -4,20 +4,17 @@
  * Le Chasseur: orchestre la chasse aux donnees et le moteur de calcul.
  *
  * DOCTRINE:
- * 1. Tir de Barrage: Interroge en parallele BAN, Cadastre, DVF, ADEME, RNIC
+ * 1. Tir de Barrage: Interroge en parallele BAN, Cadastre, DVF, ADEME
  * 2. Checkpoint de Verite: SI Golden Data manquante -> DRAFT + Plan B
  * 3. Si tout est plein -> READY -> Lance le moteur ValoSyndic
  *
- * ENDPOINTS API GRATUITS UTILISES:
- * ---------------------------------------------------------------
- * | API                | URL                                      | Cle? |
- * |--------------------|------------------------------------------|------|
- * | BAN (Adresse)      | https://api-adresse.data.gouv.fr         | Non  |
- * | Cadastre (IGN)     | https://apicarto.ign.fr/api/cadastre     | Non  |
- * | DVF (Etalab)       | https://api.dvf.etalab.gouv.fr           | Non  |
- * | ADEME DPE          | https://data.ademe.fr/data-fair/api/v1   | Non  |
- * | RNIC (Copro)       | Table Supabase (import CSV data.gouv.fr) | Non  |
- * ---------------------------------------------------------------
+ * ENDPOINTS API GRATUITS:
+ * | API           | URL                                    | Cle? |
+ * |---------------|----------------------------------------|------|
+ * | BAN           | https://api-adresse.data.gouv.fr       | Non  |
+ * | Cadastre IGN  | https://apicarto.ign.fr/api/cadastre   | Non  |
+ * | DVF Etalab    | https://api.dvf.etalab.gouv.fr         | Non  |
+ * | ADEME DPE     | https://data.ademe.fr/data-fair/api/v1 | Non  |
  */
 
 import { normalizeAddress, extractAddressData } from "@/lib/api/addressService";
@@ -27,11 +24,7 @@ import { searchDPEByAddress, searchDPEByLocation } from "@/lib/api/ademeDpeServi
 import type { AdemeDPEEntry } from "@/lib/api/ademeDpeService";
 import type { EnrichmentSource } from "@/lib/api/types";
 import type { DPELetter } from "@/lib/constants";
-import { VALUATION_PARAMS } from "@/lib/constants";
-import {
-    generateDiagnostic,
-    estimateDPEByYear,
-} from "@/lib/calculator";
+import { generateDiagnostic } from "@/lib/calculator";
 import type { DiagnosticInput } from "@/lib/schemas";
 
 import type {
@@ -43,7 +36,7 @@ import type {
     AuditComputation,
     AuditEnrichment,
     APIHuntResult,
-    HuntResults,
+    AuditFlashRow,
     SourcedData,
 } from "./types";
 
@@ -51,17 +44,13 @@ import type {
 // CONSTANTS
 // =============================================================================
 
-/** Timeout par API en ms (10 secondes — antifragile) */
 const API_TIMEOUT_MS = 10_000;
-
-/** Cout moyen renovation au m2 (ITE + VMC, ratio 180EUR/m2 hab) */
 const RENO_COST_PER_SQM = 180;
 
 // =============================================================================
 // HELPERS
 // =============================================================================
 
-/** Wrap une promesse avec un timeout — le systeme ne bloque jamais */
 async function withTimeout<T>(
     promise: Promise<T>,
     timeoutMs: number,
@@ -73,7 +62,6 @@ async function withTimeout<T>(
     return Promise.race([promise, timeout]);
 }
 
-/** Chronometre un appel API */
 async function timedFetch<T>(
     source: string,
     fn: () => Promise<T>
@@ -88,7 +76,7 @@ async function timedFetch<T>(
                 status: "success",
                 fetchedAt: new Date().toISOString(),
                 durationMs: Date.now() - start,
-                data: null, // Sera rempli par l'appelant
+                data: null,
             },
         };
     } catch (error) {
@@ -107,7 +95,12 @@ async function timedFetch<T>(
     }
 }
 
-function makeSourced<T>(value: T | null | undefined, origin: "api" | "manual" | "estimated" | "fallback", source: string, confidence: number): SourcedData<T> {
+function makeSourced<T>(
+    value: T | null | undefined,
+    origin: "api" | "manual" | "estimated" | "fallback",
+    source: string,
+    confidence: number
+): SourcedData<T> {
     return {
         value: value ?? null,
         origin: value != null ? origin : null,
@@ -117,7 +110,7 @@ function makeSourced<T>(value: T | null | undefined, origin: "api" | "manual" | 
 }
 
 // =============================================================================
-// ETAPE 1: LE TIR DE BARRAGE (Chasse aux donnees)
+// ETAPE 1: TIR DE BARRAGE
 // =============================================================================
 
 interface HuntContext {
@@ -129,15 +122,15 @@ interface HuntContext {
     goldenData: GoldenData;
     enrichment: AuditEnrichment;
     sources: EnrichmentSource[];
-    huntResults: HuntResults;
+    apiResponses: Record<string, APIHuntResult>;
 }
 
-/**
- * Phase 1: Tir de Barrage
- * Interroge toutes les APIs en parallele.
- * Ne lance JAMAIS d'exception — chaque echec est capture et logue.
- */
 async function executeHunt(request: AuditFlashInitRequest): Promise<HuntContext> {
+    const now = new Date().toISOString();
+    const emptyHunt = (s: string): APIHuntResult => ({
+        source: s, status: "error", fetchedAt: now, durationMs: 0, data: null,
+    });
+
     const ctx: HuntContext = {
         normalizedAddress: null,
         coordinates: null,
@@ -157,86 +150,58 @@ async function executeHunt(request: AuditFlashInitRequest): Promise<HuntContext>
             heatingSystem: null,
         },
         sources: [],
-        huntResults: {
-            ban: { source: "BAN", status: "error", fetchedAt: new Date().toISOString(), durationMs: 0, data: null },
-            cadastre: { source: "Cadastre", status: "error", fetchedAt: new Date().toISOString(), durationMs: 0, data: null },
-            dvf: { source: "DVF", status: "error", fetchedAt: new Date().toISOString(), durationMs: 0, data: null },
-            ademe: { source: "ADEME", status: "error", fetchedAt: new Date().toISOString(), durationMs: 0, data: null },
-            rnic: { source: "RNIC", status: "error", fetchedAt: new Date().toISOString(), durationMs: 0, data: null },
+        apiResponses: {
+            ban: emptyHunt("BAN"),
+            cadastre: emptyHunt("Cadastre"),
+            dvf: emptyHunt("DVF"),
+            ademe: emptyHunt("ADEME"),
         },
     };
 
-    // =========================================================================
-    // TIR 1: Normalisation d'adresse (BAN) — PREREQUIS pour les autres tirs
-    // =========================================================================
+    // TIR 1: BAN (prerequis pour les coordonnees)
     const banResult = await timedFetch("BAN", () => normalizeAddress(request.address));
 
     if (banResult.result?.success && banResult.result.data) {
-        const addressData = extractAddressData(banResult.result.data);
-        ctx.normalizedAddress = addressData.fullAddress;
-        ctx.postalCode = addressData.postalCode;
-        ctx.city = addressData.city;
-        ctx.cityCode = addressData.cityCode;
-        ctx.coordinates = addressData.coordinates;
+        const ad = extractAddressData(banResult.result.data);
+        ctx.normalizedAddress = ad.fullAddress;
+        ctx.postalCode = ad.postalCode;
+        ctx.city = ad.city;
+        ctx.cityCode = ad.cityCode;
+        ctx.coordinates = ad.coordinates;
         ctx.sources.push(banResult.result.source);
-        ctx.huntResults.ban = { ...banResult.hunt, status: "success", data: addressData as unknown as Record<string, unknown> };
+        ctx.apiResponses.ban = { ...banResult.hunt, status: "success", data: ad as unknown as Record<string, unknown> };
     } else {
-        ctx.huntResults.ban = banResult.hunt;
-        // Plan B: on continue sans geolocalisation, les autres APIs ne marcheront pas en geo
-        // mais on peut tenter par code postal / adresse textuelle
+        ctx.apiResponses.ban = banResult.hunt;
     }
 
-    // =========================================================================
-    // TIR 2-5: Tirs en parallele (Cadastre, DVF, ADEME, RNIC)
-    // Chaque tir est independant et ne bloque pas les autres
-    // =========================================================================
+    // TIR 2-4: Parallele (Cadastre, DVF, ADEME)
     const parallelResults = await Promise.allSettled([
-        // TIR 2: Cadastre (necessite coordonnees)
         ctx.coordinates
             ? timedFetch("Cadastre", () =>
-                searchCadastreByCoordinates(
-                    ctx.coordinates!.longitude,
-                    ctx.coordinates!.latitude
-                )
-            )
+                searchCadastreByCoordinates(ctx.coordinates!.longitude, ctx.coordinates!.latitude))
             : Promise.resolve(null),
 
-        // TIR 3: DVF (necessite coordonnees ou code commune)
         ctx.coordinates
             ? timedFetch("DVF", () =>
                 searchDVFWithFallback(
-                    ctx.coordinates!.latitude,
-                    ctx.coordinates!.longitude,
-                    ctx.cityCode ?? undefined,
-                    { typeLocal: "Appartement" }
-                )
-            )
+                    ctx.coordinates!.latitude, ctx.coordinates!.longitude,
+                    ctx.cityCode ?? undefined, { typeLocal: "Appartement" }))
             : Promise.resolve(null),
 
-        // TIR 4: ADEME DPE (par coordonnees ou par adresse)
         ctx.coordinates
             ? timedFetch("ADEME", () =>
                 searchDPEByLocation({
                     latitude: ctx.coordinates!.latitude,
                     longitude: ctx.coordinates!.longitude,
-                    radius: 100,
-                    limit: 20,
-                })
-            )
+                    radius: 100, limit: 20,
+                }))
             : ctx.postalCode
                 ? timedFetch("ADEME", () =>
-                    searchDPEByAddress({
-                        query: request.address,
-                        codePostal: ctx.postalCode!,
-                        limit: 10,
-                    })
-                )
+                    searchDPEByAddress({ query: request.address, codePostal: ctx.postalCode!, limit: 10 }))
                 : Promise.resolve(null),
     ]);
 
-    // =========================================================================
     // EXTRACTION: Cadastre
-    // =========================================================================
     const cadastreSettled = parallelResults[0];
     if (cadastreSettled?.status === "fulfilled" && cadastreSettled.value) {
         const cadastre = cadastreSettled.value as Awaited<ReturnType<typeof timedFetch<Awaited<ReturnType<typeof searchCadastreByCoordinates>>>>>;
@@ -244,32 +209,22 @@ async function executeHunt(request: AuditFlashInitRequest): Promise<HuntContext>
             const parcel = cadastre.result.data.mainParcel;
             ctx.enrichment.cadastreParcelId = parcel.properties.id;
             ctx.enrichment.cadastreSurfaceTerrain = parcel.properties.contenance;
-
-            // Surface terrain != surface habitable, mais c'est un indice
-            // On ne l'utilise PAS comme surface_habitable (doctrine: zero bullshit)
             ctx.sources.push(cadastre.result.source);
-            ctx.huntResults.cadastre = {
-                ...cadastre.hunt,
-                status: "success",
+            ctx.apiResponses.cadastre = {
+                ...cadastre.hunt, status: "success",
                 data: { parcelId: parcel.properties.id, contenance: parcel.properties.contenance },
             };
         } else {
-            ctx.huntResults.cadastre = cadastre.hunt;
+            ctx.apiResponses.cadastre = cadastre.hunt;
         }
     }
 
-    // =========================================================================
-    // EXTRACTION: DVF (Prix m2)
-    // =========================================================================
+    // EXTRACTION: DVF
     const dvfSettled = parallelResults[1];
     if (dvfSettled?.status === "fulfilled" && dvfSettled.value) {
         const dvf = dvfSettled.value as Awaited<ReturnType<typeof timedFetch<Awaited<ReturnType<typeof searchDVFWithFallback>>>>>;
         if (dvf.result?.success && dvf.result.data.length > 0) {
-            const stats = calculateDVFStats(dvf.result.data, {
-                typeLocal: "Appartement",
-                yearsBack: 3,
-            });
-
+            const stats = calculateDVFStats(dvf.result.data, { typeLocal: "Appartement", yearsBack: 3 });
             if (stats && stats.averagePricePerSqm > 0) {
                 ctx.goldenData.pricePerSqm = {
                     ...makeSourced(stats.averagePricePerSqm, "api", "DVF Etalab", 0.85),
@@ -277,32 +232,22 @@ async function executeHunt(request: AuditFlashInitRequest): Promise<HuntContext>
                     dateRange: stats.periodCovered,
                 };
                 ctx.sources.push(dvf.result.source);
-                ctx.huntResults.dvf = {
-                    ...dvf.hunt,
-                    status: "success",
-                    data: stats as unknown as Record<string, unknown>,
-                };
+                ctx.apiResponses.dvf = { ...dvf.hunt, status: "success", data: stats as unknown as Record<string, unknown> };
             } else {
-                ctx.huntResults.dvf = { ...dvf.hunt, status: "partial" };
+                ctx.apiResponses.dvf = { ...dvf.hunt, status: "partial" };
             }
         } else {
-            ctx.huntResults.dvf = dvf.hunt;
+            ctx.apiResponses.dvf = dvf.hunt;
         }
     }
 
-    // =========================================================================
-    // EXTRACTION: ADEME DPE (DPE, Surface, Annee construction, Chauffage)
-    // C'est l'API la plus riche: elle peut fournir 3 Golden Datas d'un coup
-    // =========================================================================
+    // EXTRACTION: ADEME (peut fournir 3 Golden Datas d'un coup)
     const ademeSettled = parallelResults[2];
     if (ademeSettled?.status === "fulfilled" && ademeSettled.value) {
         const ademe = ademeSettled.value as Awaited<ReturnType<typeof timedFetch<Awaited<ReturnType<typeof searchDPEByLocation>>>>>;
         if (ademe.result?.success && ademe.result.data.length > 0) {
-            // Trouver le DPE le plus pertinent (le plus recent, le plus proche de l'adresse)
             const bestDPE = findBestDPE(ademe.result.data, request.address);
-
             if (bestDPE) {
-                // GOLDEN DATA 3: DPE
                 if (bestDPE.etiquette_dpe && isValidDPE(bestDPE.etiquette_dpe)) {
                     ctx.goldenData.dpe = {
                         ...makeSourced(bestDPE.etiquette_dpe as DPELetter, "api", "API ADEME DPE", 0.90),
@@ -312,49 +257,29 @@ async function executeHunt(request: AuditFlashInitRequest): Promise<HuntContext>
                         ges: bestDPE.etiquette_ges,
                     };
                 }
-
-                // GOLDEN DATA 1: Surface (si disponible dans le DPE)
                 if (bestDPE.surface_habitable && bestDPE.surface_habitable > 0) {
-                    ctx.goldenData.surfaceHabitable = makeSourced(
-                        bestDPE.surface_habitable,
-                        "api",
-                        "API ADEME DPE",
-                        0.80
-                    );
+                    ctx.goldenData.surfaceHabitable = makeSourced(bestDPE.surface_habitable, "api", "API ADEME DPE", 0.80);
                 }
-
-                // GOLDEN DATA 2: Annee de construction
                 if (bestDPE.annee_construction && bestDPE.annee_construction > 1800) {
-                    ctx.goldenData.constructionYear = makeSourced(
-                        bestDPE.annee_construction,
-                        "api",
-                        "API ADEME DPE",
-                        0.85
-                    );
+                    ctx.goldenData.constructionYear = makeSourced(bestDPE.annee_construction, "api", "API ADEME DPE", 0.85);
                 }
-
-                // Enrichment: chauffage
                 if (bestDPE.type_chauffage) {
                     ctx.enrichment.heatingSystem = bestDPE.type_chauffage;
                 }
-
                 ctx.sources.push(ademe.result.source);
-                ctx.huntResults.ademe = {
-                    ...ademe.hunt,
-                    status: "success",
+                ctx.apiResponses.ademe = {
+                    ...ademe.hunt, status: "success",
                     data: {
-                        dpe: bestDPE.etiquette_dpe,
-                        surface: bestDPE.surface_habitable,
-                        annee: bestDPE.annee_construction,
-                        numeroDpe: bestDPE.numero_dpe,
+                        dpe: bestDPE.etiquette_dpe, surface: bestDPE.surface_habitable,
+                        annee: bestDPE.annee_construction, numeroDpe: bestDPE.numero_dpe,
                         totalResults: ademe.result.data.length,
                     },
                 };
             } else {
-                ctx.huntResults.ademe = { ...ademe.hunt, status: "partial" };
+                ctx.apiResponses.ademe = { ...ademe.hunt, status: "partial" };
             }
         } else {
-            ctx.huntResults.ademe = ademe.hunt;
+            ctx.apiResponses.ademe = ademe.hunt;
         }
     }
 
@@ -362,61 +287,31 @@ async function executeHunt(request: AuditFlashInitRequest): Promise<HuntContext>
 }
 
 // =============================================================================
-// HELPERS POUR L'EXTRACTION ADEME
+// ADEME HELPERS
 // =============================================================================
 
-/** Trouve le DPE le plus pertinent parmi les resultats */
-function findBestDPE(
-    entries: AdemeDPEEntry[],
-    rawAddress: string
-): AdemeDPEEntry | null {
+function findBestDPE(entries: AdemeDPEEntry[], rawAddress: string): AdemeDPEEntry | null {
     if (entries.length === 0) return null;
 
-    // Filtrer les DPE valides uniquement
     const valid = entries.filter((e) => e.is_valid && e.etiquette_dpe);
+    const pool = valid.length > 0
+        ? valid
+        : [...entries].filter((e) => e.etiquette_dpe).sort((a, b) =>
+            (b.date_etablissement_dpe || "").localeCompare(a.date_etablissement_dpe || ""));
 
-    if (valid.length === 0) {
-        // Fallback: prendre le plus recent meme si expire
-        const sorted = [...entries]
-            .filter((e) => e.etiquette_dpe)
-            .sort((a, b) =>
-                (b.date_etablissement_dpe || "").localeCompare(a.date_etablissement_dpe || "")
-            );
-        return sorted[0] ?? null;
-    }
+    if (pool.length === 0) return null;
 
-    // Scorer chaque DPE par pertinence
-    const scored = valid.map((entry) => {
+    const scored = pool.map((entry) => {
         let score = 0;
-
-        // Bonus: adresse similaire
-        const normalizedEntry = (entry.adresse_brute || "").toLowerCase();
-        const normalizedSearch = rawAddress.toLowerCase();
-        if (normalizedEntry.includes(normalizedSearch) || normalizedSearch.includes(normalizedEntry)) {
-            score += 10;
-        }
-
-        // Bonus: DPE recent
+        const ne = (entry.adresse_brute || "").toLowerCase();
+        const ns = rawAddress.toLowerCase();
+        if (ne.includes(ns) || ns.includes(ne)) score += 10;
         if (entry.date_etablissement_dpe) {
-            const year = new Date(entry.date_etablissement_dpe).getFullYear();
-            score += Math.max(0, year - 2020); // Plus c'est recent, mieux c'est
+            score += Math.max(0, new Date(entry.date_etablissement_dpe).getFullYear() - 2020);
         }
-
-        // Bonus: surface renseignee
-        if (entry.surface_habitable && entry.surface_habitable > 0) {
-            score += 3;
-        }
-
-        // Bonus: annee de construction renseignee
-        if (entry.annee_construction) {
-            score += 2;
-        }
-
-        // Bonus: type immeuble (on cherche des copros)
-        if (entry.type_batiment === "immeuble" || entry.type_batiment === "appartement") {
-            score += 2;
-        }
-
+        if (entry.surface_habitable && entry.surface_habitable > 0) score += 3;
+        if (entry.annee_construction) score += 2;
+        if (entry.type_batiment === "immeuble" || entry.type_batiment === "appartement") score += 2;
         return { entry, score };
     });
 
@@ -429,45 +324,30 @@ function isValidDPE(value: string): value is DPELetter {
 }
 
 // =============================================================================
-// ETAPE 2: LE CHECKPOINT DE VERITE
+// ETAPE 2: CHECKPOINT DE VERITE
 // =============================================================================
 
-interface CheckpointResult {
-    status: "DRAFT" | "READY";
-    missingFields: MissingField[];
-}
-
-/**
- * Phase 2: Checkpoint de Verite
- * Verifie que les 4 Golden Datas sont presentes et coherentes.
- * Si une donnee manque -> DRAFT + liste des champs a remplir manuellement.
- */
-function checkpointDeVerite(goldenData: GoldenData): CheckpointResult {
+function checkpointDeVerite(goldenData: GoldenData): { status: "DRAFT" | "READY"; missingFields: MissingField[] } {
     const missingFields: MissingField[] = [];
 
-    // CHECK 1: Surface habitable
     if (!goldenData.surfaceHabitable.value || goldenData.surfaceHabitable.value <= 0) {
         missingFields.push({
             field: "surface_habitable",
             label: "Surface habitable (m2)",
-            reason: "Impossible de determiner la surface habitable via les APIs publiques (Cadastre/ADEME). La surface terrain du cadastre n'est pas la surface habitable.",
+            reason: "Impossible de determiner la surface habitable via les APIs publiques.",
             inputType: "number",
-            placeholder: "Ex: 2500 (surface totale du batiment en m2)",
+            placeholder: "Ex: 2500",
         });
     }
-
-    // CHECK 2: Annee de construction
     if (!goldenData.constructionYear.value) {
         missingFields.push({
             field: "construction_year",
             label: "Annee de construction",
-            reason: "Aucune donnee d'annee de construction trouvee dans les bases ADEME/BDNB/Cadastre.",
+            reason: "Aucune donnee d'annee de construction trouvee dans les bases publiques.",
             inputType: "number",
             placeholder: "Ex: 1975",
         });
     }
-
-    // CHECK 3: Classe DPE
     if (!goldenData.dpe.value) {
         missingFields.push({
             field: "dpe_current",
@@ -477,15 +357,13 @@ function checkpointDeVerite(goldenData: GoldenData): CheckpointResult {
             options: ["A", "B", "C", "D", "E", "F", "G"],
         });
     }
-
-    // CHECK 4: Prix au m2
     if (!goldenData.pricePerSqm.value || goldenData.pricePerSqm.value <= 0) {
         missingFields.push({
             field: "price_per_sqm",
             label: "Prix au m2 du quartier",
-            reason: "Pas assez de transactions DVF dans le secteur pour etablir un prix fiable.",
+            reason: "Pas assez de transactions DVF pour etablir un prix fiable.",
             inputType: "number",
-            placeholder: "Ex: 3200 (en EUR/m2)",
+            placeholder: "Ex: 3200",
         });
     }
 
@@ -496,38 +374,24 @@ function checkpointDeVerite(goldenData: GoldenData): CheckpointResult {
 }
 
 // =============================================================================
-// ETAPE 3: LE MOTEUR VALOSYNDIC
+// ETAPE 3: MOTEUR VALOSYNDIC
 // =============================================================================
 
-/**
- * Phase 3: Lance le calcul ValoSyndic si toutes les Golden Datas sont presentes.
- * Utilise le moteur existant (calculator.ts) pour garantir la coherence.
- */
 function runValoSyndicEngine(
     goldenData: GoldenData,
     enrichment: AuditEnrichment,
     targetDPE: DPELetter
 ): AuditComputation | null {
     const surface = goldenData.surfaceHabitable.value;
-    const constructionYear = goldenData.constructionYear.value;
     const dpeCurrent = goldenData.dpe.value;
     const pricePerSqm = goldenData.pricePerSqm.value;
 
-    // Double verification (defense en profondeur)
-    if (!surface || !constructionYear || !dpeCurrent || !pricePerSqm) {
-        return null;
-    }
+    if (!surface || !dpeCurrent || !pricePerSqm) return null;
 
-    // Nombre de lots: RNIC ou estimation conservatrice
-    const numberOfUnits = enrichment.numberOfUnits ?? estimateUnitsFromSurface(surface);
-
-    // Cout travaux: 180 EUR/m2 hab (ITE + VMC)
+    const numberOfUnits = enrichment.numberOfUnits ?? Math.max(1, Math.round(surface / 65));
     const estimatedCostHT = surface * RENO_COST_PER_SQM;
-
-    // Surface moyenne par lot
     const averageUnitSurface = numberOfUnits > 0 ? surface / numberOfUnits : surface;
 
-    // Construire l'input pour le moteur existant
     const input: DiagnosticInput = {
         currentDPE: dpeCurrent,
         targetDPE: targetDPE,
@@ -538,25 +402,17 @@ function runValoSyndicEngine(
         priceSource: goldenData.pricePerSqm.origin === "api" ? "DVF" : "Manuel",
     };
 
-    // Mapper le chauffage si disponible
     if (enrichment.heatingSystem) {
         const heatingMap: Record<string, DiagnosticInput["heatingSystem"]> = {
-            "electrique": "electrique",
-            "gaz": "gaz",
-            "fioul": "fioul",
-            "bois": "bois",
-            "reseau de chaleur": "urbain",
+            "electrique": "electrique", "gaz": "gaz", "fioul": "fioul",
+            "bois": "bois", "reseau de chaleur": "urbain",
         };
         const normalized = enrichment.heatingSystem.toLowerCase();
         for (const [key, value] of Object.entries(heatingMap)) {
-            if (normalized.includes(key)) {
-                input.heatingSystem = value;
-                break;
-            }
+            if (normalized.includes(key)) { input.heatingSystem = value; break; }
         }
     }
 
-    // Lancer le moteur
     const result = generateDiagnostic(input);
 
     return {
@@ -593,26 +449,10 @@ function runValoSyndicEngine(
     };
 }
 
-/** Estimation conservatrice du nombre de lots a partir de la surface */
-function estimateUnitsFromSurface(totalSurface: number): number {
-    // Hypothese: 65m2 moyen par lot (standard copropriete francaise)
-    const estimated = Math.max(1, Math.round(totalSurface / 65));
-    return estimated;
-}
-
 // =============================================================================
-// POINT D'ENTREE PRINCIPAL
+// POINT D'ENTREE: initAuditFlash
 // =============================================================================
 
-/**
- * Initialise un Audit Flash a partir d'une adresse brute.
- *
- * Flux:
- * 1. Tir de Barrage -> Interroge BAN + Cadastre + DVF + ADEME en parallele
- * 2. Checkpoint de Verite -> Verifie les 4 Golden Datas
- * 3. Si READY -> Lance le moteur ValoSyndic
- * 4. Si DRAFT -> Renvoie la liste des champs manquants (Plan B)
- */
 export async function initAuditFlash(
     request: AuditFlashInitRequest
 ): Promise<AuditFlashInitResponse> {
@@ -635,7 +475,6 @@ export async function initAuditFlash(
         }
     }
 
-    // Generer un UUID cote serveur
     const auditId = crypto.randomUUID();
 
     return {
@@ -651,14 +490,15 @@ export async function initAuditFlash(
         enrichment: ctx.enrichment,
         computation,
         sources: ctx.sources,
+        apiResponses: ctx.apiResponses,
         createdAt: new Date().toISOString(),
     };
 }
 
-/**
- * Complete un Audit Flash avec des donnees manuelles (Plan B, Step 2).
- * Fusionne les donnees manuelles avec les donnees existantes et relance le calcul.
- */
+// =============================================================================
+// POINT D'ENTREE: completeAuditFlash
+// =============================================================================
+
 export function completeAuditFlash(
     existingGoldenData: GoldenData,
     existingEnrichment: AuditEnrichment,
@@ -671,26 +511,22 @@ export function completeAuditFlash(
     },
     targetDPE: DPELetter = "C"
 ): { goldenData: GoldenData; enrichment: AuditEnrichment; computation: AuditComputation | null; missingFields: MissingField[] } {
-    // Fusionner: les donnees manuelles remplissent les trous
     const merged: GoldenData = {
         surfaceHabitable: existingGoldenData.surfaceHabitable.value
             ? existingGoldenData.surfaceHabitable
             : manualData.surfaceHabitable
                 ? makeSourced(manualData.surfaceHabitable, "manual", "Saisie manuelle", 1.0)
                 : existingGoldenData.surfaceHabitable,
-
         constructionYear: existingGoldenData.constructionYear.value
             ? existingGoldenData.constructionYear
             : manualData.constructionYear
                 ? makeSourced(manualData.constructionYear, "manual", "Saisie manuelle", 1.0)
                 : existingGoldenData.constructionYear,
-
         dpe: existingGoldenData.dpe.value
             ? existingGoldenData.dpe
             : manualData.dpeCurrent
                 ? { ...makeSourced(manualData.dpeCurrent, "manual", "Saisie manuelle", 1.0) }
                 : existingGoldenData.dpe,
-
         pricePerSqm: existingGoldenData.pricePerSqm.value
             ? existingGoldenData.pricePerSqm
             : manualData.pricePerSqm
@@ -698,25 +534,78 @@ export function completeAuditFlash(
                 : existingGoldenData.pricePerSqm,
     };
 
-    // MAJ enrichment si nb lots fourni
     const mergedEnrichment: AuditEnrichment = {
         ...existingEnrichment,
         numberOfUnits: manualData.numberOfUnits ?? existingEnrichment.numberOfUnits,
     };
 
-    // Re-checkpoint
     const checkpoint = checkpointDeVerite(merged);
-
-    // Re-calcul si READY
     let computation: AuditComputation | null = null;
     if (checkpoint.status === "READY") {
         computation = runValoSyndicEngine(merged, mergedEnrichment, targetDPE);
     }
 
+    return { goldenData: merged, enrichment: mergedEnrichment, computation, missingFields: checkpoint.missingFields };
+}
+
+// =============================================================================
+// MAPPER: Response -> Row Supabase (1:1 avec la table SQL)
+// =============================================================================
+
+export function toSupabaseRow(
+    response: AuditFlashInitResponse,
+    rawAddress: string,
+    targetDPE: string
+): Omit<AuditFlashRow, "updated_at"> {
+    const gd = response.goldenData;
     return {
-        goldenData: merged,
-        enrichment: mergedEnrichment,
-        computation,
-        missingFields: checkpoint.missingFields,
+        id: response.auditId,
+        raw_address: rawAddress,
+        normalized_address: response.normalizedAddress,
+        postal_code: response.postalCode,
+        city: response.city,
+        city_code: response.cityCode,
+        latitude: response.coordinates?.latitude ?? null,
+        longitude: response.coordinates?.longitude ?? null,
+        status: response.status,
+        missing_fields: response.missingFields.map((f) => f.field),
+        // Golden Data 1
+        surface_habitable: gd.surfaceHabitable.value,
+        surface_origin: gd.surfaceHabitable.origin,
+        surface_source: gd.surfaceHabitable.source,
+        surface_confidence: gd.surfaceHabitable.confidence,
+        // Golden Data 2
+        construction_year: gd.constructionYear.value,
+        construction_year_origin: gd.constructionYear.origin,
+        construction_year_source: gd.constructionYear.source,
+        construction_year_confidence: gd.constructionYear.confidence,
+        // Golden Data 3
+        dpe_current: gd.dpe.value,
+        dpe_origin: gd.dpe.origin,
+        dpe_source: gd.dpe.source,
+        dpe_numero: gd.dpe.numeroDpe ?? null,
+        dpe_date: gd.dpe.dateEtablissement ?? null,
+        dpe_conso: gd.dpe.consommation ?? null,
+        dpe_ges: gd.dpe.ges ?? null,
+        // Golden Data 4
+        price_per_sqm: gd.pricePerSqm.value,
+        price_origin: gd.pricePerSqm.origin,
+        price_source: gd.pricePerSqm.source,
+        price_transaction_count: gd.pricePerSqm.transactionCount ?? null,
+        price_date_range: gd.pricePerSqm.dateRange ?? null,
+        // Enrichment
+        number_of_units: response.enrichment.numberOfUnits,
+        heating_system: response.enrichment.heatingSystem,
+        cadastre_parcel_id: response.enrichment.cadastreParcelId,
+        cadastre_surface_terrain: response.enrichment.cadastreSurfaceTerrain,
+        target_dpe: targetDPE,
+        // Results
+        computation: response.computation,
+        api_responses: response.apiResponses,
+        enrichment_sources: response.sources,
+        // Meta
+        user_id: null,
+        created_at: response.createdAt,
+        completed_at: response.status === "COMPLETED" ? response.createdAt : null,
     };
 }

@@ -2,6 +2,7 @@
  * VALO-SYNDIC — Audit Flash Types
  * ================================
  * Types stricts pour le module Audit Flash.
+ * ALIGNES 1:1 avec les colonnes SQL de reset_and_init.sql.
  *
  * DOCTRINE:
  * - Chaque Golden Data porte sa source (api | manual | estimated | fallback)
@@ -16,38 +17,34 @@ import type { EnrichmentSource } from "@/lib/api/types";
 // 1. ENUMS & LITERALS
 // =============================================================================
 
-/** Statut du pipeline Audit Flash */
+/** Statut du pipeline — SQL: audit_flash_status ENUM */
 export type AuditFlashStatus = "DRAFT" | "READY" | "COMPLETED";
 
-/** Origine d'une donnee: prouvee ou declaree */
+/** Origine d'une donnee — SQL: data_origin ENUM */
 export type DataOrigin = "api" | "manual" | "estimated" | "fallback";
 
 // =============================================================================
 // 2. GOLDEN DATA — La donnee sourcee
 // =============================================================================
 
-/** Une donnee accompagnee de sa provenance */
+/** Une donnee accompagnee de sa provenance (mappe vers les colonnes _origin/_source/_confidence) */
 export interface SourcedData<T> {
     value: T | null;
     origin: DataOrigin | null;
-    source: string | null;        // Ex: "API Cadastre IGN", "Saisie manuelle"
-    confidence: number | null;    // 0.0 a 1.0
+    source: string | null;
+    confidence: number | null;
 }
 
 /** Les 4 Golden Datas requises pour un Audit Flash */
 export interface GoldenData {
-    /** Surface habitable en m2 */
     surfaceHabitable: SourcedData<number>;
-    /** Annee de construction */
     constructionYear: SourcedData<number>;
-    /** Classe DPE actuelle (A-G) */
     dpe: SourcedData<DPELetter> & {
         numeroDpe?: string;
         dateEtablissement?: string;
-        consommation?: number;        // kWh/m2/an
-        ges?: string;                 // Classe GES
+        consommation?: number;
+        ges?: string;
     };
-    /** Prix au m2 du quartier */
     pricePerSqm: SourcedData<number> & {
         transactionCount?: number;
         dateRange?: { from: string; to: string };
@@ -55,82 +52,55 @@ export interface GoldenData {
 }
 
 // =============================================================================
-// 3. INPUT / OUTPUT du endpoint POST /api/audit/init
+// 3. INPUT / OUTPUT
 // =============================================================================
 
-/** Requete d'initialisation d'un Audit Flash */
 export interface AuditFlashInitRequest {
-    /** L'adresse brute (seul input obligatoire) */
     address: string;
-    /** Nombre de lots (optionnel, enrichi via RNIC) */
     numberOfUnits?: number;
-    /** DPE cible (defaut: C) */
     targetDPE?: DPELetter;
 }
 
 /** Reponse du endpoint /api/audit/init */
 export interface AuditFlashInitResponse {
-    /** ID unique de l'audit */
     auditId: string;
-    /** Statut du pipeline */
     status: AuditFlashStatus;
-    /** Adresse normalisee par BAN */
     normalizedAddress: string | null;
-    /** Coordonnees GPS */
     coordinates: { latitude: number; longitude: number } | null;
-    /** Code postal */
     postalCode: string | null;
-    /** Ville */
     city: string | null;
-    /** Code INSEE */
     cityCode: string | null;
-    /** Les 4 Golden Datas (avec indicateur sourcee/manquante) */
     goldenData: GoldenData;
-    /** Champs manquants (si status = DRAFT) */
     missingFields: MissingField[];
-    /** Donnees complementaires recuperees */
     enrichment: AuditEnrichment;
-    /** Resultat du calcul ValoSyndic (si status = READY ou COMPLETED) */
     computation: AuditComputation | null;
-    /** Sources des donnees */
     sources: EnrichmentSource[];
-    /** Timestamp */
+    apiResponses: Record<string, APIHuntResult>;
     createdAt: string;
 }
 
-/** Description d'un champ manquant (Plan B) */
 export interface MissingField {
-    /** Nom du champ */
     field: "surface_habitable" | "construction_year" | "dpe_current" | "price_per_sqm";
-    /** Label humain */
     label: string;
-    /** Pourquoi il manque */
     reason: string;
-    /** Type d'input attendu pour la saisie manuelle */
     inputType: "number" | "select" | "text";
-    /** Placeholder/hint */
     placeholder?: string;
-    /** Options (pour select) */
     options?: string[];
 }
 
 // =============================================================================
-// 4. ENRICHMENT — Donnees complementaires
+// 4. ENRICHMENT
 // =============================================================================
 
 export interface AuditEnrichment {
-    /** Reference cadastrale */
     cadastreParcelId: string | null;
-    /** Surface terrain (cadastre) */
     cadastreSurfaceTerrain: number | null;
-    /** Nombre de lots (RNIC) */
     numberOfUnits: number | null;
-    /** Type de chauffage */
     heatingSystem: string | null;
 }
 
 // =============================================================================
-// 5. COMPUTATION — Resultat du moteur ValoSyndic
+// 5. COMPUTATION — Mappe vers la colonne JSONB "computation" en SQL
 // =============================================================================
 
 export interface AuditComputation {
@@ -167,13 +137,11 @@ export interface AuditComputation {
 }
 
 // =============================================================================
-// 6. REQUEST pour completer les donnees manquantes (Plan B - Step 2)
+// 6. COMPLETE REQUEST (Plan B Step 2)
 // =============================================================================
 
-/** Requete de completion manuelle */
 export interface AuditFlashCompleteRequest {
     auditId: string;
-    /** Donnees fournies manuellement */
     manualData: {
         surfaceHabitable?: number;
         constructionYear?: number;
@@ -181,13 +149,13 @@ export interface AuditFlashCompleteRequest {
         pricePerSqm?: number;
         numberOfUnits?: number;
     };
+    targetDPE?: DPELetter;
 }
 
 // =============================================================================
-// 7. API HUNT RESULTS — Resultats bruts de la chasse aux donnees
+// 7. API HUNT RESULTS
 // =============================================================================
 
-/** Resultat d'un tir API individuel */
 export interface APIHuntResult {
     source: string;
     status: "success" | "partial" | "error" | "timeout";
@@ -197,11 +165,51 @@ export interface APIHuntResult {
     error?: string;
 }
 
-/** Resultat global de la chasse (tir de barrage) */
-export interface HuntResults {
-    ban: APIHuntResult;
-    cadastre: APIHuntResult;
-    dvf: APIHuntResult;
-    ademe: APIHuntResult;
-    rnic: APIHuntResult;
+// =============================================================================
+// 8. ROW SUPABASE — Mappe 1:1 avec la table audits_flash
+// =============================================================================
+
+export interface AuditFlashRow {
+    id: string;
+    raw_address: string;
+    normalized_address: string | null;
+    postal_code: string | null;
+    city: string | null;
+    city_code: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    status: AuditFlashStatus;
+    missing_fields: string[];
+    surface_habitable: number | null;
+    surface_origin: DataOrigin | null;
+    surface_source: string | null;
+    surface_confidence: number | null;
+    construction_year: number | null;
+    construction_year_origin: DataOrigin | null;
+    construction_year_source: string | null;
+    construction_year_confidence: number | null;
+    dpe_current: string | null;
+    dpe_origin: DataOrigin | null;
+    dpe_source: string | null;
+    dpe_numero: string | null;
+    dpe_date: string | null;
+    dpe_conso: number | null;
+    dpe_ges: string | null;
+    price_per_sqm: number | null;
+    price_origin: DataOrigin | null;
+    price_source: string | null;
+    price_transaction_count: number | null;
+    price_date_range: { from: string; to: string } | null;
+    number_of_units: number | null;
+    heating_system: string | null;
+    cadastre_parcel_id: string | null;
+    cadastre_surface_terrain: number | null;
+    target_dpe: string;
+    computation: AuditComputation | null;
+    api_responses: Record<string, APIHuntResult>;
+    enrichment_sources: EnrichmentSource[];
+    user_id: string | null;
+    created_at: string;
+    updated_at: string;
+    completed_at: string | null;
 }
