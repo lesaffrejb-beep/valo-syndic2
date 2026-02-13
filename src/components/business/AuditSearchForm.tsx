@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { AddressSearch } from "@/components/onboarding/AddressSearch";
@@ -24,7 +23,7 @@ export function AuditSearchForm({
 
     const handleSelect = async (result: HybridSearchResult) => {
         form.setSearchQuerySilent(result.address);
-        form.selectAddress(result); // Trigger internal form state update if needed for reuse
+        form.selectAddress(result);
         onAuditInit(result.address, result);
     };
 
@@ -34,30 +33,15 @@ export function AuditSearchForm({
     };
 
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
-            className={`w-full max-w-3xl mx-auto ${className}`}
-        >
+        <div className={`w-full max-w-3xl mx-auto ${className}`}>
             <div className="text-center mb-8">
-                <motion.h1
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.1 }}
-                    className="text-3xl md:text-5xl font-bold text-white tracking-tight mb-4 leading-tight"
-                >
+                <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight mb-4 leading-tight">
                     <span className="block text-gold mb-2">Audit Flash.</span>
                     L&apos;expertise instantanée.
-                </motion.h1>
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-muted text-lg max-w-xl mx-auto"
-                >
+                </h1>
+                <p className="text-muted text-lg max-w-xl mx-auto">
                     Entrez l&apos;adresse de la copropriété pour obtenir une analyse financière et énergétique immédiate.
-                </motion.p>
+                </p>
             </div>
 
             <div className="relative">
@@ -74,9 +58,9 @@ export function AuditSearchForm({
                 <AnimatePresence>
                     {isLoading && (
                         <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 10 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
                             className="absolute top-full left-0 right-0 mt-4 flex items-center justify-center gap-3 text-gold"
                         >
                             <Loader2 className="w-5 h-5 animate-spin" />
@@ -85,6 +69,6 @@ export function AuditSearchForm({
                     )}
                 </AnimatePresence>
             </div>
-        </motion.div>
+        </div>
     );
 }

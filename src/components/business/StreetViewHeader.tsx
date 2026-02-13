@@ -80,7 +80,7 @@ export const StreetViewHeader = ({ address, coordinates }: StreetViewHeaderProps
 
             {/* Loading state */}
             {!imageLoaded && !imageError && (
-                <div className="absolute inset-0 bg-gradient-to-br from-deep/30 via-deep-light/20 to-deep/30 animate-pulse" />
+                <div className="absolute inset-0 bg-gradient-to-br from-deep/30 via-deep-light/20 to-deep/30" />
             )}
 
             {/* Subtle vignette for depth (less dark to brighten the view) */}

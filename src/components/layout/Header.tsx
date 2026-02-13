@@ -60,9 +60,9 @@ export function Header({
 
     return (
         <motion.header
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             className="fixed top-0 left-0 right-0 z-[60] print:hidden"
         >
             {/* Premium Glassmorphism Layer */}
