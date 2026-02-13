@@ -57,8 +57,8 @@ import { CsvImportModal } from '@/components/onboarding';
 // =============================================================================
 
 const slideUp = {
-    hidden: { opacity: 0, y: 40 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" as const } }
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 0.6, ease: "easeOut" as const } }
 };
 
 const Section = ({ children, className = "", id }: { children: React.ReactNode; className?: string; id?: string }) => (
@@ -404,9 +404,9 @@ export default function ScrollytellingPage() {
                 <AnimatePresence>
                     {auditStatus === 'form_open' && prefillData && (
                         <motion.div
-                            initial={{ opacity: 0, height: 0, y: -20 }}
-                            animate={{ opacity: 1, height: 'auto', y: 0 }}
-                            exit={{ opacity: 0, height: 0, y: -20 }}
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
                             className="relative z-20 w-full max-w-3xl mx-auto mt-8 overflow-hidden"
                         >
