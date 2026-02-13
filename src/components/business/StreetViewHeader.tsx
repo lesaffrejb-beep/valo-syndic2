@@ -65,7 +65,7 @@ export const StreetViewHeader = ({ address, coordinates }: StreetViewHeaderProps
             <img
                 src={streetViewUrl || osmUrl || undefined}
                 alt={`Façade - ${address}`}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 scale-105 ${imageLoaded ? 'opacity-70' : 'opacity-0'} `}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${imageLoaded ? 'opacity-70' : 'opacity-0'}`}
                 onLoad={() => setImageLoaded(true)}
                 onError={() => {
                     // If Street View failed, mark error so OSM fallback is used
