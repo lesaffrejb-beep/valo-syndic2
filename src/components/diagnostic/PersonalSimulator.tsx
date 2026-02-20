@@ -42,11 +42,15 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
         const monthlySavings = financing.monthlyEnergySavings * ratio;
         const netCashflow = financing.netMonthlyCashFlow * ratio;
 
-        // Déficit Foncier : assiette = RAC comptant (cash réellement décaissé)
-        // Ne s'active qu'en régime Réel (Art. 156 CGI).
-        const deficitFoncier = fiscalRegime === "reel"
-            ? cashDown * (tmi + PS)
-            : 0;
+        // FIX AUDIT FEV 2026 : Déficit Foncier — CGI Art. 31 & 156
+        // L'assiette déductible = montant total des travaux payés à l'entreprise,
+        // QUELLE QUE SOIT l'origine des fonds (emprunt Éco-PTZ ou cash).
+        // L'erreur précédente limitait à cashDown uniquement, pénalisant à tort
+        // les investisseurs emprunteurs et incitant au paiement comptant. (Défaut de conseil)
+        // Assiette retenue : RAC brut (quote-part travaux nets de subventions),
+        // emprunt inclus. Déduction reportable 10 ans (Art. 156 I-3° CGI).
+        const assietteDeficitFoncier = fiscalRegime === "reel" ? racBrut : 0;
+        const deficitFoncier = assietteDeficitFoncier * (tmi + PS);
 
         return {
             ratio,

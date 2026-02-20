@@ -13,10 +13,12 @@
 
 import { useDiagnosticStore } from "@/stores/useDiagnosticStore";
 import { formatCurrency } from "@/lib/calculator";
-import { FileText, AlertTriangle } from "lucide-react";
+import { FileText, AlertTriangle, ShieldCheck, Sparkles, Scale } from "lucide-react";
 import PersonalSimulator from "@/components/diagnostic/PersonalSimulator";
 import PDFDownloadButton from "@/components/pdf/PDFDownloadButton";
 import DiagnosticPDF from "@/components/pdf/DiagnosticPDF";
+import { useState } from "react";
+import LegalNoticeModal from "@/components/ui/LegalNoticeModal";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -154,6 +156,11 @@ function KpiCard({
 export default function DiagnosticResults() {
     const { result } = useDiagnosticStore();
 
+    // FIX AUDIT FEV 2026 : Toggle Plan Sécurisé / Plan Optimisé (MPR suspendue LFI 2026)
+    // Défaut sur Plan Sécurisé pour éviter toute promesse commerciale trompeuse.
+    const [securePlan, setSecurePlan] = useState(true);
+    const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
+
     // ── Empty State ──────────────────────────────────────────
     if (!result) {
         return (
@@ -270,6 +277,40 @@ export default function DiagnosticResults() {
                 {/* ══ BLOC B : Plan de Financement & Trésorerie ═══════════════════ */}
                 <SectionHeader accent="bg-brass" title="Bloc B — Plan de Financement &amp; Trésorerie" />
 
+                {/* FIX AUDIT FEV 2026 : Toggle Plan Sécurisé / Plan Optimisé
+                    Plan Sécurisé (défaut) = CEE + AMO uniquement (aides certaines, MPR masquée).
+                    Plan Optimisé = MPR incluse avec mention réglementaire obligatoire. */}
+                <div className="flex items-center gap-2 mb-3 rounded-md border border-border bg-slate-50/60 p-2">
+                    <button
+                        type="button"
+                        onClick={() => setSecurePlan(true)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded transition-colors duration-150 ${securePlan
+                            ? "bg-navy text-white shadow-sm"
+                            : "text-slate hover:bg-white"
+                            }`}
+                    >
+                        <ShieldCheck className="w-3 h-3" />
+                        Plan Sécurisé
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setSecurePlan(false)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded transition-colors duration-150 ${!securePlan
+                            ? "bg-brass-dark text-white shadow-sm"
+                            : "text-slate hover:bg-white"
+                            }`}
+                    >
+                        <Sparkles className="w-3 h-3" />
+                        Plan Optimisé
+                    </button>
+                    <span className="text-[9px] text-subtle ml-1">
+                        {securePlan
+                            ? "CEE + AMO uniquement (aides garanties)"
+                            : "Inclut MPR — sous réserve décrets LFI 2026"
+                        }
+                    </span>
+                </div>
+
                 <div className="space-y-0.5 rounded-lg border border-border overflow-hidden mb-2">
 
                     {/* Appel de fonds initial */}
@@ -282,13 +323,16 @@ export default function DiagnosticResults() {
                     <div className="h-1" />
 
                     {/* Aides */}
-                    <LedgerRow
-                        label="MaPrimeRénov' Copropriété"
-                        amount={financing.mprAmount}
-                        variant="subtotal-aid"
-                        tag={mprRateLabel}
-                        alertBadge="Aide conditionnelle — En attente LFI 2026"
-                    />
+                    {/* MaPrimeRénov' — conditionné au Plan Optimisé */}
+                    {!securePlan && (
+                        <LedgerRow
+                            label="MaPrimeRénov\u2019 Copropriété"
+                            amount={financing.mprAmount}
+                            variant="subtotal-aid"
+                            tag={mprRateLabel}
+                            alertBadge="Sous réserve décrets LFI 2026"
+                        />
+                    )}
                     <LedgerRow
                         label="CEE (Certificats d'Économie d'Énergie)"
                         amount={financing.ceeAmount}
@@ -359,6 +403,24 @@ export default function DiagnosticResults() {
                         avant tout engagement.
                     </p>
                 </div>
+
+                {/* ⚠️ AVERTISSEMENT LÉGAL UI */}
+                <div className="mt-4 flex items-start gap-3 rounded-md border border-border bg-slate-50 px-4 py-3">
+                    <Scale className="w-4 h-4 text-slate flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                        <p className="text-[10px] text-slate leading-relaxed">
+                            <strong>Avertissement Légal :</strong> L&apos;« Effort de Trésorerie Mensuel » est une estimation nette intégrant des économies d&apos;énergie théoriques. Il ne reflète pas le montant réel de vos appels de fonds travaux ou de vos mensualités d&apos;emprunt, qui doivent être réglés intégralement à leurs échéances respectives. La responsabilité du syndic ne saurait être engagée en cas de variation des tarifs de l&apos;énergie ou des barèmes de subventions étatiques.
+                        </p>
+                        <button
+                            onClick={() => setIsLegalModalOpen(true)}
+                            className="mt-2 text-[10px] font-semibold text-oxford hover:underline underline-offset-2 transition-all"
+                        >
+                            Lire les mentions légales complètes &amp; RGPD
+                        </button>
+                    </div>
+                </div>
+
+                <LegalNoticeModal isOpen={isLegalModalOpen} onClose={() => setIsLegalModalOpen(false)} />
             </div>
 
             {/* ── Per-Unit Summary ─────────────────────────────── */}

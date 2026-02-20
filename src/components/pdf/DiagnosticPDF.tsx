@@ -556,6 +556,54 @@ export default function DiagnosticPDF({ result }: { result: DiagnosticResult }) 
 
                 <PageFooter />
             </Page>
+
+            {/* ────────────────────────────────────────────────────
+                PAGE 4 — Annexe Juridique
+               ──────────────────────────────────────────────────── */}
+            <Page size="A4" style={s.page}>
+                <View style={s.header}>
+                    <Text style={s.headerLabel}>Annexe : Mentions Légales &amp; RGPD</Text>
+                    <Text style={s.headerDate}>{now}</Text>
+                </View>
+
+                <Text style={s.pageTitle}>Cadre Juridique et Protection des Données</Text>
+                <Text style={s.pageSubtitle}>
+                    Conditions d&apos;utilisation et politique de confidentialité appliquées au 1er février 2026.
+                </Text>
+
+                <Text style={s.sectionTitle}>1. Clause d&apos;exclusion de responsabilité (Disclaimer)</Text>
+
+                <Text style={[s.calloutTitle, { marginTop: 8 }]}>1.1. Nature de l&apos;outil</Text>
+                <Text style={s.calloutText}>
+                    Le simulateur ValoSyndic est un outil d&apos;aide à la décision à caractère prospectif. Les résultats (économies d&apos;énergie, reste à charge, effort de trésorerie) sont des estimations fondées sur les données saisies par l&apos;utilisateur et les barèmes légaux en vigueur au 1er février 2026. Ils ne constituent en aucun cas un engagement contractuel ou une garantie de performance financière.
+                </Text>
+
+                <Text style={[s.calloutTitle, { marginTop: 12 }]}>1.2. Incertitude législative et fiscale</Text>
+                <View style={{ marginLeft: 10, marginTop: 4 }}>
+                    <Text style={s.calloutText}>• <Text style={{ fontFamily: "Helvetica-Bold" }}>Subventions :</Text> Le calcul de MaPrimeRénov&apos; Copropriété est effectué sous réserve de la validation définitive des crédits par la Loi de Finances 2026. Tout changement de réglementation entre la simulation et le dépôt du dossier est opposable au bénéficiaire.</Text>
+                    <Text style={[s.calloutText, { marginTop: 4 }]}>• <Text style={{ fontFamily: "Helvetica-Bold" }}>Fiscalité :</Text> Les projections de déficit foncier (Art. 31 et 156 du CGI) sont indicatives. L&apos;éligibilité réelle des travaux et la validation de la déduction relèvent de la responsabilité exclusive du contribuable face à l&apos;administration fiscale.</Text>
+                </View>
+
+                <Text style={[s.calloutTitle, { marginTop: 12 }]}>1.3. Absence de Dol et Information des Copropriétaires</Text>
+                <Text style={s.calloutText}>
+                    Le présent document ne dispense pas le syndic de présenter en Assemblée Générale les devis définitifs des entreprises ainsi que le contrat de prêt collectif, conformément au Décret n° 67-223 du 17 mars 1967. L&apos;indicateur « Effort de Trésorerie » est une grandeur théorique et n&apos;exonère pas le copropriétaire du paiement intégral des appels de fonds travaux décidés selon les majorités de la Loi du 10 juillet 1965 (Art. 24, 25 ou 26).
+                </Text>
+
+                <Text style={[s.sectionTitle, { marginTop: 24 }]}>2. Protection des Données Personnelles (RGPD)</Text>
+                <Text style={[s.calloutText, { marginBottom: 8 }]}>
+                    Conformément au Règlement Général sur la Protection des Données (RGPD) et à la Loi Informatique et Libertés, le cabinet précise les conditions de traitement des données saisies :
+                </Text>
+
+                <View style={{ marginLeft: 10 }}>
+                    <Text style={s.calloutText}>• <Text style={{ fontFamily: "Helvetica-Bold" }}>Finalité :</Text> Réalisation de la simulation financière de rénovation énergétique.</Text>
+                    <Text style={[s.calloutText, { marginTop: 4 }]}>• <Text style={{ fontFamily: "Helvetica-Bold" }}>Base légale :</Text> Intérêt légitime du syndic dans l&apos;exécution de sa mission de conseil (Loi du 10 juillet 1965).</Text>
+                    <Text style={[s.calloutText, { marginTop: 4 }]}>• <Text style={{ fontFamily: "Helvetica-Bold" }}>Conservation :</Text> En mode Rapport PDF, les données sont conservées uniquement le temps de la génération du document.</Text>
+                    <Text style={[s.calloutText, { marginTop: 4 }]}>• <Text style={{ fontFamily: "Helvetica-Bold" }}>Non-cession :</Text> Aucune donnée financière personnelle n&apos;est cédée à des tiers sans consentement écrit.</Text>
+                    <Text style={[s.calloutText, { marginTop: 4 }]}>• <Text style={{ fontFamily: "Helvetica-Bold" }}>Droits :</Text> Accès, rectification et suppression auprès du DPO (lesaffrejb@gmail.com).</Text>
+                </View>
+
+                <PageFooter />
+            </Page>
         </Document>
     );
 }

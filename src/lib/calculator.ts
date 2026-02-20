@@ -159,7 +159,10 @@ export function simulateFinancing(
     const worksTTC = costHT * (1 + FINANCES_2026.TVA.TRAVAUX);        // 5.5%
     const syndicTTC = syndicFees * (1 + FINANCES_2026.TVA.HONORAIRES); // 20%
     const doTTC = doFees * (1 + FINANCES_2026.TVA.ASSURANCE_DO);   // 9%
-    const contingencyTTC = contingencyFees;                                  // neutre
+    // FIX AUDIT FEV 2026 : TVA latente 5.5% sur aléas — si la provision est consommée pour
+    // des travaux, elle sera taxée (Art. 279-0 bis CGI). Le budget TTC doit intégrer cette
+    // TVA latente pour éviter tout appel de fonds complémentaire en fin de chantier.
+    const contingencyTTC = contingencyFees * (1 + FINANCES_2026.TVA.TRAVAUX);
     const amoTTC = amoCostHT * (1 + FINANCES_2026.TVA.HONORAIRES);  // 20%
     const totalCostTTC = worksTTC + syndicTTC + doTTC + contingencyTTC + amoTTC;
 

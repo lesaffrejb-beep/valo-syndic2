@@ -9,11 +9,14 @@
 
 import { useDiagnosticStore } from "@/stores/useDiagnosticStore";
 import { formatCurrency } from "@/lib/calculator";
-import { FileText } from "lucide-react";
+import { FileText, AlertTriangle } from "lucide-react";
 import ObjectionHandler from "@/components/diagnostic/ObjectionHandler";
+import LegalNoticeModal from "@/components/ui/LegalNoticeModal";
+import { useState } from "react";
 
 export default function PresentationView() {
     const { result } = useDiagnosticStore();
+    const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
 
     // ── Empty State ──────────────────────────────────────────
     if (!result) {
@@ -30,10 +33,12 @@ export default function PresentationView() {
     const { input, compliance, financing, valuation } = result;
     const numberOfUnits = input.numberOfUnits;
 
-    // ── Killer Metric: effort réel par lot/mois ──────────────
+    // ── Killer Metric: effort de trésorerie par lot/mois ────────
+    // FIX AUDIT FEV 2026 : Renommé "Effort Réel" → "Effort de Trésorerie Mensuel Estimé"
+    // pour distinguer flux de trésorerie certain (mensualité) vs estimation théorique (économies).
     const monthlyPerLot = Math.round(financing.monthlyPayment / numberOfUnits);
     const savingsPerLot = Math.round(financing.monthlyEnergySavings / numberOfUnits);
-    const effortReel = monthlyPerLot - savingsPerLot;
+    const effortTresorerie = monthlyPerLot - savingsPerLot;
 
     // Total subsidies
     const totalSubsidies = financing.mprAmount + financing.ceeAmount + financing.localAidAmount + financing.amoAmount;
@@ -85,24 +90,54 @@ export default function PresentationView() {
             {/* ── Hero: The Killer Metric ─────────────────────── */}
             <div className="flex-1 flex flex-col items-center justify-center px-8 py-12 md:py-0">
                 <p className="text-sm md:text-base uppercase tracking-[0.15em] text-slate font-semibold mb-4">
-                    Effort réel par lot et par mois
+                    Effort de Trésorerie Mensuel Estimé
                 </p>
                 <div className="flex items-baseline gap-3">
                     <span className="text-7xl md:text-[8rem] lg:text-[10rem] font-serif font-bold text-oxford leading-none tabular-nums">
-                        {effortReel > 0 ? effortReel : `+${Math.abs(effortReel)}`}
+                        {effortTresorerie > 0 ? effortTresorerie : `+${Math.abs(effortTresorerie)}`}
                     </span>
                     <span className="text-3xl md:text-4xl font-serif text-slate">
                         €<span className="text-xl text-subtle">/mois</span>
                     </span>
                 </div>
                 <p className="text-sm text-subtle mt-4 max-w-md text-center">
-                    Mensualité Éco-PTZ ({monthlyPerLot} €) − Économie énergie ({savingsPerLot} €)
-                    {effortReel <= 0 && (
+                    Mensualité Éco-PTZ ({monthlyPerLot} €) − Éco. énergie est. ({savingsPerLot} €)
+                    {/* FIX AUDIT FEV 2026 : "autofinancée" supprimé si apport comptant > 0
+                        (on ne peut pas qualifier d'autofinancé si un capital initial est requis) */}
+                    {effortTresorerie <= 0 && resteComptant === 0 && (
                         <span className="block text-gain font-semibold mt-1">
-                            L&apos;opération est autofinancée
+                            Mensualité couverte par les économies d&apos;énergie (hors apport initial)
+                        </span>
+                    )}
+                    {effortTresorerie <= 0 && resteComptant > 0 && (
+                        <span className="block text-gain font-semibold mt-1">
+                            Mensualité couverte par les économies d&apos;énergie (hors apport initial de {resteComptant.toLocaleString("fr-FR")} €)
                         </span>
                     )}
                 </p>
+
+                {/* ⚠️ AVERTISSEMENT LÉGAL UI */}
+                <div className="mt-8 max-w-2xl w-full text-left p-4 rounded-lg bg-amber-50/50 border border-amber-200/60">
+                    <div className="flex items-start gap-3">
+                        <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <h4 className="text-[11px] font-bold text-amber-800 uppercase tracking-wide mb-1 flex items-center gap-2">
+                                Avertissement Légal
+                            </h4>
+                            <p className="text-[10px] text-amber-800/90 leading-relaxed text-justify">
+                                L&apos;« Effort de Trésorerie Mensuel » est une estimation nette intégrant des économies d&apos;énergie théoriques. Il ne reflète pas le montant réel de vos appels de fonds travaux ou de vos mensualités d&apos;emprunt, qui doivent être réglés intégralement à leurs échéances respectives. La responsabilité du syndic ne saurait être engagée en cas de variation des tarifs de l&apos;énergie ou des barèmes de subventions étatiques.
+                            </p>
+                            <button
+                                onClick={() => setIsLegalModalOpen(true)}
+                                className="mt-2 text-[10px] font-semibold text-amber-700 hover:text-amber-900 underline underline-offset-2 transition-colors"
+                            >
+                                Lire les mentions légales complètes &amp; RGPD
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <LegalNoticeModal isOpen={isLegalModalOpen} onClose={() => setIsLegalModalOpen(false)} />
             </div>
 
             {/* ── Bottom: Macro Figures ───────────────────────── */}
@@ -113,10 +148,12 @@ export default function PresentationView() {
                         value={formatCurrency(resteComptant)}
                         sublabel="à régler immédiatement"
                     />
+                    {/* FIX AUDIT FEV 2026 : sublabel insiste sur le caractère latent/illiquide
+                        pour distinguer ce gain patrimonial du cash-flow réel. */}
                     <MacroCard
                         label="Gain Valeur Verte"
                         value={`+ ${formatCurrency(valuation.greenValueGain)}`}
-                        sublabel="plus-value patrimoniale"
+                        sublabel="gain patrimonial latent — illiquide"
                         accent="gain"
                     />
                     <MacroCard

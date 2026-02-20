@@ -1,6 +1,6 @@
 
 // Import localized dpeService to test exactly what the app runs
-import { dpeService } from "./src/services/dpeService";
+import { dpeService } from "../src/services/dpeService";
 
 async function run() {
     const query = "60 Rue Jules Guitton";
@@ -9,7 +9,7 @@ async function run() {
     try {
         const results = await dpeService.hybridSearch(query);
         console.log("\n--- Hybrid Search Results ---");
-        results.forEach(r => {
+        results.forEach((r) => {
             console.log(`Address: ${r.address}`);
             console.log(`Postal Code: ${r.postalCode}`);
             console.log(`City: ${r.city}`);
