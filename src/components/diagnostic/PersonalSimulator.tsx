@@ -300,7 +300,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                         <div className="flex items-start sm:items-center justify-between gap-4 flex-col sm:flex-row">
                             <p className="text-[10px] text-slate leading-relaxed max-w-md">
                                 Déduction estimée sur vos revenus fonciers ({Math.round(tmi * 100)}% TMI + 17,2% PS = {((tmi + PS) * 100).toFixed(1)}%).
-                                Assiette : RAC comptant uniquement (Art. 156 CGI). Reportable sur 10 ans.
+                                Assiette : RAC brut — quote-part travaux nets de subventions, emprunt inclus (Art. 156 CGI). Reportable sur 10 ans.
                             </p>
                             <span className="text-2xl font-serif font-bold text-brass-dark tabular-nums whitespace-nowrap">
                                 − {formatCurrency(personal.deficitFoncier)}

@@ -196,7 +196,20 @@ export function calculateProjectMetrics(
             : FINANCES_2026.LOAN.ECO_PTZ_MAX_PER_LOT_STANDARD;
     const ecoPtzCapTotal = ecoPtzCapPerLot * lots;
 
-    // Assiette éligible Éco-PTZ en TTC (à 5.5% sur travaux + AMO nette)
+    // Assiette éligible Éco-PTZ (CGI Art. 244 quater U)
+    // FORMULE CORRECTE : eligibleTTC − (mprAmount + ceeAmount)
+    //
+    // Raisonnement financier :
+    //   1. L'artisan facture la TVA (5,5%) sur la TOTALITÉ des travaux HT — sans exception.
+    //      Facture TTC = ecoPtzEligibleHT × 1,055
+    //   2. Les subventions (MPR, CEE) sont versées à la copropriété sous forme de chèques
+    //      en euros nets. Ce sont des flux de trésorerie, pas des "montants HT".
+    //   3. La copropriété utilise ces chèques pour payer une partie de la facture TTC.
+    //      Reste à financer par Éco-PTZ = Facture TTC − Chèques reçus
+    //      = eligibleTTC − (mprAmount + ceeAmount)
+    //
+    // La formule (eligibleHT − subsidies) × 1,055 serait fausse : elle "défiscalise"
+    // la part couverte par les aides, alors que l'artisan a toujours facturé la TVA dessus.
     const eligibleTTC = normalizePositiveNumber(ecoPtzEligibleHT, "Assiette Éco-PTZ", alerts) * (1 + FINANCES_2026.TVA.TRAVAUX);
     const racEligible = Math.max(0, Math.min(initialRac, eligibleTTC - (mprAmount + ceeAmount)));
 

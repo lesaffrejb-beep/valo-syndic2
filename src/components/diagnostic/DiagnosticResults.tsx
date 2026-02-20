@@ -66,7 +66,7 @@ function LedgerRow({
 }: {
     label: string;
     amount: number;
-    variant?: "default" | "subtotal-cost" | "subtotal-aid" | "final" | "call";
+    variant?: "default" | "subtotal-cost" | "subtotal-aid" | "loan" | "final" | "call";
     tag?: string;
     /** Badge d'alerte réglementaire (ex : suspension LFI 2026) */
     alertBadge?: string;
@@ -77,6 +77,7 @@ function LedgerRow({
         default: "py-2.5",
         "subtotal-cost": "py-3 bg-slate-50/80 font-semibold border-t border-border",
         "subtotal-aid": "py-3 bg-gain-light/40 font-semibold border-t border-border",
+        loan: "py-3 bg-info-light/25 font-semibold border-t border-border",
         call: "py-3 bg-navy/5 font-semibold border-t border-border",
         final: "py-4 bg-brass-muted border-t-2 border-brass/30 font-bold",
     };
@@ -85,6 +86,7 @@ function LedgerRow({
         default: "text-sm text-slate",
         "subtotal-cost": "text-sm text-oxford",
         "subtotal-aid": "text-sm text-gain",
+        loan: "text-sm text-info",
         call: "text-sm text-navy",
         final: "text-base font-serif text-oxford",
     };
@@ -93,11 +95,12 @@ function LedgerRow({
         default: "text-sm text-oxford tabular-nums",
         "subtotal-cost": "text-sm text-oxford tabular-nums font-semibold",
         "subtotal-aid": "text-sm text-gain tabular-nums font-semibold",
+        loan: "text-sm text-info tabular-nums font-semibold",
         call: "text-sm text-navy tabular-nums font-semibold",
         final: "text-lg font-serif text-oxford tabular-nums font-bold",
     };
 
-    const isAid = variant === "subtotal-aid";
+    const isDeduction = variant === "subtotal-aid" || variant === "loan";
 
     return (
         <div>
@@ -112,7 +115,7 @@ function LedgerRow({
                     {alertBadge && <AlertBadge label={alertBadge} />}
                 </div>
                 <span className={`${amountStyles[variant]} ml-3 flex-shrink-0`}>
-                    {isAid ? `− ${formatCurrency(Math.abs(amount))}` : formatCurrency(amount)}
+                    {isDeduction ? `− ${formatCurrency(Math.abs(amount))}` : formatCurrency(amount)}
                 </span>
             </div>
             {subNote && (
@@ -136,7 +139,7 @@ function KpiCard({
     const accentStyles: Record<string, string> = {
         default: "text-oxford",
         positive: "text-gain",
-        negative: "text-slate",
+        negative: "text-cost",
     };
     return (
         <div className="flex flex-col items-center justify-center p-4 rounded-card border border-border bg-white text-center">
@@ -193,7 +196,7 @@ export default function DiagnosticResults() {
 
     // Total aids sum
     const totalAids =
-        financing.mprAmount +
+        (securePlan ? 0 : financing.mprAmount) +
         financing.amoAmount +
         financing.ceeAmount +
         financing.localAidAmount;
@@ -284,6 +287,7 @@ export default function DiagnosticResults() {
                     <button
                         type="button"
                         onClick={() => setSecurePlan(true)}
+                        aria-pressed={securePlan}
                         className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded transition-colors duration-150 ${securePlan
                             ? "bg-navy text-white shadow-sm"
                             : "text-slate hover:bg-white"
@@ -295,6 +299,7 @@ export default function DiagnosticResults() {
                     <button
                         type="button"
                         onClick={() => setSecurePlan(false)}
+                        aria-pressed={!securePlan}
                         className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded transition-colors duration-150 ${!securePlan
                             ? "bg-brass-dark text-white shadow-sm"
                             : "text-slate hover:bg-white"
@@ -345,7 +350,7 @@ export default function DiagnosticResults() {
                         amount={financing.amoAmount}
                         variant="subtotal-aid"
                     />
-                    {(financing.localAidAmount > 0 || true) && (
+                    {financing.localAidAmount > 0 && (
                         <LedgerRow
                             label="Mieux chez moi (Angers Loire Métropole)"
                             amount={financing.localAidAmount}
@@ -367,8 +372,8 @@ export default function DiagnosticResults() {
                     <LedgerRow
                         label="Éco-PTZ Copropriété (Vote Art. 25)"
                         amount={financing.ecoPtzAmount}
-                        variant="subtotal-aid"
-                        subNote="Inclut provision 2,5% pour frais de garantie SACICAP et assurance emprunteur. Plafonné à 50 000 € / lot — Rénovation globale."
+                        variant="loan"
+                        subNote="Prêt à taux zéro — remboursé en 240 mensualités. Inclut provision 2,5% frais de garantie SACICAP. Plafonné à 50 000 € / lot — Rénovation globale."
                     />
 
                     <div className="h-2" />
@@ -436,7 +441,9 @@ export default function DiagnosticResults() {
                     </div>
                     <div className="grid grid-cols-2 gap-x-6 gap-y-1">
                         <Row label="Coût TTC / lot" value={formatCurrency(perUnit.coutParLotTTC)} />
-                        <Row label="MPR / lot" value={`− ${formatCurrency(perUnit.mprParLot)}`} green />
+                        {!securePlan && (
+                            <Row label="MPR / lot" value={`− ${formatCurrency(perUnit.mprParLot)}`} green />
+                        )}
                         <Row label="CEE / lot" value={`− ${formatCurrency(perUnit.ceeParLot)}`} green />
                         <Row label="Éco-PTZ / lot" value={formatCurrency(perUnit.ecoPtzParLot)} />
                         <Row label="RAC comptant / lot" value={formatCurrency(perUnit.racComptantParLot)} bold />
