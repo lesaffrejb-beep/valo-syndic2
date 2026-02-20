@@ -136,25 +136,33 @@ export function simulateFinancing(
         throw new Error("Le coût HT doit être supérieur à 0");
     }
 
-    // 1. Calcul des Coûts (HT et TTC)
+    // ==========================================================
+    // 1. TICKET DE CAISSE HT — Lignes séparées (pas d'addition aveugle)
+    // ==========================================================
+    //
+    // - Travaux énergétiques    : TVA 5.5% (Art. 279-0 bis)
+    // - Honoraires Syndic       : TVA 20%  (régime normal)
+    // - Assurance DO            : Taxe conv. assurance 9% (Art. 991 CGI)
+    // - Provision Aléas        : NEUTRE — provision HT, pas de TVA
+    // - AMO (Ingénierie)       : TVA 20%  (régime normal)
 
-    // a. Coûts Travaux + Frais proportionnels
-    const syndicFees = costHT * PROJECT_FEES.syndicRate;
-    const doFees = costHT * PROJECT_FEES.doRate;
-    const contingencyFees = costHT * PROJECT_FEES.contingencyRate;
+    const syndicFees = costHT * PROJECT_FEES.syndicRate;       // HT
+    const doFees = costHT * PROJECT_FEES.doRate;           // HT assiette
+    const contingencyFees = costHT * PROJECT_FEES.contingencyRate;  // provision HT
 
-    // Sous-total Travaux + Frais (Assiette MPR)
-    const subtotalWorksFeesHT = costHT + syndicFees + doFees + contingencyFees;
-
-    // b. Coût AMO (Assistance à Maîtrise d'Ouvrage) - Forfaitaire par lot
+    // b. AMO (Assistance à Maîtrise d'Ouvrage) — Forfaitaire par lot
     const amoCostHT = AMO_PARAMS.costPerLot * nbLots;
 
-    // c. Coût Total Projet HT
-    const totalCostHT = subtotalWorksFeesHT + amoCostHT;
+    // F1 — totalCostHT = addition exacte des lignes HT (avant TVA)
+    const totalCostHT = costHT + syndicFees + doFees + contingencyFees + amoCostHT;
 
-    // d. Coût Total Projet TTC (TVA 5.5% Rénovation)
-    // C'est ce montant que la copropriété doit réellement financer
-    const totalCostTTC = totalCostHT * (1 + TECHNICAL_PARAMS.TVA_RENOVATION);
+    // F2 — TTC ligne par ligne (pas de multiplicateur global 5.5%)
+    const worksTTC = costHT * (1 + FINANCES_2026.TVA.TRAVAUX);        // 5.5%
+    const syndicTTC = syndicFees * (1 + FINANCES_2026.TVA.HONORAIRES); // 20%
+    const doTTC = doFees * (1 + FINANCES_2026.TVA.ASSURANCE_DO);   // 9%
+    const contingencyTTC = contingencyFees;                                  // neutre
+    const amoTTC = amoCostHT * (1 + FINANCES_2026.TVA.HONORAIRES);  // 20%
+    const totalCostTTC = worksTTC + syndicTTC + doTTC + contingencyTTC + amoTTC;
 
     // Coût par lot (TTC)
     const costPerUnit = totalCostTTC / nbLots;
@@ -162,73 +170,123 @@ export function simulateFinancing(
     // Gain énergétique estimé
     const energyGainPercent = estimateEnergyGain(currentDPE, targetDPE);
 
-    // --- Aide AMO (Aide Ingénierie) ---
-    // Correction suite audit 30/01 : Distinction Petites/Grandes Copros
+    // ==========================================================
+    // 2. AMO : subvention 50% — Faille 3
+    // ==========================================================
+    // L'ANAH subventionne 50% de la prestation AMO, plafonnée.
+    // Le reste (amoNetCostHT) reste à la charge de la copropriété.
     const AMO_CEILING_SMALL = 1000; // ≤ 20 lots
     const AMO_CEILING_LARGE = 600;  // > 20 lots
-
-    // 1. Déterminer le plafond par lot applicable
     const amoCeilingPerLot = nbLots <= 20 ? AMO_CEILING_SMALL : AMO_CEILING_LARGE;
-
-    // 2. Plafond global AMO (ex: 8 lots * 1000€ = 8000€)
     const amoCeilingGlobal = nbLots * amoCeilingPerLot;
+    const eligibleBaseAMO = Math.min(amoCostHT, amoCeilingGlobal);
+    const amoSubvention = Math.max(eligibleBaseAMO * AMO_PARAMS.aidRate, AMO_PARAMS.minTotal);
+    const amoNetCostHT = Math.max(0, amoCostHT - amoSubvention);  // Restant finançable
+    const amoAmount = amoSubvention; // Alias pour la sortie (subvention, pas le coût)
 
-    // 3. Assiette éligible (Le coût réel de l'AMO, plafonné)
-    // Note: On suppose ici que AMO_PARAMS.costPerLot est le coût facturé
-    const amoCostEstimated = nbLots * AMO_PARAMS.costPerLot;
-    const eligibleBaseAMO = Math.min(amoCostEstimated, amoCeilingGlobal);
-
-    // 4. Calcul de l'aide (50% du montant éligible, avec plancher 3000€)
-    const amoAmountRaw = eligibleBaseAMO * AMO_PARAMS.aidRate;
-    const amoAmount = Math.max(amoAmountRaw, AMO_PARAMS.minTotal);
-
-    // --- Calcul strict via financialUtils (MPR/CEE/RAC/Éco-PTZ) ---
+    // ==========================================================
+    // 3. MPR + BONUS SORTIE PASSOIRE — Faille 5
+    // ==========================================================
     const residentialLots = Math.max(0, nbLots - commercialLots);
     const surfaceForMetrics = totalSurface ?? 0;
     const pricePerSqmForMetrics = averagePricePerSqm ?? VALUATION_PARAMS.BASE_PRICE_PER_SQM;
-    const extraSubsidies = amoAmount + localAidAmount;
 
-    // NOTE: ceeBonus volontairement ignoré (calcul strict via CEE conservateur)
+    // Le taux MPR de base
+    let baseMprRate = 0;
+    if (energyGainPercent >= FINANCES_2026.MPR.MIN_ENERGY_GAIN) {
+        baseMprRate = energyGainPercent >= FINANCES_2026.MPR.HIGH_PERF_THRESHOLD
+            ? FINANCES_2026.MPR.RATE_HIGH_PERF
+            : FINANCES_2026.MPR.RATE_STANDARD;
+    }
+
+    // Bonus "Sortie de Passoire" (F5) : F ou G → D ou mieux
+    const PASSOIRE_DEPARTS = ['F', 'G'] as const;
+    const PASSOIRE_CIBLES = ['A', 'B', 'C', 'D'] as const;
+    const isExitPassoire = PASSOIRE_DEPARTS.includes(currentDPE as 'F' | 'G') &&
+        PASSOIRE_CIBLES.includes(targetDPE as 'A' | 'B' | 'C' | 'D');
+    const bonusPassoire = isExitPassoire ? FINANCES_2026.MPR.BONUS_SORTIE_PASSOIRE : 0;
+    const mprRate = baseMprRate + bonusPassoire;
+    const exitPassoireBonus = bonusPassoire;
+
+    // F4 — Assiette Éco-PTZ = travaux éligibles uniquement (CGI Art. 244 quater U)
+    // Inclut : travaux énergétiques HT + AMO nette HT (prîstations d'ingénierie)
+    // Exclut : honoraires syndic, DO, aléas (non finançables)
+    const ecoPtzEligibleHT = costHT + amoNetCostHT;
+
+    // Toutes les aides supplémentaires (hors MPR/CEE = dans le moteur)
+    const extraSubsidies = amoSubvention + localAidAmount;
+
+    // F9 — Fonds Travaux : déduction visible avant prêt
+    const fondsTravauxMobilise = alurFund;
+
     const metrics = calculateProjectMetrics(
-        totalCostTTC,
+        costHT,              // Assiette MPR et CEE
+        totalCostTTC,        // Assiette RAC totale TTC
         residentialLots,
         energyGainPercent,
         currentEnergyBill,
         surfaceForMetrics,
         pricePerSqmForMetrics,
         extraSubsidies,
-        alurFund
+        fondsTravauxMobilise,
+        ecoPtzEligibleHT,    // Assiette Éco-PTZ éligible (Faille 4)
+        mprRate              // Injecte le taux final incluant le bonus passoire (Faille corrigée)
     );
 
-    let mprRate = 0;
-    if (energyGainPercent >= FINANCES_2026.MPR.MIN_ENERGY_GAIN) {
-        mprRate =
-            energyGainPercent >= FINANCES_2026.MPR.HIGH_PERF_THRESHOLD
-                ? FINANCES_2026.MPR.RATE_HIGH_PERF
-                : FINANCES_2026.MPR.RATE_STANDARD;
-    }
+    // ==========================================================
+    // 4. OBJET PAR LOT (AG Slide)
+    // ==========================================================
+    const valeurVerteParLot = Math.round(metrics.kpi.greenValueIncrease / nbLots);
+    const racBrutParLot = Math.round(metrics.financing.initialRac / nbLots);
+    const racComptantParLot = Math.round(metrics.financing.cashDownPayment / nbLots);
+
+    // ==========================================================
+    // 5. DÉFICIT FONCIER — ONE-SHOT Année 1 (Correction Faille CFO)
+    // ==========================================================
+    // Règle CGI Art. 31 & 156 : Le capital emprunté N'EST PAS déductible.
+    // L'assiette déductible = le décaissement réel au comptant (racComptantParLot).
+    // Si c'est financé par prêt à 0%, il n'y a pas de charge foncière déductible additionnelle.
+    const avantagesFiscauxAnnee1 = Math.round(
+        racComptantParLot * FINANCES_2026.DEFICIT_FONCIER.TAUX_EFFECTIF
+    );
+
+    const perUnit = {
+        // Avertissement AG obligatoire : à recalculer selon millièmes du règlement
+        coutParLotTTC: Math.round(totalCostTTC / nbLots),
+        mprParLot: Math.round(metrics.subsidies.mpr / Math.max(1, residentialLots)),
+        ceeParLot: Math.round(metrics.subsidies.cee / Math.max(1, residentialLots)),
+        ecoPtzParLot: Math.round(metrics.financing.loanAmount / nbLots),
+        mensualiteParLot: Math.round(metrics.financing.monthlyLoanPayment / nbLots),
+        cashflowNetParLot: Math.round(metrics.kpi.netMonthlyCashFlow / nbLots),
+        racBrutParLot,
+        racComptantParLot,  // Part appelée immédiatement au comptant
+        avantagesFiscauxAnnee1, // Remplace creditImpotLatentBailleur (Assiette = racComptant)
+        valeurVerteParLot,
+    };
 
     return {
         worksCostHT: Math.round(costHT),
-        totalCostHT: Math.round(totalCostHT), // On garde le HT pour info
-        totalCostTTC: Math.round(totalCostTTC), // Ajout pour le Ticket de Caisse TTC
+        totalCostHT: Math.round(totalCostHT),
+        totalCostTTC: Math.round(totalCostTTC),
         syndicFees: Math.round(syndicFees),
         doFees: Math.round(doFees),
         contingencyFees: Math.round(contingencyFees),
-        costPerUnit: Math.round(costPerUnit), // TTC !
+        costPerUnit: Math.round(costPerUnit),
         energyGainPercent,
         mprAmount: Math.round(metrics.subsidies.mpr),
         amoAmount: Math.round(amoAmount),
         localAidAmount: Math.round(localAidAmount),
         mprRate,
-        exitPassoireBonus: 0,
+        exitPassoireBonus,
         ecoPtzAmount: Math.round(metrics.financing.loanAmount),
         ceeAmount: Math.round(metrics.subsidies.cee),
-        remainingCost: Math.round(Math.max(0, metrics.financing.cashDownPayment)), // TTC
+        remainingCost: Math.round(metrics.financing.initialRac),
         monthlyPayment: Math.round(metrics.financing.monthlyLoanPayment),
         monthlyEnergySavings: Math.round(metrics.kpi.monthlyEnergySavings),
         netMonthlyCashFlow: Math.round(metrics.kpi.netMonthlyCashFlow),
-        remainingCostPerUnit: Math.round(Math.max(0, metrics.financing.cashDownPayment) / nbLots), // TTC
+        remainingCostPerUnit: racBrutParLot,
+        perUnit,
+        alerts: metrics.alerts,
     };
 }
 
@@ -323,33 +381,25 @@ export function calculateValuation(
     // 3. Valeur actuelle (sans surcote DPE)
     const currentValue = totalSurface * BASE_PRICE_PER_SQM;
 
-    // 4. Valeur Verte via moteur strict
-    const residentialLots = Math.max(0, input.numberOfUnits - (input.commercialLots || 0));
-    const extraSubsidies = (input.localAidAmount || 0) + financing.amoAmount;
-    const cashContribution = input.alurFund || 0;
-    const energyGainPercent = financing.energyGainPercent;
+    // 4. Valeur Verte via moteur en cascade
+    const DPE_INDEX: Record<string, number> = { A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7 };
+    const currentIndex = DPE_INDEX[input.currentDPE] || 7;
+    const targetIndex = DPE_INDEX[input.targetDPE] || 3;
+    const jumps = Math.max(0, currentIndex - targetIndex);
+    const CASCADE_RATE_PER_JUMP = 0.05;
 
-    const strictMetrics = calculateProjectMetrics(
-        financing.totalCostTTC,
-        residentialLots,
-        energyGainPercent,
-        input.currentEnergyBill || 0,
-        totalSurface,
-        BASE_PRICE_PER_SQM,
-        extraSubsidies,
-        cashContribution
-    );
-
-    const greenValueGain = strictMetrics.kpi.greenValueIncrease;
+    const greenValueGainPercent = jumps * CASCADE_RATE_PER_JUMP;
+    const greenValueGain = currentValue * greenValueGainPercent;
     const projectedValue = currentValue + greenValueGain;
-    const greenValueGainPercent = currentValue > 0 ? (greenValueGain / currentValue) : 0;
 
     // 5. Tendance marché (info)
     const marketTrend = getMarketTrend();
     const marketTrendApplied = marketTrend.national; // Ex: -0.004 = -0.4%
 
-    // 6. ROI Net
-    const netROI = greenValueGain - financing.remainingCost;
+    // 6. ROI Net (Gain de valeur verte - Coût réel supporté par les copropriétaires)
+    // Le coût réel inclut le prêt contracté (avec ses frais de garantie) et l'éventuel RAC immédiat
+    const realCost = financing.ecoPtzAmount + financing.remainingCost;
+    const netROI = greenValueGain - realCost;
 
     // Détection fossile
     const isFossilFuel = input.heatingSystem

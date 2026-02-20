@@ -386,7 +386,8 @@ describe('Règles Critiques MPR Copro 2026 — Blindage Mathématique', () => {
 
         test('mensualité stricte pour ~178k€ sur 20 ans (~744€/mois)', () => {
             const metrics = calculateProjectMetrics(
-                378_723, // montant total projet calibré pour ~178k€ de prêt
+                378_723, // costHT
+                378_723, // totalCostTTC
                 10,
                 0.50,
                 0,

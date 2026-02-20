@@ -139,6 +139,42 @@ export const ComplianceStatusSchema = z.object({
 
 export type ComplianceStatus = z.infer<typeof ComplianceStatusSchema>;
 
+/** Objet par lot — pour les slides AG (ValoSyndic_Engine_Schema v2) */
+export const CalculParLotOutputSlideSchema = z.object({
+    /** Coût total TTC par lot (base appel de fonds — à recalculer par millièmes du règlement de copro) */
+    coutParLotTTC: z.number(),
+    /** MPR par lot résidentiel (assiette HT travaux purs) */
+    mprParLot: z.number(),
+    /** CEE par lot résidentiel */
+    ceeParLot: z.number(),
+    /** Quote-part Éco-PTZ par lot (capital + forfait garantie 500€ réparti) */
+    ecoPtzParLot: z.number(),
+    /** Mensualité Éco-PTZ par lot (€/mois) */
+    mensualiteParLot: z.number(),
+    /** Cash-flow net par lot (économie énergie - mensualité) */
+    cashflowNetParLot: z.number(),
+    /** RAC brut par lot (Coût TTC total - toutes subventions) */
+    racBrutParLot: z.number(),
+    /**
+     * RAC au comptant par lot — Part non couverte par l'Éco-PTZ
+     * = Honoraires syndic TTC + DO TTC + Aléas TTC (postes non-éligibles Éco-PTZ)
+     * → Appelé immédiatement en AG, à régler avant le démarrage du chantier
+     */
+    racComptantParLot: z.number(),
+    /**
+     * Avantages Fiscaux Année 1 (Déficit Foncier) — Bailleur
+     * Assiette : uniquement le DÉCAISSEMENT RÉEL (RAC Comptant), le capital emprunté n'étant pas déductible.
+     * Taux : TMI 30% + Prélèvements Sociaux 17.2% = 47.2%
+     * Reportable sur 10 ans si déficit foncier supérieur au revenu net
+     */
+    avantagesFiscauxAnnee1: z.number(),
+    /** Plus-value Valeur Verte par lot (argument patrimonial de closing en AG) */
+    valeurVerteParLot: z.number(),
+});
+
+
+export type CalculParLotOutputSlide = z.infer<typeof CalculParLotOutputSlideSchema>;
+
 /** Plan de financement détaillé */
 export const FinancingPlanSchema = z.object({
     /** Coût travaux HT (base) */
@@ -165,7 +201,7 @@ export const FinancingPlanSchema = z.object({
     /** Gain énergétique estimé (%) */
     energyGainPercent: z.number(),
 
-    /** Montant MaPrimeRénov' */
+    /** Montant MaPrimeRénov' (calculé sur HT) */
     mprAmount: z.number(),
 
     /** Montant Aide AMO */
@@ -189,7 +225,7 @@ export const FinancingPlanSchema = z.object({
     /** Reste à charge après aides */
     remainingCost: z.number(),
 
-    /** Mensualité Éco-PTZ (sur 20 ans) */
+    /** Mensualité Éco-PTZ (sur 20 ans) — immeuble entier */
     monthlyPayment: z.number(),
 
     /** Économies mensuelles estimées sur facture énergétique */
@@ -200,6 +236,12 @@ export const FinancingPlanSchema = z.object({
 
     /** Reste à charge par lot */
     remainingCostPerUnit: z.number(),
+
+    /** Données par lot pour les slides d'AG */
+    perUnit: CalculParLotOutputSlideSchema.optional(),
+
+    /** Alertes de conformité détectées par le moteur de calcul */
+    alerts: z.array(z.string()).optional(),
 });
 
 export type FinancingPlan = z.infer<typeof FinancingPlanSchema>;

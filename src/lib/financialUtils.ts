@@ -104,26 +104,30 @@ const calculateMonthlyPayment = (principal: number, annualRate: number, duration
 /**
  * Calcule les métriques financières principales d'un projet de rénovation.
  * Entrées attendues:
- * - totalWorksAmount: montant total du projet (base de financement)
+ * - costHT: montant des travaux purs HT (assiette MPR et CEE)
+ * - totalCostTTC: coût global TTC exact (lignes TVA distinctes additionnées)
+ * - ecoPtzEligibleHT: assiette éligible Éco-PTZ (CGI Art. 244 quater U) = costHT + AMO nette
+ *   (exclut honoraires syndic (V 20%), DO (9%), et aléas)
  * - numberOfLots: nombre de lots
  * - energyGainPercent: gain énergétique (0.45 = 45%)
- * - currentEnergyBill: facture énergétique annuelle globale (€)
- * - totalSurface: surface totale (m²)
- * - averagePricePerSqm: prix moyen au m²
  */
 export function calculateProjectMetrics(
-    totalWorksAmount: number,
+    costHT: number,
+    totalCostTTC: number,
     numberOfLots: number,
     energyGainPercent: number,
     currentEnergyBill: number,
     totalSurface: number,
     averagePricePerSqm: number,
     additionalSubsidies: number = 0,
-    cashContribution: number = 0
+    cashContribution: number = 0,
+    ecoPtzEligibleHT: number = costHT,
+    forcedMprRate?: number // Utilisé si un bonus externe (ex: Sortie passoire) s'applique
 ): FinancialResult {
     const alerts: string[] = [];
 
-    const worksAmount = normalizePositiveNumber(totalWorksAmount, "Montant travaux", alerts);
+    const worksHT = normalizePositiveNumber(costHT, "Montant travaux HT", alerts);
+    const totalTTC = normalizePositiveNumber(totalCostTTC, "Coût total TTC", alerts);
     const lots = normalizeLots(numberOfLots, alerts);
     const energyGain = normalizeEnergyGain(energyGainPercent, alerts);
     const annualEnergyBill = normalizePositiveNumber(currentEnergyBill, "Facture énergétique", alerts);
@@ -132,7 +136,7 @@ export function calculateProjectMetrics(
     const extraSubsidies = normalizePositiveNumber(additionalSubsidies, "Aides complémentaires", alerts);
     const cashInput = normalizePositiveNumber(cashContribution, "Apport cash", alerts);
 
-    if (worksAmount === 0 || lots === 0) {
+    if (worksHT === 0 || totalTTC === 0 || lots === 0) {
         return {
             subsidies: { mpr: 0, cee: 0, total: 0 },
             financing: { initialRac: 0, loanAmount: 0, cashDownPayment: 0, monthlyLoanPayment: 0 },
@@ -145,7 +149,9 @@ export function calculateProjectMetrics(
     // 1. MPR Copropriété (ANAH 2026)
     // ==============================
     let mprRate = 0;
-    if (energyGain >= FINANCES_2026.MPR.MIN_ENERGY_GAIN) {
+    if (forcedMprRate !== undefined) {
+        mprRate = forcedMprRate;
+    } else if (energyGain >= FINANCES_2026.MPR.MIN_ENERGY_GAIN) {
         mprRate =
             energyGain >= FINANCES_2026.MPR.HIGH_PERF_THRESHOLD
                 ? FINANCES_2026.MPR.RATE_HIGH_PERF
@@ -155,7 +161,7 @@ export function calculateProjectMetrics(
     }
 
     const mprCeiling = FINANCES_2026.MPR.CEILING_PER_LOT * lots;
-    const mprRaw = worksAmount * mprRate;
+    const mprRaw = worksHT * mprRate;
     const mprAmount = Math.min(mprRaw, mprCeiling);
     if (mprRaw > mprCeiling) {
         alerts.push("Attention, plafond MPR atteint.");
@@ -164,7 +170,7 @@ export function calculateProjectMetrics(
     // ==============================
     // 2. CEE (estimation conservatrice)
     // ==============================
-    const ceeRaw = worksAmount * FINANCES_2026.CEE.AVG_RATE_WORKS;
+    const ceeRaw = worksHT * FINANCES_2026.CEE.AVG_RATE_WORKS;
     const ceeCeiling = FINANCES_2026.CEE.MAX_PER_LOT * lots;
     const ceeAmount = Math.min(ceeRaw, ceeCeiling);
     if (ceeRaw > ceeCeiling) {
@@ -174,40 +180,45 @@ export function calculateProjectMetrics(
     const totalSubsidies = mprAmount + ceeAmount + extraSubsidies;
 
     // ==============================
-    // 3. Reste à charge (besoin bancaire)
+    // 3. Reste à charge total (base TTC complète)
     // ==============================
-    const initialRac = Math.max(0, worksAmount - totalSubsidies - cashInput);
-    if (totalSubsidies > worksAmount) {
-        alerts.push("Subventions supérieures aux travaux: RAC ramené à 0.");
-    }
-    if (cashInput > 0) {
-        alerts.push("Apport cash déduit du reste à financer.");
-    }
+    const initialRac = Math.max(0, totalTTC - totalSubsidies - cashInput);
+    if (totalSubsidies > totalTTC) alerts.push("Subventions supérieures au projet TTC: RAC ramené à 0.");
+    if (cashInput > 0) alerts.push("Apport cash déduit du reste à financer.");
 
     // ==============================
-    // 4. Éco-PTZ (prêt collectif)
+    // 4. Éco-PTZ (CGI Art. 244 quater U — seuls travauxéligibles)
     // ==============================
     const ecoPtzCapPerLot =
         energyGain >= FINANCES_2026.MPR.MIN_ENERGY_GAIN
             ? FINANCES_2026.LOAN.ECO_PTZ_MAX_PER_LOT
             : FINANCES_2026.LOAN.ECO_PTZ_MAX_PER_LOT_STANDARD;
     const ecoPtzCapTotal = ecoPtzCapPerLot * lots;
-    const loanAmount = Math.min(initialRac, ecoPtzCapTotal);
 
-    if (loanAmount < initialRac) {
-        alerts.push("Prêt Éco-PTZ plafonné: un apport cash est requis.");
-    }
+    // Assiette éligible Éco-PTZ en TTC (à 5.5% sur travaux + AMO nette)
+    const eligibleTTC = normalizePositiveNumber(ecoPtzEligibleHT, "Assiette Éco-PTZ", alerts) * (1 + FINANCES_2026.TVA.TRAVAUX);
+    const racEligible = Math.max(0, Math.min(initialRac, eligibleTTC - (mprAmount + ceeAmount)));
 
-    if (ecoPtzCapPerLot === FINANCES_2026.LOAN.ECO_PTZ_MAX_PER_LOT_STANDARD) {
-        alerts.push("Plafond Éco-PTZ limité à 30 000€/lot (gain énergétique < 35%).");
-    }
+    // Faille 7 — Frais de garantie forfaitaires (500€ fixe, pas un %)
+    const GUARANTEE_FEE = FINANCES_2026.LOAN.GUARANTEE_FEE_FIXED;
+    const loanPrincipal = Math.min(racEligible, ecoPtzCapTotal - GUARANTEE_FEE);
+    const loanAmount = loanPrincipal > 0 ? loanPrincipal + GUARANTEE_FEE : 0;
 
-    const cashDownPayment = Math.max(0, initialRac - loanAmount);
+    if (racEligible > ecoPtzCapTotal) alerts.push("Prêt Éco-PTZ plafonné: un apport cash est requis.");
+    if (ecoPtzCapPerLot === FINANCES_2026.LOAN.ECO_PTZ_MAX_PER_LOT_STANDARD) alerts.push("Plafond Éco-PTZ limité à 30 000€/lot.");
+
+    // RAC comptant = partie inéligible + écart si plafond atteint
+    const cashDownPayment = Math.max(0, initialRac - loanPrincipal);
+
     const monthlyLoanPayment = calculateMonthlyPayment(
         loanAmount,
         FINANCES_2026.LOAN.RATE_ECO_PTZ,
         FINANCES_2026.LOAN.ECO_PTZ_DURATION_MONTHS
     );
+
+    if (loanAmount > 0 && FINANCES_2026.LOAN.ECO_PTZ_DURATION_MONTHS === 240) {
+        alerts.push("Durée 240 mois appliquée (Rénovation Globale) — vérification éligibilité Art. 244 quater U requise avant dossier bancaire.");
+    }
 
     // ==============================
     // 5. KPI Flux (Cash) vs Patrimoine
