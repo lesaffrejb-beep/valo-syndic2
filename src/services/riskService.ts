@@ -23,6 +23,21 @@ export interface GeoRisk {
     feuxForet: boolean;
 }
 
+/**
+ * Structure d'une entrée de risque dans la réponse Géorisques API v1
+ * @see https://georisques.gouv.fr/api/v1
+ */
+interface GeoRisquesRiskEntry {
+    libelle_risque_long?: string;
+    num_risque?: number;
+    niveau_exposition?: string;
+    niveau_exposition_label?: string;
+}
+
+interface GeoRisquesApiResponse {
+    data?: GeoRisquesRiskEntry[];
+}
+
 export const riskService = {
     /**
      * Récupère les risques naturels pour une position GPS donnée
@@ -63,17 +78,20 @@ export const riskService = {
     /**
      * Normalise les données de l'API Géorisques
      */
-    normalizeData(data: any): GeoRisk {
+    normalizeData(data: GeoRisquesApiResponse): GeoRisk {
         // Helper to find risk by keyword within the raw data
-        const checkRisk = (keyword: string) => data.data?.some(
-            (risk: { libelle_risque_long?: string }) =>
+        const checkRisk = (keyword: string) =>
+            data.data?.some((risk: GeoRisquesRiskEntry) =>
                 risk.libelle_risque_long?.toLowerCase().includes(keyword)
-        );
+            );
 
         // Detailed parsing
-        const argileData = data.data?.find((r: any) => r.libelle_risque_long?.toLowerCase().includes('argile'));
-        const sismiciteData = data.data?.find((r: any) => r.libelle_risque_long?.toLowerCase().includes('sismi'));
-        const radonData = data.data?.find((r: any) => r.libelle_risque_long?.toLowerCase().includes('radon'));
+        const argileData = data.data?.find((r: GeoRisquesRiskEntry) =>
+            r.libelle_risque_long?.toLowerCase().includes('argile'));
+        const sismiciteData = data.data?.find((r: GeoRisquesRiskEntry) =>
+            r.libelle_risque_long?.toLowerCase().includes('sismi'));
+        const radonData = data.data?.find((r: GeoRisquesRiskEntry) =>
+            r.libelle_risque_long?.toLowerCase().includes('radon'));
 
         return {
             // Argiles
@@ -81,7 +99,7 @@ export const riskService = {
             argileLabel: argileData?.niveau_exposition_label || (argileData ? 'Identifié' : 'Non concerné'),
 
             // Inondation (tous types : débordement, submersion, remontée nappe)
-            inondation: checkRisk('inondation') || checkRisk('submersion'),
+            inondation: (checkRisk('inondation') ?? false) || (checkRisk('submersion') ?? false),
 
             // Sismicité
             sismicite: sismiciteData?.num_risque || 1,
@@ -89,11 +107,11 @@ export const riskService = {
             // Radon
             radon: radonData?.num_risque || 1,
 
-            // Autres risques pour boucher les trous et faire "Data Dense"
-            mouvementTerrain: checkRisk('mouvement de terrain') || checkRisk('cavité'),
-            technologique: checkRisk('industriel') || checkRisk('technologique') || checkRisk('usine'),
-            minier: checkRisk('minier'),
-            feuxForet: checkRisk('feu de forêt') || checkRisk('feux de forêt'),
+            // Autres risques
+            mouvementTerrain: (checkRisk('mouvement de terrain') ?? false) || (checkRisk('cavité') ?? false),
+            technologique: (checkRisk('industriel') ?? false) || (checkRisk('technologique') ?? false) || (checkRisk('usine') ?? false),
+            minier: checkRisk('minier') ?? false,
+            feuxForet: (checkRisk('feu de forêt') ?? false) || (checkRisk('feux de forêt') ?? false),
         };
     },
 

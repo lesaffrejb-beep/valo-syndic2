@@ -406,7 +406,7 @@ export const SavedSimulationSchema = z.object({
     project_name: z.string().nullable(),
     city: z.string().nullable(),
     postal_code: z.string().nullable(),
-    json_data: z.any(), // DiagnosticResult as JSONB
+    json_data: DiagnosticResultSchema, // DiagnosticResult validé — rejet de tout payload corrompu
     user_email: z.string().email().nullable(),
     user_id: z.string().uuid().nullable(),
     status: z.enum(['draft', 'shared', 'archived']).default('draft'),

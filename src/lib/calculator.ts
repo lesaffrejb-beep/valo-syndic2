@@ -123,7 +123,6 @@ export function simulateFinancing(
     commercialLots: number = 0,
     localAidAmount: number = 0,
     alurFund: number = 0,
-    _ceeBonus: number = 0,
     currentEnergyBill: number = 0,
     totalSurface?: number,
     averagePricePerSqm?: number
@@ -171,13 +170,13 @@ export function simulateFinancing(
     const energyGainPercent = estimateEnergyGain(currentDPE, targetDPE);
 
     // ==========================================================
-    // 2. AMO : subvention 50% — Faille 3
+    // 2. AMO : Subvention ANAH 50% (Art. L. 321-1)
     // ==========================================================
     // L'ANAH subventionne 50% de la prestation AMO, plafonnée.
     // Le reste (amoNetCostHT) reste à la charge de la copropriété.
-    const AMO_CEILING_SMALL = 1000; // ≤ 20 lots
-    const AMO_CEILING_LARGE = 600;  // > 20 lots
-    const amoCeilingPerLot = nbLots <= 20 ? AMO_CEILING_SMALL : AMO_CEILING_LARGE;
+    const amoCeilingPerLot = nbLots <= AMO_PARAMS.smallCoproThreshold
+        ? AMO_PARAMS.ceilingPerLotSmall
+        : AMO_PARAMS.ceilingPerLotLarge;
     const amoCeilingGlobal = nbLots * amoCeilingPerLot;
     const eligibleBaseAMO = Math.min(amoCostHT, amoCeilingGlobal);
     const amoSubvention = Math.max(eligibleBaseAMO * AMO_PARAMS.aidRate, AMO_PARAMS.minTotal);
@@ -185,7 +184,7 @@ export function simulateFinancing(
     const amoAmount = amoSubvention; // Alias pour la sortie (subvention, pas le coût)
 
     // ==========================================================
-    // 3. MPR + BONUS SORTIE PASSOIRE — Faille 5
+    // 3. MPR + BONUS SORTIE PASSOIRE (Art. D. 321-13 et suivants)
     // ==========================================================
     const residentialLots = Math.max(0, nbLots - commercialLots);
     const surfaceForMetrics = totalSurface ?? 0;
@@ -216,7 +215,7 @@ export function simulateFinancing(
     // Toutes les aides supplémentaires (hors MPR/CEE = dans le moteur)
     const extraSubsidies = amoSubvention + localAidAmount;
 
-    // F9 — Fonds Travaux : déduction visible avant prêt
+    // Fonds Travaux ALUR : mobilisés en déduction visible avant prêt
     const fondsTravauxMobilise = alurFund;
 
     const metrics = calculateProjectMetrics(
@@ -229,8 +228,8 @@ export function simulateFinancing(
         pricePerSqmForMetrics,
         extraSubsidies,
         fondsTravauxMobilise,
-        ecoPtzEligibleHT,    // Assiette Éco-PTZ éligible (Faille 4)
-        mprRate              // Injecte le taux final incluant le bonus passoire (Faille corrigée)
+        ecoPtzEligibleHT,    // Assiette Éco-PTZ éligible (CGI Art. 244 quater U)
+        mprRate              // Taux final incluant bonus sortie passoire si applicable
     );
 
     // ==========================================================
@@ -241,12 +240,12 @@ export function simulateFinancing(
     const racComptantParLot = Math.round(metrics.financing.cashDownPayment / nbLots);
 
     // ==========================================================
-    // 5. DÉFICIT FONCIER — ONE-SHOT Année 1 (Correction Faille CFO)
+    // 5. DÉFICIT FONCIER — ONE-SHOT Année 1
     // ==========================================================
     // Règle CGI Art. 31 & 156 : Le capital emprunté N'EST PAS déductible.
     // L'assiette déductible = le décaissement réel au comptant (racComptantParLot).
     // Si c'est financé par prêt à 0%, il n'y a pas de charge foncière déductible additionnelle.
-    // Sont EXCLUS : Provision Aléas (dépense incertaine)
+    // Sont EXCLUS : Provision Aléas (dépense incertaine, non engagée)
     const assietteEligibleDfTotal = totalCostTTC
         - contingencyFees // Exclu car provisionnel
         - metrics.subsidies.mpr
@@ -270,7 +269,7 @@ export function simulateFinancing(
         cashflowNetParLot: Math.round(metrics.kpi.netMonthlyCashFlow / nbLots),
         racBrutParLot,
         racComptantParLot,  // Part appelée immédiatement au comptant
-        avantagesFiscauxAnnee1, // Remplace creditImpotLatentBailleur (Assiette = racComptant)
+        avantagesFiscauxAnnee1, // Assiette = RAC comptant réel (CGI Art. 31 & 156)
         valeurVerteParLot,
     };
 
@@ -456,7 +455,6 @@ export function generateDiagnostic(input: DiagnosticInput): DiagnosticResult {
         input.commercialLots,
         input.localAidAmount,
         input.alurFund || 0,
-        input.ceeBonus || 0,
         input.currentEnergyBill || 0,
         totalSurface,
         input.averagePricePerSqm || VALUATION_PARAMS.BASE_PRICE_PER_SQM

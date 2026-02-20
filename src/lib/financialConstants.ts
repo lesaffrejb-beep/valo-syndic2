@@ -42,7 +42,7 @@ export const FINANCES_2026 = {
         RATE_ECO_PTZ: 0,
         /**
          * Frais de garantie forfaitaires — banques conventionnées (CEPAC, CIC, etc.)
-         * Faille 7 : Un % était incorrecte. Forfait fixe moyen documenté = 500€.
+         * Forfait fixe moyen documenté = 500€ (art. R. 312-11 Code Consommation).
          * Source : grille tarifaire banques partenaires Éco-PTZ collectif 2026.
          */
         GUARANTEE_FEE_FIXED: 500,

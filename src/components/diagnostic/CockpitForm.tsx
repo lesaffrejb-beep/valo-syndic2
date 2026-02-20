@@ -103,7 +103,7 @@ function DPESelector({
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function CockpitForm() {
-    const { input, updateInput, runDiagnostic, isCalculating } = useDiagnosticStore();
+    const { input, updateInput, runDiagnostic, isCalculating, error } = useDiagnosticStore();
     const [advancedOpen, setAdvancedOpen] = useState(false);
 
     const isValid = !!(input.numberOfUnits && input.numberOfUnits >= 2 && input.currentDPE && input.targetDPE);
@@ -367,6 +367,18 @@ export default function CockpitForm() {
                SUBMIT
                ════════════════════════════════════════════════════════ */}
             <div className="pt-6">
+                {error && (
+                    <div className="mb-4 p-3 rounded-md bg-red-50 border border-red-200">
+                        <div className="flex items-start gap-2">
+                            <svg className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <p className="text-xs font-medium text-red-800 leading-tight">
+                                {error}
+                            </p>
+                        </div>
+                    </div>
+                )}
                 <button
                     type="submit"
                     disabled={!isValid || isCalculating}
@@ -386,7 +398,7 @@ export default function CockpitForm() {
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                             </svg>
-                            Calcul en cours…
+                            Analyse en cours via Serveur…
                         </span>
                     ) : (
                         "Générer l\u2019Analyse Financière"

@@ -114,6 +114,9 @@ export const TECHNICAL_PARAMS = {
 
     /** Écart qui se creuse chaque année (Double Peine) */
     greenValueDrift: 0.015,
+
+    /** Valeur Verte : appréciation standard passage E/F → D (rénovation partielle) */
+    greenValueAppreciationStandard: 0.08,
 } as const;
 
 // =============================================================================
@@ -263,11 +266,11 @@ export { getLiveConstants as getDynamicConstants } from "@/lib/api/settingsServi
 // =============================================================================
 
 export const DPE_COLORS: Record<DPELetter, string> = {
-  A: "#2E7D32", // Vert foncé
-  B: "#4CAF50", // Vert
-  C: "#8BC34A", // Vert clair
-  D: "#CDDC39", // Jaune-vert
-  E: "#FFEB3B", // Jaune
-  F: "#FF9800", // Orange
-  G: "#F44336", // Rouge
+    A: "#2E7D32", // Vert foncé
+    B: "#4CAF50", // Vert
+    C: "#8BC34A", // Vert clair
+    D: "#CDDC39", // Jaune-vert
+    E: "#FFEB3B", // Jaune
+    F: "#FF9800", // Orange
+    G: "#F44336", // Rouge
 } as const;

@@ -29,19 +29,6 @@ const nextConfig = {
         }
         return config;
     },
-    async headers() {
-        return [
-            {
-                source: "/:path*",
-                headers: [
-                    {
-                        key: "Content-Security-Policy",
-                        value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://*.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org; font-src 'self' data:; connect-src 'self' https://api-adresse.data.gouv.fr https://api.dvf.etalab.gouv.fr https://data.ademe.fr https://*.supabase.co; frame-src 'self' https://www.youtube.com;",
-                    },
-                ],
-            },
-        ];
-    },
 };
 
 module.exports = nextConfig;

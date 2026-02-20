@@ -5,6 +5,7 @@
  */
 
 import { FINANCES_2026 } from "./financialConstants";
+import { TECHNICAL_PARAMS } from "./constants";
 
 export interface FinancialResult {
     subsidies: {
@@ -199,7 +200,7 @@ export function calculateProjectMetrics(
     const eligibleTTC = normalizePositiveNumber(ecoPtzEligibleHT, "Assiette Éco-PTZ", alerts) * (1 + FINANCES_2026.TVA.TRAVAUX);
     const racEligible = Math.max(0, Math.min(initialRac, eligibleTTC - (mprAmount + ceeAmount)));
 
-    // Faille 7 — Frais de garantie forfaitaires (500€ fixe, pas un %)
+    // Frais de garantie forfaitaires (art. R. 312-11 Code Consommation — forfait fixe, pas un %)
     const GUARANTEE_FEE = FINANCES_2026.LOAN.GUARANTEE_FEE_FIXED;
     const loanPrincipal = Math.min(racEligible, ecoPtzCapTotal - GUARANTEE_FEE);
     const loanAmount = loanPrincipal > 0 ? loanPrincipal + GUARANTEE_FEE : 0;
@@ -231,9 +232,9 @@ export function calculateProjectMetrics(
         const totalPropertyValue = surface * pricePerSqm;
         const greenRate =
             energyGain >= FINANCES_2026.MPR.HIGH_PERF_THRESHOLD
-                ? 0.12
+                ? TECHNICAL_PARAMS.greenValueAppreciation         // 12% (haute performance)
                 : energyGain >= FINANCES_2026.MPR.MIN_ENERGY_GAIN
-                    ? 0.08
+                    ? TECHNICAL_PARAMS.greenValueAppreciationStandard // 8% (standard)
                     : 0;
         greenValueIncrease = totalPropertyValue * greenRate;
     } else if (energyGain >= FINANCES_2026.MPR.MIN_ENERGY_GAIN) {

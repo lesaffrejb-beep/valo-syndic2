@@ -38,15 +38,15 @@ describe('MaPrimeRénov Copropriété 2026', () => {
             const result = simulateFinancing(
                 300000, // coût HT
                 20,     // nb lots
-                'F',    // DPE actuel
-                'C',    // DPE cible
+                'E',    // DPE actuel
+                'B',    // DPE cible
                 0,      // lots commerciaux
                 0,      // aide locale
                 0,      // fonds ALUR
                 0       // CEE
             );
 
-            // Gain énergétique F→C = 3 classes = 55%
+            // Gain énergétique E→B = 3 classes = 55%
             expect(result.mprRate).toBeCloseTo(0.45, 2);
             expect(result.exitPassoireBonus).toBe(0);
         });
@@ -65,7 +65,7 @@ describe('MaPrimeRénov Copropriété 2026', () => {
             expect(result.exitPassoireBonus).toBe(0);
         });
 
-        it('calcule correctement 45% pour performance (>50% gain)', () => {
+        it('calcule correctement 55% pour performance (>50% gain) avec sortie de passoire', () => {
             const result = simulateFinancing(
                 300000,
                 20,
@@ -74,9 +74,9 @@ describe('MaPrimeRénov Copropriété 2026', () => {
                 0, 0, 0, 0
             );
 
-            // 55% gain = taux performance 45%
-            expect(result.mprRate).toBeCloseTo(0.45, 2);
-            expect(result.exitPassoireBonus).toBe(0);
+            // 55% gain = taux performance 45% + sortie passoire 10% = 55%
+            expect(result.mprRate).toBeCloseTo(0.55, 2);
+            expect(result.exitPassoireBonus).toBe(0.10);
         });
 
         it('exclut les lots commerciaux du calcul MPR', () => {
@@ -239,7 +239,7 @@ describe('Intégration — Scénario complet', () => {
         const financing = simulateFinancing(300000, 20, 'F', 'C');
 
         // Vérifications cohérence
-        expect(financing.mprRate).toBeCloseTo(0.45, 2);
+        expect(financing.mprRate).toBeCloseTo(0.55, 2); // 45% + 10% bonus
         expect(financing.totalCostHT).toBeGreaterThan(300000); // Avec frais
         expect(financing.remainingCost).toBeGreaterThanOrEqual(0);
         expect(financing.monthlyPayment).toBeGreaterThanOrEqual(0);
@@ -342,21 +342,21 @@ describe('Règles Critiques MPR Copro 2026 — Blindage Mathématique', () => {
         });
     });
 
-    describe('Bonus Sortie de Passoire (désactivé en mode strict)', () => {
-        test('ne doit jamais appliquer de bonus passoire', () => {
-            const resultFG = simulateFinancing(300_000, 20, 'G', 'D');
-            const resultFA = simulateFinancing(300_000, 20, 'F', 'A');
+    describe('Bonus Sortie de Passoire (réactivé - CFO Audit)', () => {
+        test('doit appliquer de bonus passoire pour les sauts depuis F ou G vers D ou mieux', () => {
+            const resultGD = simulateFinancing(300_000, 20, 'G', 'D'); // Gain > 35%, passoire G
+            const resultFA = simulateFinancing(300_000, 20, 'F', 'A'); // Gain > 50%, passoire F
 
-            expect(resultFG.exitPassoireBonus).toBe(0);
-            expect(resultFA.exitPassoireBonus).toBe(0);
+            expect(resultGD.exitPassoireBonus).toBe(0.10);
+            expect(resultFA.exitPassoireBonus).toBe(0.10);
         });
 
-        test('mprRate suit uniquement le seuil de performance', () => {
-            const standard = simulateFinancing(300_000, 20, 'E', 'C'); // 40% gain
-            const performance = simulateFinancing(300_000, 20, 'G', 'A'); // 55% gain
+        test('mprRate intègre le bonus au seuil de base ou de performance', () => {
+            const standard = simulateFinancing(300_000, 20, 'E', 'C'); // 40% gain, pas de passoire = 30%
+            const performance = simulateFinancing(300_000, 20, 'G', 'A'); // 55% gain + passoire = 55%
 
             expect(standard.mprRate).toBeCloseTo(0.30, 2);
-            expect(performance.mprRate).toBeCloseTo(0.45, 2);
+            expect(performance.mprRate).toBeCloseTo(0.55, 2);
         });
     });
 

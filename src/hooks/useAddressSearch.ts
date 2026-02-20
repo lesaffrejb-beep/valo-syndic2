@@ -21,6 +21,25 @@ export interface AddressResult {
 }
 
 /**
+ * Structure GeoJSON retournée par api-adresse.data.gouv.fr
+ * @see https://adresse.data.gouv.fr/api-doc/adresse
+ */
+interface BanApiFeature {
+    properties: {
+        label: string;
+        city: string;
+        postcode: string;
+        street?: string;
+        housenumber?: string;
+        type: "housenumber" | "street" | "locality" | "municipality";
+        score?: number;
+    };
+    geometry: {
+        coordinates: [number, number]; // [longitude, latitude]
+    };
+}
+
+/**
  * Interface pour les données DPE trouvées dans Supabase
  */
 export interface DPEData {
@@ -61,13 +80,13 @@ export function useAddressSearch() {
             );
             const data = await response.json();
 
-            const results: AddressResult[] = data.features.map((feature: any) => ({
+            const results: AddressResult[] = data.features.map((feature: BanApiFeature) => ({
                 label: feature.properties.label,
                 city: feature.properties.city,
                 postcode: feature.properties.postcode,
                 street: feature.properties.street,
                 housenumber: feature.properties.housenumber,
-                type: feature.properties.type as "housenumber" | "street" | "locality" | "municipality",
+                type: feature.properties.type,
                 score: feature.properties.score,
                 coordinates: {
                     lon: feature.geometry.coordinates[0],

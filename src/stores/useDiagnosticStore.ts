@@ -7,8 +7,7 @@
 
 import { create } from "zustand";
 import type { DiagnosticInput, DiagnosticResult } from "@/lib/schemas";
-import { generateDiagnostic } from "@/lib/calculator";
-import { VALUATION_PARAMS } from "@/lib/constants";
+import { calculateDiagnosticAction } from "@/actions/calculateDiagnostic";
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
 const DEFAULT_INPUT: Partial<DiagnosticInput> = {
@@ -35,13 +34,15 @@ interface DiagnosticState {
     result: DiagnosticResult | null;
     /** Loading flag for async UX feedback */
     isCalculating: boolean;
+    /** Error message if Server Action fails */
+    error: string | null;
     /** View mode toggle: pilotage (cockpit) vs presentation (projector) */
     viewMode: "pilotage" | "presentation";
     /** Merge a partial patch into the current input */
     updateInput: (patch: Partial<DiagnosticInput>) => void;
     /** Reset input to defaults */
     resetInput: () => void;
-    /** Run the diagnostic engine with the current input */
+    /** Run the diagnostic engine via Server Action */
     runDiagnostic: () => Promise<void>;
     /** Toggle view mode */
     setViewMode: (mode: "pilotage" | "presentation") => void;
@@ -52,6 +53,7 @@ export const useDiagnosticStore = create<DiagnosticState>((set, get) => ({
     input: { ...DEFAULT_INPUT },
     result: null,
     isCalculating: false,
+    error: null,
     viewMode: "pilotage",
 
     updateInput: (patch) => {
@@ -73,22 +75,22 @@ export const useDiagnosticStore = create<DiagnosticState>((set, get) => ({
 
         // Guard: required fields
         if (!input.currentDPE || !input.targetDPE || !input.numberOfUnits) {
-            console.warn("[DiagnosticStore] Missing required fields — aborting.");
+            console.warn("[DiagnosticStore] Champs obligatoires manquants — abandon.");
             return;
         }
 
-        set({ isCalculating: true });
+        set({ isCalculating: true, error: null });
 
         try {
-            // ── Fill smart defaults ──────────────────────────────
+            // ── Fill smart defaults (Minimal pre-processing before Zod) ────────
             const averageSurface = input.averageUnitSurface || 65;
             const totalSurface = input.numberOfUnits * averageSurface;
 
-            // Auto-estimate works cost if not provided
+            // Optional auto-estimation of HT cost if fully 0
             const estimatedCostHT =
                 input.estimatedCostHT && input.estimatedCostHT > 0
                     ? input.estimatedCostHT
-                    : totalSurface * VALUATION_PARAMS.ESTIMATED_RENO_COST_PER_SQM;
+                    : totalSurface * 850; // Fallback hardcodé avant TS/Server
 
             const fullInput: DiagnosticInput = {
                 currentDPE: input.currentDPE,
@@ -105,7 +107,6 @@ export const useDiagnosticStore = create<DiagnosticState>((set, get) => ({
                 investorRatio: input.investorRatio ?? 0,
                 isCostTTC: input.isCostTTC ?? true,
                 includeHonoraires: input.includeHonoraires ?? true,
-                // Optional fields
                 ...(input.address && { address: input.address }),
                 ...(input.postalCode && { postalCode: input.postalCode }),
                 ...(input.city && { city: input.city }),
@@ -115,14 +116,38 @@ export const useDiagnosticStore = create<DiagnosticState>((set, get) => ({
                 ...(input.salesCount !== undefined && { salesCount: input.salesCount }),
             };
 
-            // ── Call the pure calculator ─────────────────────────
-            // Wrapped in a microtask to allow React to show loading state
-            const result = await Promise.resolve(generateDiagnostic(fullInput));
+            // ── Call the Server Action (Black Box) ───────────────────────────
+            const response = await calculateDiagnosticAction(fullInput);
 
-            set({ result, isCalculating: false });
+            if (!response.success) {
+                console.error("[DiagnosticStore] Erreur Server Action:", response.error, response.fieldErrors);
+                set({
+                    isCalculating: false,
+                    error: response.error || "Erreur lors du calcul.",
+                });
+                return;
+            }
+
+            // ── Deserialize ISO Dates to native JS Dates ───────────────────────
+            const rawData = response.data;
+            const parsedResult: DiagnosticResult = {
+                ...rawData,
+                generatedAt: new Date(rawData.generatedAt),
+                compliance: {
+                    ...rawData.compliance,
+                    prohibitionDate: rawData.compliance.prohibitionDate
+                        ? new Date(rawData.compliance.prohibitionDate)
+                        : null,
+                },
+            };
+
+            set({ result: parsedResult, isCalculating: false, error: null });
         } catch (error) {
-            console.error("[DiagnosticStore] Calculation failed:", error);
-            set({ isCalculating: false });
+            console.error("[DiagnosticStore] Échec inattendu du calcul:", error);
+            set({
+                isCalculating: false,
+                error: error instanceof Error ? error.message : "Erreur interne inconnue.",
+            });
         }
     },
 }));
