@@ -1,6 +1,6 @@
 
 // Import localized dpeService to test exactly what the app runs
-import { dpeService } from "./src/services/dpeService";
+import { dpeService } from "@/services/dpeService";
 
 async function run() {
     const query = "60 Rue Jules Guitton";
