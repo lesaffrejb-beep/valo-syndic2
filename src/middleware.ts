@@ -64,8 +64,8 @@ export function middleware(request: NextRequest) {
     const prodCsp = [
         "default-src 'self'",
         // 'wasm-unsafe-eval' requis par @react-pdf/renderer (WASM) — conforme W3C
-        // 'unsafe-inline' retiré de script-src pour conformité OWASP production
-        "script-src 'self' 'wasm-unsafe-eval' blob: https://maps.googleapis.com https://maps.gstatic.com",
+        // 'unsafe-inline' ajouté pour Google Maps qui injecte des scripts en ligne
+        "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://maps.googleapis.com https://maps.gstatic.com",
         "worker-src 'self' blob: data:",
         // Styles inline temporairement autorisés (react-pdf injecte des styles en ligne)
         "style-src 'self' 'unsafe-inline'",
