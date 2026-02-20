@@ -337,6 +337,8 @@ export default function DiagnosticResults() {
                         label="CEE (Certificats d'Économie d'Énergie)"
                         amount={financing.ceeAmount}
                         variant="subtotal-aid"
+                        alertBadge="Indicatif — à contractualiser"
+                        subNote="Estimation basée sur 8% des travaux HT (taux moyen de marché). Le montant CEE réel est fixé par contrat avec un opérateur selon les fiches standardisées ATEE/PNCEE."
                     />
                     <LedgerRow
                         label="Subvention AMO (50%)"
@@ -440,6 +442,37 @@ export default function DiagnosticResults() {
                         <Row label="RAC comptant / lot" value={formatCurrency(perUnit.racComptantParLot)} bold />
                         <Row label="Avantage fiscal An 1" value={`− ${formatCurrency(perUnit.avantagesFiscauxAnnee1)}`} green />
                         <Row label="Potentiel Valeur Verte / lot" value={`+ ${formatCurrency(perUnit.valeurVerteParLot)}`} green />
+                    </div>
+
+                    {/* J2 — Disclaimer Loi 65-557 Art. 10 (tantièmes) */}
+                    <div className="mt-4 flex items-start gap-2 rounded-md border border-border bg-slate-50/60 px-3 py-2.5">
+                        <Scale className="w-3.5 h-3.5 text-slate flex-shrink-0 mt-0.5" />
+                        <p className="text-[10px] text-slate leading-relaxed">
+                            <strong>Répartition par lot indicative (Loi 65-557 Art. 10) :</strong> Les montants
+                            ci-dessus sont calculés à parts égales à titre d&apos;estimation. L&apos;appel de fonds
+                            réel sera établi par le syndic selon les tantièmes du règlement de copropriété.
+                        </p>
+                    </div>
+
+                    {/* J3 — Disclaimer Valeur Verte */}
+                    <div className="mt-2 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50/40 px-3 py-2.5">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-[10px] text-amber-800 leading-relaxed">
+                            <strong>Valeur Verte — estimation statistique non opposable :</strong> La plus-value
+                            estimée est basée sur les données DVF millésimées 2024 (publication décalée de 2 ans).
+                            Elle ne remplace pas un audit réglementaire OPQIBI 1905 ni une expertise immobilière.
+                        </p>
+                    </div>
+
+                    {/* F4a — Disclaimer Déficit Foncier plafond 10 700 €/an */}
+                    <div className="mt-2 flex items-start gap-2 rounded-md border border-border bg-slate-50/60 px-3 py-2.5">
+                        <Scale className="w-3.5 h-3.5 text-slate flex-shrink-0 mt-0.5" />
+                        <p className="text-[10px] text-slate leading-relaxed">
+                            <strong>Déficit Foncier (CGI Art. 156) :</strong> L&apos;avantage fiscal An 1 est
+                            déductible du revenu global dans la limite de <strong>10 700 €/an par contribuable</strong>.
+                            L&apos;excédent est reportable sur les revenus fonciers des 10 années suivantes.
+                            Applicable au <strong>régime réel uniquement</strong> — bailleurs investisseurs uniquement.
+                        </p>
                     </div>
                 </div>
             )}

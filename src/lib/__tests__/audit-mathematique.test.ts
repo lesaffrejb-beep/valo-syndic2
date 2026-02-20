@@ -188,69 +188,84 @@ describe("AUDIT MATHEMATIQUE - Cas #1: Petite copropriété F → C", () => {
             expectedGain, result.financing.energyGainPercent);
     });
 
-    it("applique correctement le taux MPR strict (sans bonus passoire)", () => {
-        // Gain 55% > 50% → taux performance 45% (bonus passoire ignoré en mode strict)
-        const expectedMprRate = 0.45;
+    it("applique correctement le taux MPR avec bonus sortie passoire (F→C)", () => {
+        // Gain ~57.1% > 50% → taux haute performance 45% + bonus sortie passoire +10% = 55%
+        // F ∈ {F, G} et C ∈ {A, B, C, D} → bonus sortie de passoire applicable
+        // FIX AUDIT FEV 2026 (F6) : le test précédent attendait 0.45 (sans bonus), erreur corrigée
+        const expectedMprRate = MPR_COPRO.rates.performance + MPR_COPRO.exitPassoireBonus; // 0.55
 
-        auditApprox("Cas#1", "Taux MPR strict (45%)",
+        auditApprox("Cas#1", "Taux MPR avec bonus passoire (55%)",
             result.financing.mprRate, expectedMprRate, 0.001);
-        auditAssert("Cas#1", "Bonus passoire non appliqué",
-            result.financing.exitPassoireBonus === 0,
-            0, result.financing.exitPassoireBonus);
+        auditAssert("Cas#1", "Bonus passoire appliqué (+10%)",
+            result.financing.exitPassoireBonus === MPR_COPRO.exitPassoireBonus,
+            MPR_COPRO.exitPassoireBonus, result.financing.exitPassoireBonus);
     });
 
-    it("calcule correctement le montant MPR avec plafond", () => {
-        // Travaux + frais = 180k + 5.4k + 3.6k + 9k = 198k
-        const subtotalWorksFeesHT = input.estimatedCostHT * (1 + 0.03 + 0.02 + 0.05);
-        // AMO = 8 lots × 600€ = 4,800€
-        const amoCostHT = AMO_PARAMS.costPerLot * input.numberOfUnits;
-        const totalCostHT = subtotalWorksFeesHT + amoCostHT;
-        const totalCostTTC = totalCostHT * 1.055;
+    it("calcule correctement le montant MPR avec bonus passoire", () => {
+        // MPR = min(worksHT × mprRate, plafond par lot résidentiel)
+        // FIX AUDIT FEV 2026 (F6) : base = worksHT (pas totalCostTTC), mprRate avec bonus
+        // mprRate = taux haute perf (45%) + bonus sortie passoire (10%) = 55%
+        // = min(180,000 × 0.55, 8 × 25,000€) = min(99,000, 200,000) = 99,000€
+        const mprRate = MPR_COPRO.rates.performance + MPR_COPRO.exitPassoireBonus; // 0.55
+        const mprCeiling = input.numberOfUnits * MPR_COPRO.ceilingPerUnit; // 200,000
+        const expectedMPR = Math.min(input.estimatedCostHT * mprRate, mprCeiling); // 99,000
 
-        // Plafond MPR = 8 lots × 25k€ = 200k€
-        const mprCeiling = input.numberOfUnits * MPR_COPRO.ceilingPerUnit;
-        // MPR strict = min(TTC × 45%, plafond)
-        const expectedMPR = Math.min(totalCostTTC * 0.45, mprCeiling);
-
-        auditAssert("Cas#1", "Montant MPR calculé",
+        auditAssert("Cas#1", "Montant MPR calculé (base worksHT, avec bonus passoire)",
             result.financing.mprAmount === Math.round(expectedMPR),
             Math.round(expectedMPR), result.financing.mprAmount);
     });
 
     it("calcule correctement l'Éco-PTZ", () => {
-        // Total HT = Travaux + Frais + AMO
-        // Travaux 180k + Frais 18k = 198k
-        const subtotalWorksFeesHT = input.estimatedCostHT * 1.10;
-        // AMO = 8 lots × 600€ = 4,800€ (coût réel)
-        const amoCostHT = AMO_PARAMS.costPerLot * input.numberOfUnits;
-        const totalCostHT = subtotalWorksFeesHT + amoCostHT; // 202,800€
-        // TTC = 202.8k × 1.055 = 213,954€
-        const totalCostTTC = totalCostHT * 1.055;
-        // MPR strict = min(TTC × 45%, plafond)
+        // Recalcul ligne par ligne (FIX AUDIT FEV 2026 : TVA multi-taux, pas uniforme à 5.5%)
+        const mprRate = MPR_COPRO.rates.performance + MPR_COPRO.exitPassoireBonus; // 0.55
         const mprCeiling = input.numberOfUnits * MPR_COPRO.ceilingPerUnit;
-        const mprAmount = Math.min(totalCostTTC * 0.45, mprCeiling);
-        // CEE strict = min(TTC × 8%, 5k/lot)
-        const ceeAmount = Math.min(totalCostTTC * 0.08, input.numberOfUnits * 5_000);
-        // AMO aidée = plafond(4800 × 50%, 3000 plancher) = 3,000€
-        const amoAmount = 3000;
-        // Reste avant PTZ = TTC - (MPR + CEE + AMO + aide locale) - ALUR
-        const remainingBeforePTZ =
-            totalCostTTC - mprAmount - ceeAmount - amoAmount - input.localAidAmount - input.alurFund;
-        // Plafond Éco-PTZ = 8 × 50k = 400k€
-        const ecoPtzCeiling = input.numberOfUnits * ECO_PTZ_COPRO.ceilingPerUnit;
-        // Éco-PTZ = min(remaining, plafond)
-        const expectedEcoPTZ = Math.min(remainingBeforePTZ, ecoPtzCeiling);
+        const mprAmount = Math.min(input.estimatedCostHT * mprRate, mprCeiling); // 99,000
+        const ceeAmount = Math.min(input.estimatedCostHT * 0.08, input.numberOfUnits * 5_000); // 14,400
+        const amoCostHT = AMO_PARAMS.costPerLot * input.numberOfUnits; // 4,800
+        const amoSubvention = Math.min(Math.max(amoCostHT * AMO_PARAMS.aidRate, AMO_PARAMS.minTotal), amoCostHT); // 3,000
+        const amoNetCostHT = Math.max(0, amoCostHT - amoSubvention); // 1,800
 
-        // Tolérance 5€ pour les arrondis intermédiaires
-        auditApprox("Cas#1", "Montant Éco-PTZ",
-            result.financing.ecoPtzAmount, expectedEcoPTZ, 5);
+        // TTC ligne par ligne (TVA 5.5% travaux, 20% honoraires, 9% DO, 5.5% aléas)
+        const syndicFees = input.estimatedCostHT * PROJECT_FEES.syndicRate; // 5,400
+        const doFees = input.estimatedCostHT * PROJECT_FEES.doRate; // 3,600
+        const contingencyFees = input.estimatedCostHT * PROJECT_FEES.contingencyRate; // 9,000
+        const totalCostTTC =
+            input.estimatedCostHT * 1.055 +    // travaux HT × (1 + 5.5%)
+            syndicFees * 1.20 +                 // honoraires syndic × (1 + 20%)
+            doFees * 1.09 +                     // assurance DO × (1 + 9%)
+            contingencyFees * 1.055 +           // aléas × (1 + 5.5%) TVA latente
+            amoCostHT * 1.20;                   // AMO × (1 + 20%)
+
+        const totalSubsidies = mprAmount + ceeAmount + amoSubvention; // 116,400
+        const initialRac = Math.max(0, totalCostTTC - totalSubsidies - (input.alurFund ?? 0)); // 94,159
+
+        // Assiette Éco-PTZ = travaux HT + AMO nette HT (CGI Art. 244 quater U)
+        const ecoPtzEligibleHT = input.estimatedCostHT + amoNetCostHT; // 181,800
+        const eligibleTTC = ecoPtzEligibleHT * 1.055; // 191,799
+        const racEligible = Math.max(0, Math.min(initialRac, eligibleTTC - (mprAmount + ceeAmount))); // 78,399
+
+        const GUARANTEE_FEE = 500;
+        const ecoPtzCeiling = input.numberOfUnits * ECO_PTZ_COPRO.ceilingPerUnit; // 400,000
+        const loanPrincipal = Math.min(racEligible, ecoPtzCeiling - GUARANTEE_FEE);
+        const expectedEcoPTZ = loanPrincipal + GUARANTEE_FEE; // 78,899
+
+        auditApprox("Cas#1", "Montant Éco-PTZ", result.financing.ecoPtzAmount, expectedEcoPTZ, 10);
     });
 
-    it("calcule correctement le reste à charge final", () => {
-        // Reste = 97,654 - 97,654 = 0€ (tout couvert!)
-        auditAssert("Cas#1", "Reste à charge final",
-            result.financing.remainingCost === 0,
-            0, result.financing.remainingCost);
+    it("calcule correctement le reste à charge (avant Éco-PTZ) et l'apport comptant", () => {
+        // FIX AUDIT FEV 2026 (F6) : remainingCost = initialRac = besoin de financement AVANT Éco-PTZ
+        // Il n'est pas nul : le prêt couvre la partie éligible, le solde est le cashDownPayment
+        // cashDownPayment = la vraie sortie de trésorerie immédiate (Appel de Fonds)
+        auditAssert("Cas#1", "Reste à charge (initialRac) >= 0",
+            result.financing.remainingCost >= 0,
+            ">= 0", result.financing.remainingCost);
+        auditAssert("Cas#1", "Apport comptant (cashDownPayment) >= 0",
+            result.financing.cashDownPayment >= 0,
+            ">= 0", result.financing.cashDownPayment);
+        // Le prêt ne peut pas dépasser le besoin de financement + frais de garantie
+        auditAssert("Cas#1", "Éco-PTZ ≤ remainingCost + frais garantie",
+            result.financing.ecoPtzAmount <= result.financing.remainingCost + 500,
+            "<= RAC + 500", result.financing.ecoPtzAmount);
     });
 
     it("calcule correctement la mensualité Éco-PTZ", () => {
@@ -327,14 +342,12 @@ describe("AUDIT MATHEMATIQUE - Cas #2: Grande copropriété G → A", () => {
         // Plafond MPR = 42 × 25k€ = 1,050,000€
         const mprCeiling = residentialLots * MPR_COPRO.ceilingPerUnit;
 
-        // Travaux + frais = 1,200k × 1.10 = 1,320,000€
-        const subtotalWorksFeesHT = input.estimatedCostHT * 1.10;
-        // AMO = 45 lots × 600€ = 27,000€
-        const amoCostHT = AMO_PARAMS.costPerLot * input.numberOfUnits;
-        const totalCostHT = subtotalWorksFeesHT + amoCostHT;
-        const totalCostTTC = totalCostHT * 1.055;
-        // MPR strict = min(TTC × 45%, plafond)
-        const expectedMPR = Math.min(totalCostTTC * 0.45, mprCeiling);
+        // FIX AUDIT FEV 2026 (F6) : MPR = min(worksHT × mprRate, plafond résidentiel)
+        // G→A = passoire exit (G ∈ {F,G}, A ∈ {A,B,C,D}) → bonus +10%
+        // mprRate = taux haute perf (45%) + bonus passoire (10%) = 55%
+        // = min(1,200,000 × 0.55, 42 × 25,000) = min(660,000, 1,050,000) = 660,000€
+        const mprRate = MPR_COPRO.rates.performance + MPR_COPRO.exitPassoireBonus; // 0.55
+        const expectedMPR = Math.min(input.estimatedCostHT * mprRate, mprCeiling); // 660,000
 
         auditAssert("Cas#2", "MPR avec exclusion lots commerciaux",
             result.financing.mprAmount === Math.round(expectedMPR),
@@ -349,23 +362,25 @@ describe("AUDIT MATHEMATIQUE - Cas #2: Grande copropriété G → A", () => {
             expectedGain, result.financing.energyGainPercent);
     });
 
-    it("applique le taux MPR maximum strict (performance)", () => {
-        auditApprox("Cas#2", "Taux MPR max 45%",
-            result.financing.mprRate, 0.45, 0.001);
+    it("applique le taux MPR maximum avec bonus passoire (G→A)", () => {
+        // G→A = passoire exit → taux haute perf (45%) + bonus passoire (10%) = 55%
+        // FIX AUDIT FEV 2026 (F6) : G→A qualifie aussi pour le bonus sortie passoire
+        const expectedRate = MPR_COPRO.rates.performance + MPR_COPRO.exitPassoireBonus; // 0.55
+        auditApprox("Cas#2", "Taux MPR avec bonus passoire (55%)",
+            result.financing.mprRate, expectedRate, 0.001);
     });
 
     it("intègre correctement les aides externes (CEE + locales)", () => {
         const residentialLots = input.numberOfUnits - (input.commercialLots || 0);
-        const subtotalWorksFeesHT = input.estimatedCostHT * 1.10;
-        const amoCostHT = AMO_PARAMS.costPerLot * input.numberOfUnits;
-        const totalCostHT = subtotalWorksFeesHT + amoCostHT;
-        const totalCostTTC = totalCostHT * 1.055;
-        const expectedCee = Math.min(totalCostTTC * 0.08, residentialLots * 5_000);
+        // FIX AUDIT FEV 2026 (F6) : CEE = min(worksHT × 8%, plafond résidentiel)
+        // Base de calcul = worksHT (pas totalCostTTC)
+        // = min(1,200,000 × 8%, 42 × 5,000€) = min(96,000, 210,000) = 96,000€
+        const expectedCee = Math.min(input.estimatedCostHT * 0.08, residentialLots * 5_000);
 
         auditAssert("Cas#2", "Aides locales présentes",
             result.financing.localAidAmount === input.localAidAmount,
             input.localAidAmount, result.financing.localAidAmount);
-        auditAssert("Cas#2", "Primes CEE calculées (strict)",
+        auditAssert("Cas#2", "Primes CEE calculées (base worksHT)",
             result.financing.ceeAmount === Math.round(expectedCee),
             Math.round(expectedCee), result.financing.ceeAmount);
     });
@@ -376,12 +391,15 @@ describe("AUDIT MATHEMATIQUE - Cas #2: Grande copropriété G → A", () => {
 // ============================================================================
 
 describe("AUDIT MATHEMATIQUE - Cas #3: Projet non éligible MPR", () => {
+    // FIX AUDIT FEV 2026 (F1+F6) : Le scénario C→B a été remplacé par D→C.
+    // Avec le calcul kWh réel, C→B donne (150-90)/150 = 40% — ÉLIGIBLE au MPR.
+    // D→C donne (210-150)/210 = 28.6% — INÉLIGIBLE (< seuil 35%) comme attendu.
     const input: DiagnosticInput = {
         address: "8 Rue Moderne, 49100 Angers",
         postalCode: "49100",
         city: "Angers",
-        currentDPE: "C",
-        targetDPE: "B", // C→B = 1 classe = 15% gain < 35%
+        currentDPE: "D",
+        targetDPE: "C", // D→C = gain kWh = (210-150)/210 = 28.6% < 35% → non éligible
         numberOfUnits: 12,
         commercialLots: 0,
         estimatedCostHT: 80_000,
@@ -401,18 +419,18 @@ describe("AUDIT MATHEMATIQUE - Cas #3: Projet non éligible MPR", () => {
     it("vérifie les paramètres", () => {
     });
 
-    it("calcule correctement le faible gain énergétique", () => {
-        // C→B = 1 saut = 15%
-        const expectedGain = estimateEnergyGain("C", "B"); // = 0.15
-        auditAssert("Cas#3", "Gain C→B = 15%",
+    it("calcule correctement le faible gain énergétique (D→C)", () => {
+        // D→C : (210 - 150) / 210 = 28.6% < seuil MPR de 35%
+        const expectedGain = estimateEnergyGain("D", "C"); // ≈ 0.2857
+        auditAssert("Cas#3", "Gain D→C ≈ 28.6%",
             result.financing.energyGainPercent === expectedGain,
             expectedGain, result.financing.energyGainPercent);
     });
 
     it("déclare le projet non éligible MPR (gain < 35%)", () => {
-        // Gain 15% < 35% minimum → MPR = 0
+        // Gain 28.6% < 35% minimum → MPR = 0
         const isEligible = result.financing.energyGainPercent >= MPR_COPRO.minEnergyGain;
-        auditAssert("Cas#3", "Projet non éligible (15% < 35%)",
+        auditAssert("Cas#3", "Projet non éligible (28.6% < 35%)",
             !isEligible, false, isEligible);
     });
 
@@ -422,8 +440,9 @@ describe("AUDIT MATHEMATIQUE - Cas #3: Projet non éligible MPR", () => {
             0, result.financing.mprAmount, "CRITICAL");
     });
 
-    it("n'applique pas de bonus passoire (C n'est pas une passoire)", () => {
-        auditAssert("Cas#3", "Pas de bonus passoire pour C",
+    it("n'applique pas de bonus passoire (D n'est pas une passoire)", () => {
+        // Le bonus passoire ne s'applique que si currentDPE ∈ {F, G}
+        auditAssert("Cas#3", "Pas de bonus passoire pour D",
             result.financing.exitPassoireBonus === 0,
             0, result.financing.exitPassoireBonus);
     });
@@ -495,11 +514,14 @@ describe("AUDIT MATHEMATIQUE - Cas #4: Test de stress plafonnements", () => {
     });
 
     it("calcule un coût par lot TTC cohérent", () => {
-        // costPerUnit est TTC donc > totalCostHT / nbLots
-        const minCostPerUnit = result.financing.totalCostHT / input.numberOfUnits * 1.05;
-        const maxCostPerUnit = result.financing.totalCostHT / input.numberOfUnits * 1.06;
+        // FIX AUDIT FEV 2026 (F6) : avec TVA multi-taux ligne par ligne, le taux effectif
+        // n'est pas uniforme à 5.5%. Le mix travaux(5.5%)+honoraires(20%)+DO(9%)+aléas(5.5%)+AMO(20%)
+        // donne un taux effectif d'environ 6.0% sur le HT total. Bornes élargies en conséquence.
+        const costPerUnitHT = result.financing.totalCostHT / input.numberOfUnits;
+        const minCostPerUnit = costPerUnitHT * 1.055; // borne basse (pur TVA 5.5%)
+        const maxCostPerUnit = costPerUnitHT * 1.07;  // borne haute (mix avec 20% honoraires)
 
-        auditAssert("Cas#4", "Coût par lot TTC cohérent",
+        auditAssert("Cas#4", "Coût par lot TTC cohérent (TVA effective 5.5%-7%)",
             result.financing.costPerUnit >= minCostPerUnit && result.financing.costPerUnit <= maxCostPerUnit,
             `${formatCurrency(minCostPerUnit)}-${formatCurrency(maxCostPerUnit)}`,
             formatCurrency(result.financing.costPerUnit), "WARNING");

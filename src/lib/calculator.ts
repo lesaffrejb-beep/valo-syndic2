@@ -182,7 +182,13 @@ export function simulateFinancing(
         : AMO_PARAMS.ceilingPerLotLarge;
     const amoCeilingGlobal = nbLots * amoCeilingPerLot;
     const eligibleBaseAMO = Math.min(amoCostHT, amoCeilingGlobal);
-    const amoSubvention = Math.max(eligibleBaseAMO * AMO_PARAMS.aidRate, AMO_PARAMS.minTotal);
+    // FIX AUDIT FEV 2026 (S3) : plafonnement de la subvention AMO à 100% du coût réel
+    // L'ANAH ne peut pas subventionner au-delà du coût du service réellement facturé.
+    // Le plancher de 3 000€ peut dépasser le coût AMO pour les toutes petites copros (< 6 lots).
+    const amoSubvention = Math.min(
+        Math.max(eligibleBaseAMO * AMO_PARAMS.aidRate, AMO_PARAMS.minTotal),
+        amoCostHT  // Cap à 100% du coût réel
+    );
     const amoNetCostHT = Math.max(0, amoCostHT - amoSubvention);  // Restant finançable
     const amoAmount = amoSubvention; // Alias pour la sortie (subvention, pas le coût)
 
@@ -395,8 +401,16 @@ export function calculateValuation(
     // 3. Valeur actuelle (sans surcote DPE)
     const currentValue = totalSurface * BASE_PRICE_PER_SQM;
 
-    // 4. Valeur Verte via paramètre global
-    const greenValueGainPercent = TECHNICAL_PARAMS.greenValueAppreciation; // 0.12
+    // 4. Valeur Verte — taux conditionnel selon la performance énergétique atteinte
+    // FIX AUDIT FEV 2026 (F3) : aligné sur la logique de calculateProjectMetrics/financialUtils
+    // pour éviter l'incohérence entre les deux moteurs (12% toujours vs 12%/8%/0% conditionnel)
+    const energyGain = financing.energyGainPercent;
+    const greenValueGainPercent =
+        energyGain >= FINANCES_2026.MPR.HIGH_PERF_THRESHOLD
+            ? TECHNICAL_PARAMS.greenValueAppreciation           // 12% (haute performance, gain > 50%)
+            : energyGain >= FINANCES_2026.MPR.MIN_ENERGY_GAIN
+                ? TECHNICAL_PARAMS.greenValueAppreciationStandard // 8%  (standard, gain 35-50%)
+                : 0;                                              // 0%  (non éligible, gain < 35%)
     const greenValueGain = currentValue * greenValueGainPercent;
     const projectedValue = currentValue + greenValueGain;
 
@@ -404,9 +418,12 @@ export function calculateValuation(
     const marketTrend = getMarketTrend();
     const marketTrendApplied = marketTrend.national; // Ex: -0.004 = -0.4%
 
-    // 6. ROI Net (Gain de valeur verte - Coût réel supporté par les copropriétaires)
-    // Le coût réel inclut le prêt contracté (avec ses frais de garantie) et l'éventuel RAC immédiat
-    const realCost = financing.ecoPtzAmount + financing.remainingCost;
+    // 6. ROI Net (Gain de valeur verte - Décaissement cash effectif des copropriétaires)
+    // Le coût réel = uniquement l'apport comptant immédiat (cashDownPayment).
+    // L'Éco-PTZ est un prêt remboursé progressivement : l'additionner au RAC serait
+    // un double-comptage qui sous-estime le ROI patrimonial.
+    // FIX AUDIT FEV 2026 (F2) : réalisé avec cashDownPayment au lieu de ecoPtzAmount + remainingCost
+    const realCost = financing.cashDownPayment;
     const netROI = greenValueGain - realCost;
 
     // Détection fossile
