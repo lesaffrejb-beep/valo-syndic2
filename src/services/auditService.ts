@@ -71,7 +71,12 @@ export function mapBackendToFrontend(backendData: AuditFlashResult): DiagnosticR
         currentEnergyBill: 0,
         investorRatio: 30, // Défaut
         includeHonoraires: true,
-        isCostTTC: true
+        isCostTTC: true,
+        devisValide: false,
+        revenusFonciersExistants: 0,
+        montantTravauxAmeliorationHT: 0,
+        statutLot: 'occupant',
+        optionLocAvantages: false
     };
 
     // 2. Génération d'une base cohérente via le calculateur existant

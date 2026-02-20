@@ -135,6 +135,11 @@ describe("AUDIT MATHEMATIQUE - Cas #1: Petite copropriété F → C", () => {
         investorRatio: 30,
         isCostTTC: true,
         includeHonoraires: true,
+        devisValide: false,
+        revenusFonciersExistants: 0,
+        montantTravauxAmeliorationHT: 0,
+        statutLot: 'occupant',
+        optionLocAvantages: false,
     };
 
     const result = generateDiagnostic(input);
@@ -335,6 +340,11 @@ describe("AUDIT MATHEMATIQUE - Cas #2: Grande copropriété G → A", () => {
         investorRatio: 40,
         isCostTTC: true,
         includeHonoraires: true,
+        devisValide: false,
+        revenusFonciersExistants: 0,
+        montantTravauxAmeliorationHT: 0,
+        statutLot: 'occupant',
+        optionLocAvantages: false,
     };
 
     const result = generateDiagnostic(input);
@@ -418,6 +428,11 @@ describe("AUDIT MATHEMATIQUE - Cas #3: Projet non éligible MPR", () => {
         investorRatio: 0,
         isCostTTC: true,
         includeHonoraires: true,
+        devisValide: false,
+        revenusFonciersExistants: 0,
+        montantTravauxAmeliorationHT: 0,
+        statutLot: 'occupant',
+        optionLocAvantages: false,
     };
 
     const result = generateDiagnostic(input);
@@ -477,6 +492,11 @@ describe("AUDIT MATHEMATIQUE - Cas #4: Test de stress plafonnements", () => {
         investorRatio: 0,
         isCostTTC: true,
         includeHonoraires: true,
+        devisValide: false,
+        revenusFonciersExistants: 0,
+        montantTravauxAmeliorationHT: 0,
+        statutLot: 'occupant',
+        optionLocAvantages: false,
     };
 
     const result = generateDiagnostic(input);

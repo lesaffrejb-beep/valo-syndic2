@@ -247,9 +247,16 @@ export function simulateFinancing(
     // Fonds Travaux ALUR : mobilisés en déduction visible avant prêt
     const fondsTravauxMobilise = alurFund;
 
+    // ==========================================================
+    // 3.B WATERFALL — CALCUL DES KPI (MOTEUR)
+    // ==========================================================
+    // L'assiette de RAC pour les aides (initialRac) ne doit JAMAIS 
+    // pouvoir être subventionnée sur la part Syndic/Amélioration.
+    const subsidizableTTC = totalCostTTC - syndicTTC - ameliorationTTC;
+
     const metrics = calculateProjectMetrics(
         costHT,              // Assiette MPR et CEE
-        totalCostTTC,        // Assiette RAC totale TTC
+        subsidizableTTC,     // Assiette RAC totale TTC éligible aux subventions
         residentialLots,
         energyGainPercent,
         currentEnergyBill,
@@ -363,6 +370,7 @@ export function simulateFinancing(
         monthlyEnergySavings: Math.round(metrics.kpi.monthlyEnergySavings),
         netMonthlyCashFlow: Math.round(metrics.kpi.netMonthlyCashFlow),
         remainingCostPerUnit: racBrutParLot,
+        plafondImputationDeductible: plafondApplicable,
         perUnit,
         alerts: metrics.alerts,
     };

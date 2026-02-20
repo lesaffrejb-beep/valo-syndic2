@@ -113,14 +113,14 @@ export const DiagnosticInputSchema = z.object({
      * Devis signé avant le 31/12/2026 (condition suspensive LdF 2026).
      * Doit être true pour débloquer le plafond de 21 400 €.
      */
-    devisValide: z.boolean().optional(),
+    devisValide: z.boolean().optional().default(false),
 
     /**
      * Revenus fonciers existants du bailleur (€/an).
      * Permet de calculer l'économie sur PS (17.2%) sur la fraction
      * excédant le plafond d'imputation sur le revenu global.
      */
-    revenusFonciersExistants: z.number().min(0).optional(),
+    revenusFonciersExistants: z.number().min(0).optional().default(0),
 
     // =========================================================================
     // Waterfall TVA — Postes à TVA distincte (BOI-TVA-LIQ-30-20-95)
@@ -131,7 +131,7 @@ export const DiagnosticInputSchema = z.object({
      * TVA à 10% (Art. 279-0 bis CGI) — hors travaux énergétiques.
      * Ces travaux ne sont PAS éligibles MPR/Éco-PTZ.
      */
-    montantTravauxAmeliorationHT: z.number().min(0).optional(),
+    montantTravauxAmeliorationHT: z.number().min(0).optional().default(0),
 
     /**
      * Montant honoraires syndic HT (€) — si connu et différent du taux par défaut (3%).
@@ -159,13 +159,13 @@ export const DiagnosticInputSchema = z.object({
      *   sauf si `optionLocAvantages` est coché.
      * - 'occupant' : toutes les primes sont accessibles.
      */
-    statutLot: z.enum(['bailleur', 'occupant']).optional(),
+    statutLot: z.enum(['bailleur', 'occupant']).optional().default('occupant'),
 
     /**
      * Unlock des primes ANAH pour bailleurs en Loc'Avantages.
      * Applicable uniquement si `statutLot === 'bailleur'`.
      */
-    optionLocAvantages: z.boolean().optional(),
+    optionLocAvantages: z.boolean().optional().default(false),
 });
 
 export type DiagnosticInput = z.infer<typeof DiagnosticInputSchema>;
@@ -314,6 +314,9 @@ export const FinancingPlanSchema = z.object({
 
     /** Données par lot pour les slides d'AG */
     perUnit: CalculParLotOutputSlideSchema.optional(),
+
+    /** Plafond d'imputation déductible (Déficit Foncier) */
+    plafondImputationDeductible: z.number().optional(),
 
     /** Alertes de conformité détectées par le moteur de calcul */
     alerts: z.array(z.string()).optional(),
