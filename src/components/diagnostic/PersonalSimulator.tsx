@@ -129,7 +129,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
 
     const inputCls =
         "w-full h-10 px-3 text-sm text-oxford bg-white border border-border rounded-md " +
-        "placeholder:text-subtle/60 " +
+        "placeholder:text-slate-400 " +
         "hover:border-border-strong " +
         "focus:outline-none focus:border-navy focus:ring-1 focus:ring-navy/20 " +
         "transition-colors duration-150 tabular-nums text-center";
@@ -141,20 +141,20 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
         "transition-colors duration-150 cursor-pointer";
 
     return (
-        <section className="border-t-2 border-brass bg-slate-50/60 rounded-b-card -mx-6 -mb-6 md:-mx-8 md:-mb-8 px-6 py-8 md:px-8">
+        <section className="border border-brass/30 bg-slate-50/60 rounded-xl mt-6 px-6 py-8 md:px-8 shadow-sm">
 
             {/* ── Header ──────────────────────────────────────── */}
             <div className="flex items-center gap-2 mb-4">
-                <div className="w-1 h-5 bg-brass rounded-full" />
-                <h3 className="font-serif text-lg font-semibold text-oxford">
+                <div className="w-1 h-5 bg-gradient-to-b from-brass-dark to-brass rounded-full" />
+                <h3 className="font-serif text-lg font-bold text-oxford">
                     Bilan Patrimonial Personnel
                 </h3>
             </div>
 
             {/* ── Disclaimer Art. 10 Loi 65 ───────────────────── */}
             <div className="flex items-start gap-2 rounded-md border border-navy/15 bg-navy/5 px-3.5 py-2.5 mb-6">
-                <Info className="w-3 h-3 text-navy flex-shrink-0 mt-0.5" />
-                <p className="text-[10px] text-navy/80 leading-relaxed">
+                <Info className="w-3.5 h-3.5 text-navy flex-shrink-0 mt-0.5" />
+                <p className="text-[10px] text-navy/80 leading-relaxed font-medium">
                     <strong>Calcul estimatif lissé.</strong> La répartition légale exacte sera appliquée selon les grilles
                     de votre Règlement de Copropriété{" "}
                     <strong>(Art. 10 Loi 65 : Charges générales vs Utilité)</strong>.
@@ -163,14 +163,14 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
             </div>
 
             {/* ── Controls ────────────────────────────────────── */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 mb-6 flex-wrap">
+            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5 mb-8 flex-wrap">
 
                 {/* Tantièmes Input Group */}
-                <div className="flex items-end gap-2">
-                    <div>
+                <div className="flex gap-4">
+                    <div className="flex-1">
                         <label
                             htmlFor="tantiemes"
-                            className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-1"
+                            className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate mb-2"
                         >
                             Vos tantièmes
                         </label>
@@ -178,7 +178,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                             id="tantiemes"
                             type="number"
                             min={1}
-                            className={`${inputCls} w-20`}
+                            className={inputCls}
                             value={tantiemes || ""}
                             onChange={(e) => {
                                 const v = parseInt(e.target.value);
@@ -186,56 +186,59 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                             }}
                         />
                     </div>
-                    <span className="text-slate text-lg font-light pb-1.5">/</span>
-                    <div>
+                    <div className="flex-1">
                         <label
                             htmlFor="totalTantiemes"
-                            className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-1"
+                            className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate mb-2"
                         >
                             Total copro
                         </label>
-                        <input
-                            id="totalTantiemes"
-                            type="number"
-                            min={1}
-                            className={`${inputCls} w-20`}
-                            value={totalTantiemes || ""}
-                            onChange={(e) => {
-                                const v = parseInt(e.target.value);
-                                setTotalTantiemes(isNaN(v) ? 0 : v);
-                            }}
-                        />
+                        <div className="relative">
+                            <input
+                                id="totalTantiemes"
+                                type="number"
+                                min={1}
+                                className={inputCls}
+                                value={totalTantiemes || ""}
+                                onChange={(e) => {
+                                    const v = parseInt(e.target.value);
+                                    setTotalTantiemes(isNaN(v) ? 0 : v);
+                                }}
+                            />
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <span className="text-[10px] font-semibold text-slate-400">
+                                    {(personal.ratio * 100).toFixed(1)}%
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <span className="text-[10px] text-subtle pb-2.5">
-                        ({(personal.ratio * 100).toFixed(1)}%)
-                    </span>
                 </div>
 
                 {/* Investor Type Toggle */}
                 <div>
-                    <span className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-1">
+                    <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate mb-2">
                         Statut du lot
                     </span>
-                    <div className="flex rounded-md border border-border overflow-hidden">
+                    <div className="flex p-1 bg-slate-100 rounded-md border border-slate-200 gap-1">
                         <button
                             type="button"
                             onClick={() => setInvestorType("occupant")}
-                            className={`px-4 py-2 text-xs font-semibold transition-colors duration-150 ${investorType === "occupant"
-                                ? "bg-navy text-white"
-                                : "bg-white text-slate hover:bg-slate-50"
+                            className={`flex-1 px-4 py-2 text-[11px] font-bold uppercase tracking-wide rounded transition-all duration-300 ${investorType === "occupant"
+                                ? "bg-white text-brass-dark shadow-sm ring-1 ring-border"
+                                : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
                                 }`}
                         >
-                            Propriétaire Occupant
+                            Occupant
                         </button>
                         <button
                             type="button"
                             onClick={() => setInvestorType("bailleur")}
-                            className={`px-4 py-2 text-xs font-semibold border-l border-border transition-colors duration-150 ${investorType === "bailleur"
-                                ? "bg-navy text-white"
-                                : "bg-white text-slate hover:bg-slate-50"
+                            className={`flex-1 px-4 py-2 text-[11px] font-bold uppercase tracking-wide rounded transition-all duration-300 ${investorType === "bailleur"
+                                ? "bg-gradient-to-r from-brass-dark to-brass text-white shadow-sm ring-1 ring-brass-dark/50"
+                                : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
                                 }`}
                         >
-                            Propriétaire Bailleur
+                            Bailleur
                         </button>
                     </div>
                 </div>
@@ -244,7 +247,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                 <div>
                     <label
                         htmlFor="codePostal-sim"
-                        className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-1"
+                        className="block text-[10px] font-semibold uppercase tracking-[0.05em] text-slate mb-1.5"
                     >
                         Code postal
                         <span className="ml-1 normal-case font-normal text-subtle">(barème ANAH)</span>
@@ -265,8 +268,8 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
             {/* ── ANAH Prime Info Banner (si code postal saisi) ── */}
             {codePostal.length === 5 && (
                 <div className={`flex items-center gap-2 rounded-md border px-3.5 py-2 mb-5 text-[10px] ${isIDF(codePostal)
-                        ? "border-navy/20 bg-navy/5 text-navy/80"
-                        : "border-moss/20 bg-moss/5 text-moss/80"
+                    ? "border-navy/20 bg-navy/5 text-navy/80"
+                    : "border-moss/20 bg-moss/5 text-moss/80"
                     }`}>
                     <span className="font-semibold">
                         Barème {isIDF(codePostal) ? "Île-de-France" : "Province"} appliqué
@@ -276,44 +279,47 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
             )}
 
             {/* ── Results Grid ────────────────────────────────── */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
 
-                {/* Card 1: Reste au comptant */}
-                <div className="flex flex-col items-center justify-center p-5 rounded-card bg-white border border-border text-center">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-2">
+                {/* Card 1 : Reste au comptant */}
+                <div className="flex flex-col items-center justify-between p-6 min-h-[120px] rounded-xl bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100/50 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-shadow duration-300 text-center relative overflow-hidden group">
+                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-brass-dark to-brass-light opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate mb-3 mt-1">
                         Reste au comptant
                     </span>
-                    <span className="text-2xl md:text-3xl font-serif font-bold text-oxford tabular-nums">
+                    <span className="text-3xl font-serif font-bold text-oxford tabular-nums">
                         {formatCurrency(personal.cashDown)}
                     </span>
                     {personal.primeANAH > 0 && (
-                        <span className="text-[10px] text-gain mt-1">
+                        <span className="text-[11px] font-medium text-gain mt-1.5">
                             − {formatCurrency(personal.primeANAH)} prime ANAH → {formatCurrency(personal.cashDownNet)}
                         </span>
                     )}
-                    <span className="text-[10px] text-subtle mt-1">appel de fonds immédiat</span>
+                    <span className="text-[10px] text-subtle mt-auto pt-3">Appel de fonds immédiat</span>
                 </div>
 
                 {/* Card 2: Mensualité Éco-PTZ */}
-                <div className="flex flex-col items-center justify-center p-5 rounded-card bg-white border border-border text-center">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-2">
+                <div className="flex flex-col items-center justify-between p-6 min-h-[120px] rounded-xl bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100/50 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-shadow duration-300 text-center relative overflow-hidden group">
+                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-brass-dark to-brass-light opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate mb-3 mt-1">
                         Mensualité Éco-PTZ
                     </span>
-                    <span className="text-2xl md:text-3xl font-serif font-bold text-oxford tabular-nums">
+                    <span className="text-3xl font-serif font-bold text-oxford tabular-nums">
                         {formatCurrency(personal.monthlyPayment)}
                     </span>
-                    <span className="text-[10px] text-subtle mt-1">/ mois pendant 20 ans</span>
+                    <span className="text-[10px] text-subtle mt-auto pt-3">/ mois pendant 20 ans</span>
                 </div>
 
                 {/* Card 3: Potentiel de Valorisation Patrimoniale */}
-                <div className="flex flex-col items-center justify-center p-5 rounded-card bg-white border border-border text-center">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-2">
-                        Potentiel Valeur Verte
+                <div className="flex flex-col items-center justify-between p-6 min-h-[120px] rounded-xl bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100/50 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-shadow duration-300 text-center relative overflow-hidden group">
+                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-brass-dark to-brass-light opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate mb-3 mt-1">
+                        Valeur Verte
                     </span>
-                    <span className="text-2xl md:text-3xl font-serif font-bold text-gain tabular-nums">
+                    <span className="text-3xl font-serif font-bold text-gain tabular-nums">
                         + {formatCurrency(personal.greenValue)}
                     </span>
-                    <span className="text-[10px] text-subtle mt-1">potentiel de valorisation patrimoniale (est. marché)</span>
+                    <span className="text-[10px] text-subtle mt-auto pt-3">Valorisation patrimoniale estimée</span>
                 </div>
             </div>
 
@@ -413,7 +419,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                         <div>
                             <label
                                 htmlFor="tmi-select"
-                                className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-1"
+                                className="block text-[10px] font-semibold uppercase tracking-[0.05em] text-slate mb-1.5"
                             >
                                 Tranche d&rsquo;imposition (TMI)
                             </label>
@@ -433,16 +439,16 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
 
                         {/* Régime Fiscal Toggle */}
                         <div>
-                            <span className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-1">
+                            <span className="block text-[10px] font-semibold uppercase tracking-[0.05em] text-slate mb-1.5">
                                 Régime fiscal
                             </span>
-                            <div className="flex rounded-md border border-border overflow-hidden">
+                            <div className="flex p-0.5 bg-slate-100 rounded-md border border-slate-200">
                                 <button
                                     type="button"
                                     onClick={() => setFiscalRegime("reel")}
-                                    className={`px-3 py-1.5 text-[11px] font-semibold transition-colors duration-150 ${fiscalRegime === "reel"
-                                        ? "bg-navy text-white"
-                                        : "bg-white text-slate hover:bg-slate-50"
+                                    className={`px-3 py-1.5 text-[11px] font-semibold rounded transition-all duration-150 ${fiscalRegime === "reel"
+                                        ? "bg-white text-navy shadow-sm ring-1 ring-black/5"
+                                        : "text-slate-500 hover:text-slate-700"
                                         }`}
                                 >
                                     Réel (Déficit Foncier)
@@ -450,9 +456,9 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                                 <button
                                     type="button"
                                     onClick={() => setFiscalRegime("micro")}
-                                    className={`px-3 py-1.5 text-[11px] font-semibold border-l border-border transition-colors duration-150 ${fiscalRegime === "micro"
-                                        ? "bg-navy text-white"
-                                        : "bg-white text-slate hover:bg-slate-50"
+                                    className={`px-3 py-1.5 text-[11px] font-semibold rounded transition-all duration-150 ${fiscalRegime === "micro"
+                                        ? "bg-white text-navy shadow-sm ring-1 ring-black/5"
+                                        : "text-slate-500 hover:text-slate-700"
                                         }`}
                                 >
                                     Micro-Foncier (30%)
@@ -465,7 +471,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                             <div>
                                 <label
                                     htmlFor="rfExistants-sim"
-                                    className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-1"
+                                    className="block text-[10px] font-semibold uppercase tracking-[0.05em] text-slate mb-1.5"
                                 >
                                     Revenus fonciers N−1 (€/an)
                                 </label>
@@ -518,8 +524,8 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
 // ── Mini stat helper ─────────────────────────────────────────────────────────
 function MiniStat({ label, value, green }: { label: string; value: string; green?: boolean }) {
     return (
-        <div className="flex flex-col">
-            <span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-subtle">{label}</span>
+        <div className="flex flex-col gap-0.5">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.07em] text-slate">{label}</span>
             <span className={`text-sm font-semibold tabular-nums ${green ? "text-gain" : "text-oxford"}`}>
                 {value}
             </span>

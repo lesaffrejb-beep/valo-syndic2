@@ -80,7 +80,7 @@ export default function PresentationView() {
                                 {input.targetDPE}
                             </span>
                         </div>
-                        <span className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-wider rounded-md ${badgeColor[compliance.statusColor]}`}>
+                        <span className={`px-3 py-1.5 text-xs font-semibold rounded-md border ${compliance.statusColor === 'danger' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>
                             {compliance.statusLabel}
                         </span>
                     </div>
@@ -117,21 +117,22 @@ export default function PresentationView() {
                 </p>
 
                 {/* ⚠️ AVERTISSEMENT LÉGAL UI */}
-                <div className="mt-8 max-w-2xl w-full text-left p-4 rounded-lg bg-amber-50/50 border border-amber-200/60">
-                    <div className="flex items-start gap-3">
-                        <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                        <div>
-                            <h4 className="text-[11px] font-bold text-amber-800 uppercase tracking-wide mb-1 flex items-center gap-2">
-                                Avertissement Légal
-                            </h4>
-                            <p className="text-[10px] text-amber-800/90 leading-relaxed text-justify">
+                <div className="mt-12 max-w-2xl w-full text-left animate-fadeInUp" style={{ animationDelay: "300ms", animationFillMode: "both" }}>
+                    <div className="flex bg-brass-muted/30 border border-brass/20 rounded-lg p-4 sm:p-5 shadow-sm">
+                        <AlertTriangle className="w-5 h-5 text-brass-dark flex-shrink-0 mt-0.5" />
+                        <div className="ml-3 sm:ml-4">
+                            <h3 className="text-sm font-bold text-oxford tracking-tight">Avertissement Légal</h3>
+                            <p className="mt-1.5 text-[11px] text-slate-600 leading-relaxed font-medium">
                                 L&apos;« Effort de Trésorerie Mensuel » est une estimation nette intégrant des économies d&apos;énergie théoriques. Il ne reflète pas le montant réel de vos appels de fonds travaux ou de vos mensualités d&apos;emprunt, qui doivent être réglés intégralement à leurs échéances respectives. La responsabilité du syndic ne saurait être engagée en cas de variation des tarifs de l&apos;énergie ou des barèmes de subventions étatiques.
                             </p>
                             <button
                                 onClick={() => setIsLegalModalOpen(true)}
-                                className="mt-2 text-[10px] font-semibold text-amber-700 hover:text-amber-900 underline underline-offset-2 transition-colors"
+                                className="mt-3 text-[11px] font-bold tracking-wide uppercase text-brass-dark hover:text-brass transition-colors flex items-center gap-1 group"
                             >
                                 Lire les mentions légales complètes &amp; RGPD
+                                <svg className="w-3 h-3 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                </svg>
                             </button>
                         </div>
                     </div>
@@ -141,12 +142,13 @@ export default function PresentationView() {
             </div>
 
             {/* ── Bottom: Macro Figures ───────────────────────── */}
-            <div className="flex-shrink-0 border-t border-border bg-alabaster">
-                <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border">
+            <div className="flex-shrink-0 bg-alabaster/50 border-t border-border mt-auto">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-8 md:p-12 max-w-7xl mx-auto">
                     <MacroCard
                         label="Reste au comptant"
                         value={formatCurrency(resteComptant)}
                         sublabel="à régler immédiatement"
+                        accent="slate"
                     />
                     {/* FIX AUDIT FEV 2026 : sublabel insiste sur le caractère latent/illiquide
                         pour distinguer ce gain patrimonial du cash-flow réel. */}
@@ -154,13 +156,13 @@ export default function PresentationView() {
                         label="Gain Valeur Verte"
                         value={`+ ${formatCurrency(valuation.greenValueGain)}`}
                         sublabel="gain patrimonial latent — illiquide"
-                        accent="gain"
+                        accent="brass"
                     />
                     <MacroCard
                         label="Subventions obtenues"
                         value={formatCurrency(totalSubsidies)}
                         sublabel={hasMpr ? "MPR (sous réserve LFI 2026) + CEE + Aides" : "CEE + AMO + Aides"}
-                        accent="brass"
+                        accent="navy"
                     />
                 </div>
             </div>
@@ -171,7 +173,6 @@ export default function PresentationView() {
     );
 }
 
-// ─── Macro Card Component ────────────────────────────────────────────────────
 function MacroCard({
     label,
     value,
@@ -181,19 +182,23 @@ function MacroCard({
     label: string;
     value: string;
     sublabel: string;
-    accent?: "gain" | "brass";
+    accent?: "navy" | "brass" | "slate";
 }) {
-    const valueColor = accent === "gain" ? "text-gain" : accent === "brass" ? "text-brass-dark" : "text-oxford";
+    const textColors = {
+        navy: "text-navy",
+        brass: "text-brass-dark",
+        slate: "text-oxford"
+    };
 
     return (
-        <div className="flex flex-col items-center justify-center px-8 py-8 md:py-10 text-center">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate mb-3">
+        <div className="flex flex-col items-center justify-center bg-white px-8 py-8 md:py-10 text-center rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100/50 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-shadow duration-300">
+            <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate mb-3">
                 {label}
             </span>
-            <span className={`text-3xl md:text-4xl font-serif font-bold tabular-nums ${valueColor}`}>
+            <span className={`text-3xl md:text-4xl font-serif font-bold tabular-nums ${textColors[accent || 'slate']}`}>
                 {value}
             </span>
-            <span className="text-[10px] text-subtle mt-2">{sublabel}</span>
+            <span className="text-[11px] font-medium text-subtle mt-2.5 max-w-[200px] leading-tight">{sublabel}</span>
         </div>
     );
 }
