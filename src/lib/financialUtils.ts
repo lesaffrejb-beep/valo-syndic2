@@ -196,9 +196,15 @@ export function calculateProjectMetrics(
             : FINANCES_2026.LOAN.ECO_PTZ_MAX_PER_LOT_STANDARD;
     const ecoPtzCapTotal = ecoPtzCapPerLot * lots;
 
-    // Assiette éligible Éco-PTZ en TTC (à 5.5% sur travaux + AMO nette)
-    const eligibleTTC = normalizePositiveNumber(ecoPtzEligibleHT, "Assiette Éco-PTZ", alerts) * (1 + FINANCES_2026.TVA.TRAVAUX);
-    const racEligible = Math.max(0, Math.min(initialRac, eligibleTTC - (mprAmount + ceeAmount)));
+    // Assiette éligible Éco-PTZ (FIX AUDIT FEV 2026 — F5 : cohérence HT/TTC)
+    // RÈGLE : on ne soustrait JAMAIS des montants HT d'une base TTC.
+    // Les subventions (MPR + CEE) sont calculées sur l'assiette HT.
+    // → Déduire ces montants HT de l'assiette HT d'abord, PUIS convertir en TTC.
+    // Formule correcte : (ecoPtzEligibleHT - subsidiesHT) × (1 + TVA)
+    // ≠ ancienne formule : eligibleTTC - subsidiesHT (mélange de bases)
+    const ecoPtzBaseHT = normalizePositiveNumber(ecoPtzEligibleHT, "Assiette Éco-PTZ", alerts);
+    const netEligibleHT = Math.max(0, ecoPtzBaseHT - (mprAmount + ceeAmount));
+    const racEligible = Math.max(0, Math.min(initialRac, netEligibleHT * (1 + FINANCES_2026.TVA.TRAVAUX)));
 
     // Frais de garantie forfaitaires (art. R. 312-11 Code Consommation — forfait fixe, pas un %)
     const GUARANTEE_FEE = FINANCES_2026.LOAN.GUARANTEE_FEE_FIXED;
