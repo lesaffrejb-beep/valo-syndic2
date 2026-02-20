@@ -19,7 +19,13 @@ const testInput: DiagnosticInput = {
     currentEnergyBill: 24000,
     isCostTTC: true,
     includeHonoraires: true,
-    investorRatio: 0
+    investorRatio: 0,
+    // Champs 2026 — valeurs par défaut (test de non-régression)
+    devisValide: true,                    // Activer le plafond dérogatoire 21 400 €
+    revenusFonciersExistants: 0,
+    montantTravauxAmeliorationHT: 0,
+    statutLot: 'occupant' as const,
+    optionLocAvantages: false,
 };
 
 const result = generateDiagnostic(testInput);

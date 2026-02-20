@@ -97,6 +97,75 @@ export const DiagnosticInputSchema = z.object({
 
     /** Est-ce qu'on inclut les honoraires (Syndic, DO, etc.) dans l'estimation ? */
     includeHonoraires: z.boolean().optional().default(true),
+
+    // =========================================================================
+    // CGI Art. 156-I-3° — Déficit Foncier dérogatoire (LdF 2026)
+    // =========================================================================
+
+    /**
+     * Classe DPE projetée après travaux.
+     * Requise pour activer le plafond dérogatoire de 21 400 €
+     * (doit atteindre A, B, C ou D pour un DPE initial F ou G).
+     */
+    dpeProjete: DPELetterSchema.optional(),
+
+    /**
+     * Devis signé avant le 31/12/2026 (condition suspensive LdF 2026).
+     * Doit être true pour débloquer le plafond de 21 400 €.
+     */
+    devisValide: z.boolean().optional(),
+
+    /**
+     * Revenus fonciers existants du bailleur (€/an).
+     * Permet de calculer l'économie sur PS (17.2%) sur la fraction
+     * excédant le plafond d'imputation sur le revenu global.
+     */
+    revenusFonciersExistants: z.number().min(0).optional(),
+
+    // =========================================================================
+    // Waterfall TVA — Postes à TVA distincte (BOI-TVA-LIQ-30-20-95)
+    // =========================================================================
+
+    /**
+     * Montant travaux d'amélioration standard HT (€).
+     * TVA à 10% (Art. 279-0 bis CGI) — hors travaux énergétiques.
+     * Ces travaux ne sont PAS éligibles MPR/Éco-PTZ.
+     */
+    montantTravauxAmeliorationHT: z.number().min(0).optional(),
+
+    /**
+     * Montant honoraires syndic HT (€) — si connu et différent du taux par défaut (3%).
+     * TVA à 20% (Loi 65, Art. 18-1 A) — strictement hors prêt/subvention.
+     * Si absent, le moteur utilise le taux forfaitaire PROJECT_FEES.syndicRate (3%).
+     */
+    montantHonorairesSyndicHT: z.number().min(0).optional(),
+
+    // =========================================================================
+    // PersonalSimulator — Géo-routage ANAH & Statut Lot
+    // =========================================================================
+
+    /**
+     * Code postal de l'immeuble (5 chiffres).
+     * Utilisé pour router le barème ANAH : IDF (75,77,78,91-95) vs Province.
+     */
+    codePostalImmeuble: z
+        .string()
+        .regex(/^\d{5}$/, "Code postal invalide")
+        .optional(),
+
+    /**
+     * Statut d'occupation du lot ciblé par le PersonalSimulator.
+     * - 'bailleur' : les primes ANAH individuelles Bleu/Jaune sont bloquées
+     *   sauf si `optionLocAvantages` est coché.
+     * - 'occupant' : toutes les primes sont accessibles.
+     */
+    statutLot: z.enum(['bailleur', 'occupant']).optional(),
+
+    /**
+     * Unlock des primes ANAH pour bailleurs en Loc'Avantages.
+     * Applicable uniquement si `statutLot === 'bailleur'`.
+     */
+    optionLocAvantages: z.boolean().optional(),
 });
 
 export type DiagnosticInput = z.infer<typeof DiagnosticInputSchema>;

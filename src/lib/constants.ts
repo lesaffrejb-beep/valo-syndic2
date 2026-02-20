@@ -148,11 +148,11 @@ export const AMO_PARAMS = {
     /** Montant plancher global minimum (3 000€) */
     minTotal: 3_000,
 
-    /** Plafond d'assiette subventionnable par lot (≤ 20 lots) */
-    ceilingPerLotSmall: 1_000,
+    /** Plafond d'assiette subventionnable par lot (≤ 20 lots) — ANAH Février 2026 */
+    ceilingPerLotSmall: 500,
 
-    /** Plafond d'assiette subventionnable par lot (> 20 lots) */
-    ceilingPerLotLarge: 600,
+    /** Plafond d'assiette subventionnable par lot (> 20 lots) — ANAH Février 2026 */
+    ceilingPerLotLarge: 300,
 
     /** Seuil de distinction petite/grande copropriété */
     smallCoproThreshold: 20,

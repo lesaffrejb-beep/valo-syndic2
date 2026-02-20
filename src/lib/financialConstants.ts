@@ -48,8 +48,10 @@ export const FINANCES_2026 = {
         GUARANTEE_FEE_FIXED: 500,
     },
     TVA: {
-        /** TVA Rénovation Énergétique logements > 2 ans (Art. 279-0 bis) */
+        /** TVA Rénovation Énergétique logements > 2 ans (Art. 279-0 bis A) */
         TRAVAUX: 0.055,
+        /** TVA Travaux d'amélioration standard non énergétiques (Art. 279-0 bis) */
+        AMELIORATION: 0.10,
         /** TVA Honoraires Syndic / MOE / AMO (régime normal) */
         HONORAIRES: 0.20,
         /** Taxe sur conventions d'assurance — Dommages-Ouvrage (Art. 991 CGI) */
@@ -63,12 +65,56 @@ export const FINANCES_2026 = {
         /** Taux effectif de déduction = TMI + PS (47.2%) — calculé sur base TMI 30% */
         TAUX_EFFECTIF: 0.472,
         /**
+         * Plafond standard d'imputation du déficit foncier (CGI Art. 156-I-3°)
+         * Applicable sur le revenu global — excédent reportable 10 ans sur revenus fonciers.
+         */
+        PLAFOND_STANDARD: 10_700,
+        /**
+         * Plafond dérogatoire — Loi de Finances 2026
+         * Exclusivement réservé aux passoires thermiques (DPE initial F ou G).
+         * Recentré par Bercy — les DPE E en sont exclus.
+         */
+        PLAFOND_DEROGATOIRE: 21_400,
+        /**
          * Tranches Marginales d'Imposition (TMI) applicables au Déficit Foncier
          * Art. 156 CGI — Régime Réel uniquement.
          * Source : Barème de l'impôt sur le revenu 2026 (revenus 2025).
          */
         TMI_BRACKETS: [0.11, 0.30, 0.41, 0.45] as const,
     },
+    /**
+     * MPR Copropriété — Primes Individuelles Complémentaires (ANAH 2026)
+     * Versées au syndicat mais déduites du RAC du lot concerné.
+     * Source : Guide des aides financières de l'ANAH, Édition Février 2026.
+     */
+    MPR_PRIMES_INDIVIDUELLES: {
+        /** Profil Bleu (Très Modeste) */
+        BLEU: 3_000,
+        /** Profil Jaune (Modeste) */
+        JAUNE: 1_500,
+        /** Profil Violet (Intermédiaire) et Rose (Supérieur) : pas de prime */
+        VIOLET: 0,
+        ROSE: 0,
+    },
+} as const;
+
+// =============================================================================
+// BARÈMES DE REVENUS ANAH 2026 (MaPrimeRénov')
+// =============================================================================
+// Source : Guide des aides financières de l'ANAH, Édition Février 2026.
+// Utilisés pour la classification des profils individuels (PersonalSimulator).
+
+export const BAREME_ANAH_2026_PROVINCE = {
+    bleu: { base: [17_363, 25_393, 30_540, 35_676, 40_835], supp: 5_151 },
+    jaune: { base: [22_259, 32_553, 39_148, 45_735, 52_348], supp: 6_598 },
+    violet: { base: [31_185, 45_842, 55_196, 64_550, 73_907], supp: 9_357 },
+    // Catégorie "Rose" déduite : > seuil violet
+} as const;
+
+export const BAREME_ANAH_2026_IDF = {
+    bleu: { base: [24_031, 35_270, 42_357, 49_455, 56_580], supp: 7_116 },
+    jaune: { base: [29_253, 42_933, 51_564, 60_208, 68_877], supp: 8_663 },
+    violet: { base: [40_851, 60_051, 71_846, 84_562, 96_817], supp: 12_257 },
 } as const;
 
 export type Finances2026 = typeof FINANCES_2026;

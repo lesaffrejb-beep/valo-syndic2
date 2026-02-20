@@ -399,7 +399,8 @@ describe('Règles Critiques MPR Copro 2026 — Blindage Mathématique', () => {
             expect(metrics.financing.loanAmount).toBeLessThan(181_000);
 
             const expectedMonthly = Math.round(metrics.financing.loanAmount / (20 * 12));
-            expect(metrics.financing.monthlyLoanPayment).toBe(expectedMonthly);
+            // financialUtils retourne des flottants bruts (arrondi différé à calculator.ts)
+            expect(metrics.financing.monthlyLoanPayment).toBeCloseTo(expectedMonthly, 0);
             expect(metrics.financing.monthlyLoanPayment).toBeGreaterThan(700);
             expect(metrics.financing.monthlyLoanPayment).toBeLessThan(780);
         });

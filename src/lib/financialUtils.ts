@@ -254,22 +254,25 @@ export function calculateProjectMetrics(
         alerts.push("Valeur verte non calculable: surface/prix m² manquants.");
     }
 
+    // FIX AUDIT FEV 2026 : Pas d'arrondi intermédiaire.
+    // Les valeurs sont retournées en flottants bruts.
+    // L'arrondi final (Math.round) est appliqué dans calculator.ts à la sortie.
     return {
         subsidies: {
-            mpr: roundEuro(mprAmount),
-            cee: roundEuro(ceeAmount),
-            total: roundEuro(totalSubsidies),
+            mpr: mprAmount,
+            cee: ceeAmount,
+            total: totalSubsidies,
         },
         financing: {
-            initialRac: roundEuro(initialRac),
-            loanAmount: roundEuro(loanAmount),
-            cashDownPayment: roundEuro(cashDownPayment),
-            monthlyLoanPayment: roundEuro(monthlyLoanPayment),
+            initialRac: initialRac,
+            loanAmount: loanAmount,
+            cashDownPayment: cashDownPayment,
+            monthlyLoanPayment: monthlyLoanPayment,
         },
         kpi: {
-            monthlyEnergySavings: roundEuro(monthlyEnergySavings),
-            netMonthlyCashFlow: roundEuro(netMonthlyCashFlow),
-            greenValueIncrease: roundEuro(greenValueIncrease),
+            monthlyEnergySavings: monthlyEnergySavings,
+            netMonthlyCashFlow: netMonthlyCashFlow,
+            greenValueIncrease: greenValueIncrease,
         },
         alerts,
     };

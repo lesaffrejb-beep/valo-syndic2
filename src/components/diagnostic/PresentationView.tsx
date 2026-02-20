@@ -40,10 +40,10 @@ export default function PresentationView() {
     const savingsPerLot = Math.round(financing.monthlyEnergySavings / numberOfUnits);
     const effortTresorerie = monthlyPerLot - savingsPerLot;
 
-    // Total subsidies
+    // Total subsidies — MPR incluse mais avec mention explicite du statut conditionnel
     const totalSubsidies = financing.mprAmount + financing.ceeAmount + financing.localAidAmount + financing.amoAmount;
-
-    // Reste au comptant collectif
+    const subsidiesHorsMpr = financing.ceeAmount + financing.localAidAmount + financing.amoAmount;
+    const hasMpr = financing.mprAmount > 0;
     const resteComptant = Math.max(0, financing.remainingCost - financing.ecoPtzAmount);
 
     // ── Status badge color ───────────────────────────────────
@@ -159,7 +159,7 @@ export default function PresentationView() {
                     <MacroCard
                         label="Subventions obtenues"
                         value={formatCurrency(totalSubsidies)}
-                        sublabel="MPR + CEE + Aides"
+                        sublabel={hasMpr ? "MPR (sous réserve LFI 2026) + CEE + Aides" : "CEE + AMO + Aides"}
                         accent="brass"
                     />
                 </div>

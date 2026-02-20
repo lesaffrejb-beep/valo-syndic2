@@ -162,6 +162,24 @@ export default function CockpitForm() {
                     />
                 </div>
 
+                {/* Code Postal */}
+                <div>
+                    <FieldLabel htmlFor="codePostalImmeuble">Code Postal</FieldLabel>
+                    <input
+                        id="codePostalImmeuble"
+                        type="text"
+                        maxLength={5}
+                        pattern="\d{5}"
+                        className={inputCls}
+                        placeholder="Ex : 75001"
+                        value={input.codePostalImmeuble || ""}
+                        onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, "");
+                            updateInput({ codePostalImmeuble: val || undefined });
+                        }}
+                    />
+                </div>
+
                 {/* Number of Lots */}
                 <div>
                     <FieldLabel htmlFor="numberOfUnits">Nombre de lots</FieldLabel>
@@ -191,6 +209,14 @@ export default function CockpitForm() {
                     options={TARGET_DPE}
                     value={input.targetDPE}
                     onChange={(dpe) => updateInput({ targetDPE: dpe })}
+                />
+
+                {/* DPE Projeté */}
+                <DPESelector
+                    label="DPE projeté (Déficit Foncier LdF 2026)"
+                    options={ALL_DPE}
+                    value={input.dpeProjete}
+                    onChange={(dpe) => updateInput({ dpeProjete: dpe })}
                 />
             </div>
 
@@ -229,6 +255,52 @@ export default function CockpitForm() {
                         value={input.currentEnergyBill || ""}
                         onChange={handleNumber("currentEnergyBill")}
                     />
+                </div>
+
+                {/* Travaux d'amélioration standard (hors énergie) */}
+                <div>
+                    <FieldLabel htmlFor="montantTravauxAmeliorationHT">Travaux d'amélioration HT (€)</FieldLabel>
+                    <input
+                        id="montantTravauxAmeliorationHT"
+                        type="number"
+                        min={0}
+                        className={inputCls}
+                        placeholder="Ex : 15 000"
+                        value={input.montantTravauxAmeliorationHT ?? ""}
+                        onChange={handleNumber("montantTravauxAmeliorationHT")}
+                    />
+                    <HelperText>Non éligible subventions. TVA 10%.</HelperText>
+                </div>
+
+                {/* Honoraires Syndic */}
+                <div>
+                    <FieldLabel htmlFor="montantHonorairesSyndicHT">Honoraires Syndic HT (€)</FieldLabel>
+                    <input
+                        id="montantHonorairesSyndicHT"
+                        type="number"
+                        min={0}
+                        className={inputCls}
+                        placeholder="Vide = forfait 3%"
+                        value={input.montantHonorairesSyndicHT ?? ""}
+                        onChange={handleNumber("montantHonorairesSyndicHT")}
+                    />
+                    <HelperText>Mélange interdit avec travaux. TVA 20%.</HelperText>
+                </div>
+
+                {/* Devis Valide */}
+                <div className="pt-2">
+                    <label className="flex items-center gap-2.5 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={input.devisValide || false}
+                            onChange={(e) => updateInput({ devisValide: e.target.checked })}
+                            className="h-4 w-4 rounded border-border text-navy focus:ring-navy/30"
+                        />
+                        <span className="text-sm font-medium text-oxford">
+                            Devis signé avant le 31/12/2026
+                        </span>
+                    </label>
+                    <HelperText>Condition cumulative pour accès au plafond dérogatoire du Déficit Foncier (21 400 €).</HelperText>
                 </div>
             </div>
 

@@ -15,7 +15,7 @@ import {
     type DPELetter,
 } from "./constants";
 
-import { FINANCES_2026 } from "./financialConstants";
+import { FINANCES_2026, BAREME_ANAH_2026_IDF, BAREME_ANAH_2026_PROVINCE } from "./financialConstants";
 import { calculateProjectMetrics } from "./financialUtils";
 
 import { getMarketTrend } from "./market-data";
@@ -107,12 +107,21 @@ export function calculateComplianceStatus(
 /**
  * Calcule le plan de financement complet pour des travaux de rénovation.
  *
- * @param costHT - Coût des travaux HT (€) (Travaux purs)
+ * @param costHT - Coût des travaux HT (€) (Travaux purs énergétiques — TVA 5.5%)
  * @param nbLots - Nombre total de lots
  * @param currentDPE - Classe DPE actuelle
  * @param targetDPE - Classe DPE cible
  * @param commercialLots - Nombre de lots commerciaux (non éligibles MPR)
  * @param localAidAmount - Montant des aides locales
+ * @param alurFund - Fonds ALUR mobilisés
+ * @param currentEnergyBill - Facture énergétique annuelle
+ * @param totalSurface - Surface totale
+ * @param averagePricePerSqm - Prix au m²
+ * @param montantHonorairesSyndicHT - Honoraires syndic HT saisis (TVA 20% — Loi 65 Art. 18-1 A)
+ *   Si fourni, remplace le calcul forfaitaire (3% de costHT).
+ *   Toujours hors assiette MPR/Éco-PTZ — ajouté directement au cashDownPayment.
+ * @param montantTravauxAmeliorationHT - Travaux amélioration standard HT (TVA 10%)
+ *   Non éligibles MPR/Éco-PTZ — ajoutés directement au cashDownPayment.
  * @returns Plan de financement détaillé
  */
 export function simulateFinancing(
@@ -125,7 +134,11 @@ export function simulateFinancing(
     alurFund: number = 0,
     currentEnergyBill: number = 0,
     totalSurface?: number,
-    averagePricePerSqm?: number
+    averagePricePerSqm?: number,
+    montantHonorairesSyndicHT?: number,   // Optionnel — override du taux forfaitaire 3%
+    montantTravauxAmeliorationHT: number = 0,  // Travaux amélioration TVA 10%
+    devisValide: boolean = false,              // Conditions Dérogatoire: devis signé avant 31/12/2026
+    revenusFonciersExistants: number = 0       // Bailleur: revenus fonciers existants (€/an)
 ): FinancingPlan {
     // Guard: prevent division by zero
     if (!nbLots || nbLots <= 0) {
@@ -145,26 +158,33 @@ export function simulateFinancing(
     // - Provision Aléas        : NEUTRE — provision HT, pas de TVA
     // - AMO (Ingénierie)       : TVA 20%  (régime normal)
 
-    const syndicFees = costHT * PROJECT_FEES.syndicRate;       // HT
+    // Honoraires syndic HT : priorité au montant saisi, sinon taux forfaitaire 3%
+    // (Loi 65, Art. 18-1 A — TVA 20% — STRICTEMENT hors assiette MPR/Éco-PTZ)
+    const syndicFees = montantHonorairesSyndicHT ?? (costHT * PROJECT_FEES.syndicRate); // HT
     const doFees = costHT * PROJECT_FEES.doRate;           // HT assiette
     const contingencyFees = costHT * PROJECT_FEES.contingencyRate;  // provision HT
 
     // b. AMO (Assistance à Maîtrise d'Ouvrage) — Forfaitaire par lot
     const amoCostHT = AMO_PARAMS.costPerLot * nbLots;
 
-    // F1 — totalCostHT = addition exacte des lignes HT (avant TVA)
-    const totalCostHT = costHT + syndicFees + doFees + contingencyFees + amoCostHT;
+    // c. Travaux amélioration standard (TVA 10%) — hors énergétiques
+    const ameliorationHT = Math.max(0, montantTravauxAmeliorationHT);
 
-    // F2 — TTC ligne par ligne (pas de multiplicateur global 5.5%)
-    const worksTTC = costHT * (1 + FINANCES_2026.TVA.TRAVAUX);        // 5.5%
-    const syndicTTC = syndicFees * (1 + FINANCES_2026.TVA.HONORAIRES); // 20%
-    const doTTC = doFees * (1 + FINANCES_2026.TVA.ASSURANCE_DO);   // 9%
+    // F1 — totalCostHT = addition exacte des lignes HT (avant TVA)
+    const totalCostHT = costHT + syndicFees + doFees + contingencyFees + amoCostHT + ameliorationHT;
+
+    // F2 — TTC ligne par ligne (règle stricte de non-mélange HT/TTC — BOI-TVA-LIQ-30-20-95)
+    const worksTTC = costHT * (1 + FINANCES_2026.TVA.TRAVAUX);             // 5.5%
+    const syndicTTC = syndicFees * (1 + FINANCES_2026.TVA.HONORAIRES);      // 20%
+    const doTTC = doFees * (1 + FINANCES_2026.TVA.ASSURANCE_DO);            // 9%
     // FIX AUDIT FEV 2026 : TVA latente 5.5% sur aléas — si la provision est consommée pour
     // des travaux, elle sera taxée (Art. 279-0 bis CGI). Le budget TTC doit intégrer cette
     // TVA latente pour éviter tout appel de fonds complémentaire en fin de chantier.
-    const contingencyTTC = contingencyFees * (1 + FINANCES_2026.TVA.TRAVAUX);
-    const amoTTC = amoCostHT * (1 + FINANCES_2026.TVA.HONORAIRES);  // 20%
-    const totalCostTTC = worksTTC + syndicTTC + doTTC + contingencyTTC + amoTTC;
+    const contingencyTTC = contingencyFees * (1 + FINANCES_2026.TVA.TRAVAUX);  // 5.5%
+    const amoTTC = amoCostHT * (1 + FINANCES_2026.TVA.HONORAIRES);            // 20%
+    const ameliorationTTC = ameliorationHT * (1 + FINANCES_2026.TVA.AMELIORATION); // 10%
+    // totalCostTTC : base complète (hors TVA déjà incluse dans honoraires/amélioration)
+    const totalCostTTC = worksTTC + syndicTTC + doTTC + contingencyTTC + amoTTC + ameliorationTTC;
 
     // Coût par lot (TTC)
     const costPerUnit = totalCostTTC / nbLots;
@@ -242,31 +262,69 @@ export function simulateFinancing(
     );
 
     // ==========================================================
-    // 4. OBJET PAR LOT (AG Slide)
+    // 4. OBJET PAR LOT (AG Slide) — calculé après waterfall en section 6
     // ==========================================================
     const valeurVerteParLot = Math.round(metrics.kpi.greenValueIncrease / nbLots);
-    const racBrutParLot = Math.round(metrics.financing.initialRac / nbLots);
-    const racComptantParLot = Math.round(metrics.financing.cashDownPayment / nbLots);
 
     // ==========================================================
-    // 5. DÉFICIT FONCIER — ONE-SHOT Année 1
+    // 5. DÉFICIT FONCIER — ONE-SHOT Année 1 (CGI Art. 156-I-3° — LdF 2026)
     // ==========================================================
-    // Règle CGI Art. 31 & 156 : Le capital emprunté N'EST PAS déductible.
-    // L'assiette déductible = le décaissement réel au comptant (racComptantParLot).
-    // Si c'est financé par prêt à 0%, il n'y a pas de charge foncière déductible additionnelle.
-    // Sont EXCLUS : Provision Aléas (dépense incertaine, non engagée)
+    //
+    // L'assiette déductible exclut :
+    //   - Provision Aléas (dépense incertaine, non engagée — BOI-RFPI-BASE-20-60)
+    //   - Les subventions reçues (MPR, CEE, AMO, aides locales)
+    //   - Les travaux amélioration standard (hors rénovation énergétique, critère DF strict)
+    // Cohérence HT/TTC : on soustrait les TTC des postes exclus d'une base TTC.
     const assietteEligibleDfTotal = totalCostTTC
-        - contingencyFees // Exclu car provisionnel
+        - contingencyTTC      // Exclu — provision aléatoire non engagée
+        - ameliorationTTC     // Exclu — travaux amélioration hors réno énergétique
+        - syndicTTC           // Exclu — honoraires de gestion (non déductibles comme charges Art. 31)
         - metrics.subsidies.mpr
         - metrics.subsidies.cee
         - amoSubvention
         - localAidAmount;
 
-    const assietteEligibleDfParLot = assietteEligibleDfTotal / nbLots;
+    const assietteEligibleDfParLot = Math.max(0, assietteEligibleDfTotal / nbLots);
 
-    const avantagesFiscauxAnnee1 = Math.round(
-        Math.max(0, assietteEligibleDfParLot * FINANCES_2026.DEFICIT_FONCIER.TAUX_EFFECTIF)
-    );
+    // ── Plafond dérogatoire 21 400 € — 3 conditions CUMULATIVES (BOFiP mai 2026) ──
+    // 1. DPE initial : F ou G (passoire thermique)
+    // 2. DPE projeté : A, B, C ou D (sortie de passoire validée)
+    // 3. Devis signé avant le 31/12/2026 (condition suspensive LdF 2026)
+    // Si l'une manque → plafond standard 10 700 €
+    const PASSOIRE_INITIALES = ['F', 'G'] as const;
+    const CIBLES_VALIDES_DF = ['A', 'B', 'C', 'D'] as const;
+    const eligibleDerogatoire =
+        PASSOIRE_INITIALES.includes(currentDPE as 'F' | 'G') &&
+        CIBLES_VALIDES_DF.includes(targetDPE as 'A' | 'B' | 'C' | 'D') &&
+        (devisValide === true);
+
+    const plafondApplicable = eligibleDerogatoire
+        ? FINANCES_2026.DEFICIT_FONCIER.PLAFOND_DEROGATOIRE  // 21 400 €
+        : FINANCES_2026.DEFICIT_FONCIER.PLAFOND_STANDARD;    // 10 700 €
+
+    // Imputation sur le revenu global (plafonnée) → économie = TMI seule
+    const imputationRevenuGlobal = Math.min(assietteEligibleDfParLot, plafondApplicable);
+    const economieSurRevenuGlobal = imputationRevenuGlobal * FINANCES_2026.DEFICIT_FONCIER.TMI_DEFAULT;
+
+    // Excédent + revenus fonciers existants → économie = TMI + PS (17.2%)
+    // Les revenus fonciers existants permettent d'absorber la totalité du déficit y compris le plafond.
+    const rfExistants = Math.max(0, revenusFonciersExistants);
+    const excedentDF = Math.max(0, assietteEligibleDfParLot - plafondApplicable);
+    const baseRevenusFonciers = excedentDF + rfExistants;
+    const economieSurRevenusFonciers = baseRevenusFonciers * FINANCES_2026.DEFICIT_FONCIER.TAUX_EFFECTIF;
+
+    const avantagesFiscauxAnnee1 = Math.round(economieSurRevenuGlobal + economieSurRevenusFonciers);
+
+    // ==========================================================
+    // 6. WATERFALL — Ventilation finale du cashDownPayment
+    // ==========================================================
+    // Le cashDownPayment issu du moteur (éco-PTZ) ne contient pas encore :
+    //   - ameliorationTTC (TVA 10%) — non éligible Éco-PTZ, appel de fonds direct
+    //   - syndicTTC (TVA 20%)       — hors tout prêt/subv. (Loi 65, Art. 18-1 A)
+    // Ces postes sont toujours appelés en AG, jamais financés par l'Éco-PTZ.
+    const cashDownTotal = Math.round(metrics.financing.cashDownPayment + ameliorationTTC + syndicTTC);
+    const racBrutParLot = Math.round((metrics.financing.initialRac + ameliorationTTC + syndicTTC) / nbLots);
+    const racComptantParLot = Math.round(cashDownTotal / nbLots);
 
     const perUnit = {
         // Avertissement AG obligatoire : à recalculer selon millièmes du règlement
@@ -276,9 +334,9 @@ export function simulateFinancing(
         ecoPtzParLot: Math.round(metrics.financing.loanAmount / nbLots),
         mensualiteParLot: Math.round(metrics.financing.monthlyLoanPayment / nbLots),
         cashflowNetParLot: Math.round(metrics.kpi.netMonthlyCashFlow / nbLots),
-        racBrutParLot,
-        racComptantParLot,  // Part appelée immédiatement au comptant
-        avantagesFiscauxAnnee1, // Assiette = RAC comptant réel (CGI Art. 31 & 156)
+        racBrutParLot,               // RAC brut incluant amélioration + honoraires syndic
+        racComptantParLot,           // Appel immédiat en AG (hors Éco-PTZ)
+        avantagesFiscauxAnnee1,      // Économie fiscale Bailleur (CGI Art. 31 & 156)
         valeurVerteParLot,
     };
 
@@ -299,8 +357,8 @@ export function simulateFinancing(
         exitPassoireBonus,
         ecoPtzAmount: Math.round(metrics.financing.loanAmount),
         ceeAmount: Math.round(metrics.subsidies.cee),
-        remainingCost: Math.round(metrics.financing.initialRac),
-        cashDownPayment: Math.round(metrics.financing.cashDownPayment),
+        remainingCost: Math.round(metrics.financing.initialRac + ameliorationTTC + syndicTTC),
+        cashDownPayment: cashDownTotal,
         monthlyPayment: Math.round(metrics.financing.monthlyLoanPayment),
         monthlyEnergySavings: Math.round(metrics.kpi.monthlyEnergySavings),
         netMonthlyCashFlow: Math.round(metrics.kpi.netMonthlyCashFlow),
@@ -477,7 +535,11 @@ export function generateDiagnostic(input: DiagnosticInput): DiagnosticResult {
         input.alurFund || 0,
         input.currentEnergyBill || 0,
         totalSurface,
-        input.averagePricePerSqm || VALUATION_PARAMS.BASE_PRICE_PER_SQM
+        input.averagePricePerSqm || VALUATION_PARAMS.BASE_PRICE_PER_SQM,
+        input.montantHonorairesSyndicHT,            // TVA 20% — hors subv./prêt (Loi 65)
+        input.montantTravauxAmeliorationHT ?? 0,    // TVA 10% — hors éligibilité MPR/Éco-PTZ
+        input.devisValide ?? false,                  // Condition suspensive plafond 21 400 €
+        input.revenusFonciersExistants ?? 0          // Bailleur — revenus fonciers existants
     );
 
     // 3. Coût de l'inaction
