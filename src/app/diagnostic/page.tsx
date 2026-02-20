@@ -41,18 +41,17 @@ export default function DiagnosticPage() {
         <main className="min-h-screen bg-alabaster">
             {/* ── Page Header ───────────────────────────────────────── */}
             <header className="border-b border-border bg-card">
-                <div className="container-custom py-6 md:py-8">
-                    <div className="flex items-start justify-between gap-4">
-                        <div>
-                            <div className="flex items-baseline gap-3">
-                                <h1 className="text-3xl md:text-4xl font-serif font-bold text-oxford">
+                <div className="container-custom py-5 md:py-7">
+                    <div className="flex items-center justify-between gap-6">
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-3 flex-wrap">
+                                <h1 className="text-2xl md:text-3xl font-serif font-bold text-oxford tracking-tight">
                                     Diagnostic Patrimonial
                                 </h1>
-                                <span className="label-technical text-brass">ANAH 2026</span>
+                                <span className="px-2.5 py-0.5 rounded border border-brass/30 bg-brass-muted text-brass-dark text-[10px] font-bold uppercase tracking-widest flex-shrink-0">ANAH 2026</span>
                             </div>
-                            <p className="mt-2 text-sm text-slate font-sans max-w-2xl">
-                                Simulation complète de votre plan de valorisation : conformité réglementaire,
-                                ingénierie financière MaPrimeRénov&#39; Copropriété, et projection patrimoniale.
+                            <p className="mt-1.5 text-xs text-slate font-sans">
+                                Ingénierie financière copropriété <span className="text-brass mx-1">·</span> MaPrimeRénov&apos; <span className="text-brass mx-1">·</span> Éco-PTZ <span className="text-brass mx-1">·</span> CEE <span className="text-brass mx-1">·</span> Déficit Foncier
                             </p>
                         </div>
 
@@ -61,17 +60,14 @@ export default function DiagnosticPage() {
                             {result && (
                                 <DownloadPdfButton
                                     result={result}
-                                    className="px-4 py-2.5 rounded-md bg-brass text-white text-xs font-semibold hover:bg-brass-light transition-colors duration-150 shadow-sm"
+                                    className="flex items-center justify-center gap-2 px-4 h-9 rounded-md border-border border bg-white text-brass-dark text-[11px] font-bold uppercase tracking-wider hover:border-brass hover:bg-brass-muted transition-all duration-200 shadow-sm"
                                 />
                             )}
                             {/* View Mode Toggle */}
                             <button
                                 type="button"
                                 onClick={() => setViewMode("presentation")}
-                                className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-md
-                                           border border-border bg-white text-xs font-semibold text-slate
-                                           hover:bg-navy hover:text-white hover:border-navy
-                                           transition-colors duration-150 shadow-sm"
+                                className="flex-shrink-0 flex items-center justify-center gap-2 px-4 h-9 rounded-md border-border border bg-white text-brass-dark text-[11px] font-bold uppercase tracking-wider hover:border-brass hover:bg-brass-muted transition-all duration-200 shadow-sm"
                                 title="Mode Présentation AG"
                             >
                                 <Monitor className="w-4 h-4" strokeWidth={1.5} />
@@ -89,10 +85,10 @@ export default function DiagnosticPage() {
                     {/* ── Left Column: Cockpit Form ──────────────────── */}
                     <aside className="lg:col-span-4">
                         <div className="card card-content lg:sticky lg:top-8">
-                            <div className="flex items-center gap-2 mb-6">
-                                <div className="w-1 h-6 bg-brass rounded-full" />
-                                <h2 className="text-xl font-serif font-semibold text-oxford">
-                                    Paramètres
+                            <div className="flex items-center gap-2.5 mb-6 pb-4 border-b border-brass/15">
+                                <div className="w-0.5 h-5 bg-brass rounded-full" />
+                                <h2 className="text-base font-serif font-semibold text-oxford tracking-tight">
+                                    Paramètres de la copropriété
                                 </h2>
                             </div>
                             <CockpitForm />

@@ -9,21 +9,11 @@
  */
 
 import { useState, useCallback, type FormEvent } from "react";
+import { Zap } from "lucide-react";
 import { useDiagnosticStore } from "@/stores/useDiagnosticStore";
-import type { DPELetter } from "@/lib/constants";
+import { DPE_COLORS, type DPELetter } from "@/lib/constants";
 
-// ─── DPE Color Map (muted institutional) ─────────────────────────────────────
-type DPEStyle = { bg: string; bgActive: string; text: string; border: string };
-
-const DPE_COLORS: Record<DPELetter, DPEStyle> = {
-    A: { bg: "bg-emerald-50", bgActive: "bg-emerald-600", text: "text-emerald-700", border: "border-emerald-200" },
-    B: { bg: "bg-lime-50", bgActive: "bg-lime-600", text: "text-lime-700", border: "border-lime-200" },
-    C: { bg: "bg-yellow-50", bgActive: "bg-yellow-500", text: "text-yellow-700", border: "border-yellow-200" },
-    D: { bg: "bg-amber-50", bgActive: "bg-amber-500", text: "text-amber-700", border: "border-amber-200" },
-    E: { bg: "bg-orange-50", bgActive: "bg-orange-500", text: "text-orange-700", border: "border-orange-200" },
-    F: { bg: "bg-red-50", bgActive: "bg-red-500", text: "text-red-700", border: "border-red-200" },
-    G: { bg: "bg-red-100", bgActive: "bg-red-700", text: "text-red-800", border: "border-red-300" },
-};
+// ─── DPE Constants ─────────────────────────────────────────────────────────────
 
 const ALL_DPE: DPELetter[] = ["A", "B", "C", "D", "E", "F", "G"];
 const TARGET_DPE: DPELetter[] = ["A", "B", "C", "D", "E"];
@@ -32,9 +22,12 @@ const TARGET_DPE: DPELetter[] = ["A", "B", "C", "D", "E"];
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
     return (
-        <h3 className="font-serif text-lg font-semibold text-oxford tracking-tight">
-            {children}
-        </h3>
+        <div className="flex items-center gap-2.5">
+            <div className="w-0.5 h-5 bg-brass rounded-full flex-shrink-0" />
+            <h3 className="font-serif text-base font-semibold text-oxford tracking-tight">
+                {children}
+            </h3>
+        </div>
     );
 }
 
@@ -42,7 +35,7 @@ function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.Re
     return (
         <label
             htmlFor={htmlFor}
-            className="block text-[11px] font-semibold uppercase tracking-[0.1em] text-slate mb-1.5"
+            className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate mb-1.5"
         >
             {children}
         </label>
@@ -68,13 +61,12 @@ function DPESelector({
 }) {
     return (
         <fieldset>
-            <legend className="block text-[11px] font-semibold uppercase tracking-[0.1em] text-slate mb-2">
+            <legend className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate mb-2">
                 {label}
             </legend>
-            <div className="flex gap-1">
+            <div className="flex bg-slate-50 border border-slate-200 rounded-md p-1 gap-0.5 shadow-inner">
                 {options.map((dpe) => {
                     const isActive = value === dpe;
-                    const colors = DPE_COLORS[dpe];
                     return (
                         <button
                             key={dpe}
@@ -82,14 +74,18 @@ function DPESelector({
                             onClick={() => onChange(dpe)}
                             aria-pressed={isActive}
                             className={`
-                                flex-1 h-9 rounded-md text-xs font-bold
-                                border transition-all duration-150
-                                focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-navy focus-visible:ring-offset-1
+                                flex-1 h-10 rounded font-bold text-base
+                                transition-all duration-200 relative
+                                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-1
                                 ${isActive
-                                    ? `${colors.bgActive} text-white border-transparent shadow-sm`
-                                    : `${colors.bg} ${colors.text} ${colors.border} hover:border-slate-300`
+                                    ? "text-white shadow-md z-10"
+                                    : "bg-transparent text-slate-400 hover:text-slate-700 hover:bg-slate-100/60"
                                 }
                             `}
+                            style={{
+                                backgroundColor: isActive ? DPE_COLORS[dpe] : "transparent",
+                                transform: isActive ? "scale(1.04)" : "scale(1)"
+                            }}
                         >
                             {dpe}
                         </button>
@@ -105,8 +101,13 @@ function DPESelector({
 export default function CockpitForm() {
     const { input, updateInput, runDiagnostic, isCalculating, error } = useDiagnosticStore();
     const [advancedOpen, setAdvancedOpen] = useState(false);
+    const [heatingMenuOpen, setHeatingMenuOpen] = useState(false);
 
-    const isValid = !!(input.numberOfUnits && input.numberOfUnits >= 2 && input.currentDPE && input.targetDPE);
+    const isValid =
+        input.numberOfUnits !== undefined &&
+        input.numberOfUnits >= 2 &&
+        input.currentDPE !== undefined &&
+        input.targetDPE !== undefined;
 
     const handleSubmit = useCallback(
         (e: FormEvent) => {
@@ -115,7 +116,7 @@ export default function CockpitForm() {
                 runDiagnostic();
             }
         },
-        [isValid, isCalculating, runDiagnostic]
+        [isValid, isCalculating, runDiagnostic, input]
     );
 
     // Generic number handler — sets to undefined when empty to keep Partial<> clean
@@ -135,7 +136,7 @@ export default function CockpitForm() {
     // Shared input classes
     const inputCls =
         "w-full h-10 px-3 text-sm text-oxford bg-white border border-border rounded-md " +
-        "placeholder:text-subtle/60 " +
+        "placeholder:text-slate-400 " +
         "hover:border-border-strong " +
         "focus:outline-none focus:border-navy focus:ring-1 focus:ring-navy/20 " +
         "transition-colors duration-150";
@@ -146,7 +147,7 @@ export default function CockpitForm() {
             {/* ════════════════════════════════════════════════════════
                SECTION 1 — IDENTIFICATION
                ════════════════════════════════════════════════════════ */}
-            <div className="space-y-4">
+            <div className="space-y-6">
                 <SectionTitle>Identification</SectionTitle>
 
                 {/* Address */}
@@ -220,13 +221,15 @@ export default function CockpitForm() {
                 />
             </div>
 
-            <hr className="border-border my-6" />
+            <hr className="border-border my-8" />
 
             {/* ════════════════════════════════════════════════════════
                SECTION 2 — BUDGET & ÉNERGIE
                ════════════════════════════════════════════════════════ */}
-            <div className="space-y-4">
-                <SectionTitle>Budget &amp; Énergie</SectionTitle>
+            <div className="space-y-6">
+                <div className="mt-6 mb-2">
+                    <SectionTitle>Budget &amp; Énergie</SectionTitle>
+                </div>
 
                 {/* Works Budget HT */}
                 <div>
@@ -289,22 +292,28 @@ export default function CockpitForm() {
 
                 {/* Devis Valide */}
                 <div className="pt-2">
-                    <label className="flex items-center gap-2.5 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={input.devisValide || false}
-                            onChange={(e) => updateInput({ devisValide: e.target.checked })}
-                            className="h-4 w-4 rounded border-border text-navy focus:ring-navy/30"
-                        />
-                        <span className="text-sm font-medium text-oxford">
-                            Devis signé avant le 31/12/2026
-                        </span>
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                        <div className="flex items-center h-5 mt-0.5">
+                            <input
+                                type="checkbox"
+                                checked={input.devisValide || false}
+                                onChange={(e) => updateInput({ devisValide: e.target.checked })}
+                                className="h-4 w-4 rounded border-border text-brass-dark focus:ring-brass/30 transition-shadow duration-150 cursor-pointer"
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-sm font-medium text-oxford group-hover:text-navy transition-colors">
+                                Devis signé avant le 31/12/2026
+                            </span>
+                            <p className="text-[10px] text-slate-500 italic mt-0.5 leading-tight">
+                                Condition cumulative pour accès au plafond dérogatoire du Déficit Foncier (21 400 €).
+                            </p>
+                        </div>
                     </label>
-                    <HelperText>Condition cumulative pour accès au plafond dérogatoire du Déficit Foncier (21 400 €).</HelperText>
                 </div>
             </div>
 
-            <hr className="border-border my-6" />
+            <hr className="border-border my-8" />
 
             {/* ════════════════════════════════════════════════════════
                SECTION 3 — PARAMÈTRES AVANCÉS (collapsible)
@@ -313,12 +322,14 @@ export default function CockpitForm() {
                 <button
                     type="button"
                     onClick={() => setAdvancedOpen(!advancedOpen)}
-                    className="w-full flex items-center justify-between py-1 group"
+                    className="w-full flex items-center justify-between py-2.5 px-4 bg-slate-50 border border-slate-200 rounded-md hover:bg-brass-muted hover:border-brass/30 transition-all duration-200 group"
                     aria-expanded={advancedOpen}
                 >
-                    <SectionTitle>Paramètres avancés</SectionTitle>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-navy">
+                        Paramètres financiers avancés
+                    </span>
                     <svg
-                        className={`w-4 h-4 text-subtle transition-transform duration-200 ${advancedOpen ? "rotate-180" : ""}`}
+                        className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 flex-shrink-0 ${advancedOpen ? "rotate-180" : ""}`}
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -404,32 +415,55 @@ export default function CockpitForm() {
                         </div>
 
                         {/* Heating System */}
-                        <div>
+                        <div className="relative">
                             <FieldLabel htmlFor="heatingSystem">Système de chauffage</FieldLabel>
-                            <select
-                                id="heatingSystem"
-                                className={`${inputCls} appearance-none bg-[length:16px] bg-[position:right_12px_center] bg-no-repeat`}
-                                style={{
-                                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
-                                    paddingRight: "2.75rem",
-                                }}
-                                value={input.heatingSystem || ""}
-                                onChange={(e) =>
-                                    updateInput({
-                                        heatingSystem: (e.target.value || undefined) as
-                                            | "electrique" | "gaz" | "fioul" | "bois" | "urbain" | "autre"
-                                            | undefined,
-                                    })
-                                }
+
+                            {/* Custom native-like dropdown */}
+                            <button
+                                type="button"
+                                id="heatingSystemButton"
+                                onClick={() => setHeatingMenuOpen(!heatingMenuOpen)}
+                                onBlur={() => setTimeout(() => setHeatingMenuOpen(false), 200)}
+                                className={`${inputCls} text-left flex items-center justify-between w-full shadow-sm`}
                             >
-                                <option value="">— Non renseigné —</option>
-                                <option value="electrique">Électrique</option>
-                                <option value="gaz">Gaz</option>
-                                <option value="fioul">Fioul</option>
-                                <option value="bois">Bois</option>
-                                <option value="urbain">Réseau urbain</option>
-                                <option value="autre">Autre</option>
-                            </select>
+                                <span className={input.heatingSystem ? "text-oxford" : "text-subtle/60"}>
+                                    {input.heatingSystem === "electrique" ? "Électrique" :
+                                        input.heatingSystem === "gaz" ? "Gaz" :
+                                            input.heatingSystem === "fioul" ? "Fioul" :
+                                                input.heatingSystem === "bois" ? "Bois" :
+                                                    input.heatingSystem === "urbain" ? "Réseau urbain" :
+                                                        input.heatingSystem === "autre" ? "Autre" : "— Non renseigné —"}
+                                </span>
+                                <svg className={`w-4 h-4 text-subtle transition-transform duration-200 ${heatingMenuOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            {heatingMenuOpen && (
+                                <div className="absolute z-50 w-full mt-1 bg-white border border-border rounded-md shadow-lg overflow-hidden animate-fadeInUp" style={{ animationDuration: "100ms" }}>
+                                    {[
+                                        { val: undefined, label: "— Non renseigné —" },
+                                        { val: "electrique", label: "Électrique" },
+                                        { val: "gaz", label: "Gaz" },
+                                        { val: "fioul", label: "Fioul" },
+                                        { val: "bois", label: "Bois" },
+                                        { val: "urbain", label: "Réseau urbain" },
+                                        { val: "autre", label: "Autre" }
+                                    ].map((opt, idx) => (
+                                        <button
+                                            key={idx}
+                                            type="button"
+                                            onClick={() => {
+                                                updateInput({ heatingSystem: opt.val as any });
+                                                setHeatingMenuOpen(false);
+                                            }}
+                                            className="w-full text-left px-3 py-2 text-sm text-oxford hover:bg-slate-50 hover:text-navy transition-colors"
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -455,11 +489,11 @@ export default function CockpitForm() {
                     type="submit"
                     disabled={!isValid || isCalculating}
                     className={`
-                        w-full h-12 rounded-md text-sm font-semibold tracking-wide
-                        transition-all duration-150
-                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white
+                        w-full h-12 rounded-md text-sm font-semibold tracking-[0.04em]
+                        transition-all duration-200
+                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white
                         ${isValid && !isCalculating
-                            ? "bg-navy text-white hover:bg-navy-light active:bg-navy-dark shadow-sm hover:shadow-md"
+                            ? "bg-gradient-to-r from-brass-dark via-brass to-brass-light text-white hover:opacity-90 shadow-[0_4px_14px_0_rgba(184,150,62,0.39)] border border-brass-light/30 active:scale-[0.99]"
                             : "bg-slate-100 text-slate-400 cursor-not-allowed"
                         }
                     `}
@@ -470,10 +504,13 @@ export default function CockpitForm() {
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                             </svg>
-                            Analyse en cours via Serveur…
+                            <span>Analyse en cours…</span>
                         </span>
                     ) : (
-                        "Générer l\u2019Analyse Financière"
+                        <span className="flex items-center justify-center gap-2">
+                            <Zap className="w-4 h-4" />
+                            Générer l&lsquo;Analyse Financière
+                        </span>
                     )}
                 </button>
             </div>

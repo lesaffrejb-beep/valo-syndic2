@@ -24,13 +24,13 @@ import LegalNoticeModal from "@/components/ui/LegalNoticeModal";
 
 function StatusBadge({ label, color }: { label: string; color: "danger" | "warning" | "success" }) {
     const styles: Record<string, string> = {
-        danger: "bg-cost-light text-cost border-cost/20",
-        warning: "bg-amber-50 text-amber-800 border-amber-200",
-        success: "bg-gain-light text-gain border-gain/20",
+        danger: "bg-red-50 text-red-700 border border-red-200",
+        warning: "bg-orange-50/80 text-orange-800", // No border, softer background
+        success: "bg-[#009246]/10 text-[#009246] border border-[#009246]/20",
     };
     return (
         <span
-            className={`inline-flex items-center px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] rounded border ${styles[color]}`}
+            className={`inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.05em] rounded ${styles[color]}`}
         >
             {label}
         </span>
@@ -40,18 +40,19 @@ function StatusBadge({ label, color }: { label: string; color: "danger" | "warni
 /** Badge d'alerte réglementaire — affiché sur les aides à statut incertain */
 function AlertBadge({ label }: { label: string }) {
     return (
-        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-semibold rounded border bg-amber-50 text-amber-700 border-amber-200 whitespace-nowrap">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-sm border bg-amber-50 text-amber-800 border-amber-200 whitespace-nowrap">
             <AlertTriangle className="w-2.5 h-2.5 flex-shrink-0" />
             {label}
         </span>
     );
 }
 
-function SectionHeader({ accent, title }: { accent: string; title: string }) {
+function SectionHeader({ title, accent = "primary" }: { title: string; accent?: "primary" | "secondary" }) {
+    const isPrimary = accent === "primary";
     return (
-        <div className="flex items-center gap-2 mb-3 mt-5 first:mt-0">
-            <div className={`w-1 h-4 rounded-full ${accent}`} />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate">{title}</span>
+        <div className="flex items-center gap-3 mb-5">
+            <div className={`w-0.5 h-5 rounded-full flex-shrink-0 ${isPrimary ? "bg-brass" : "bg-brass/40"}`} />
+            <h2 className={`text-base font-serif font-semibold tracking-tight ${isPrimary ? "text-oxford" : "text-slate"}`}>{title}</h2>
         </div>
     );
 }
@@ -71,24 +72,24 @@ function LedgerRow({
     /** Badge d'alerte réglementaire (ex : suspension LFI 2026) */
     alertBadge?: string;
     /** Sous-ligne informative en gris (ex : frais garantie SACICAP) */
-    subNote?: string;
+    subNote?: string | React.ReactNode; // Changed to React.ReactNode to allow JSX
 }) {
     const rowStyles: Record<string, string> = {
-        default: "py-2.5",
-        "subtotal-cost": "py-3 bg-slate-50/80 font-semibold border-t border-border",
-        "subtotal-aid": "py-3 bg-gain-light/40 font-semibold border-t border-border",
-        loan: "py-3 bg-info-light/25 font-semibold border-t border-border",
-        call: "py-3 bg-navy/5 font-semibold border-t border-border",
-        final: "py-4 bg-brass-muted border-t-2 border-brass/30 font-bold",
+        default: "py-3",
+        "subtotal-cost": "py-3 bg-slate-50 font-semibold border-t border-border",
+        "subtotal-aid": "py-3 font-semibold border-t border-border",
+        loan: "py-3 font-semibold border-t border-border",
+        call: "py-3 bg-slate-50 font-semibold border-t border-border",
+        final: "py-4 bg-brass-muted border-t-2 border-brass font-bold",
     };
 
     const labelStyles: Record<string, string> = {
         default: "text-sm text-slate",
         "subtotal-cost": "text-sm text-oxford",
-        "subtotal-aid": "text-sm text-gain",
-        loan: "text-sm text-info",
-        call: "text-sm text-navy",
-        final: "text-base font-serif text-oxford",
+        "subtotal-aid": "text-sm text-oxford",
+        loan: "text-sm text-oxford",
+        call: "text-sm text-oxford",
+        final: "text-base font-serif text-brass-dark",
     };
 
     const amountStyles: Record<string, string> = {
@@ -96,8 +97,8 @@ function LedgerRow({
         "subtotal-cost": "text-sm text-oxford tabular-nums font-semibold",
         "subtotal-aid": "text-sm text-gain tabular-nums font-semibold",
         loan: "text-sm text-info tabular-nums font-semibold",
-        call: "text-sm text-navy tabular-nums font-semibold",
-        final: "text-lg font-serif text-oxford tabular-nums font-bold",
+        call: "text-sm text-oxford tabular-nums font-semibold",
+        final: "text-xl font-serif text-brass-dark tabular-nums font-bold",
     };
 
     const isDeduction = variant === "subtotal-aid" || variant === "loan";
@@ -105,10 +106,10 @@ function LedgerRow({
     return (
         <div>
             <div className={`flex items-center justify-between px-4 rounded-md ${rowStyles[variant]}`}>
-                <div className="flex items-center flex-wrap gap-2 min-w-0">
+                <div className="flex items-center flex-wrap gap-3 min-w-0">
                     <span className={`${labelStyles[variant]} leading-snug`}>{label}</span>
                     {tag && (
-                        <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-navy/5 text-navy border border-navy/10">
+                        <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-border">
                             {tag}
                         </span>
                     )}
@@ -119,7 +120,11 @@ function LedgerRow({
                 </span>
             </div>
             {subNote && (
-                <p className="text-[9px] text-subtle px-4 pb-1 -mt-1 leading-relaxed italic">{subNote}</p>
+                typeof subNote === 'string' ? (
+                    <p className="text-[9px] text-subtle px-4 pb-1 -mt-1 leading-relaxed italic">{subNote}</p>
+                ) : (
+                    <div className="px-4 pb-1 -mt-1">{subNote}</div>
+                )
             )}
         </div>
     );
@@ -142,14 +147,15 @@ function KpiCard({
         negative: "text-cost",
     };
     return (
-        <div className="flex flex-col items-center justify-center p-4 rounded-card border border-border bg-white text-center">
+        <div className="flex flex-col items-center justify-center p-5 rounded-card border border-border bg-white text-center relative overflow-hidden">
+            <div className="absolute top-0 inset-x-0 h-0.5 bg-brass" />
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-2">
                 {label}
             </span>
             <span className={`text-2xl md:text-3xl font-serif font-bold tabular-nums ${accentStyles[accent]}`}>
                 {value}
             </span>
-            <span className="text-[10px] text-subtle mt-1">{unit}</span>
+            <span className="text-[10px] text-subtle mt-1.5">{unit}</span>
         </div>
     );
 }
@@ -212,19 +218,26 @@ export default function DiagnosticResults() {
 
             {/* ── Header ──────────────────────────────────────── */}
             <div className="card card-content">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div>
-                        <h2 className="text-2xl md:text-3xl font-serif font-bold text-oxford">
+                        <h2 className="text-xl md:text-2xl font-serif font-bold text-oxford tracking-tight">
                             {input.address || "Copropriété"}
                         </h2>
-                        <p className="text-xs text-subtle mt-1">
-                            {numberOfUnits} lots · DPE {input.currentDPE} → {input.targetDPE} · Gain énergétique {Math.round(financing.energyGainPercent * 100)}%
+                        <p className="text-[11px] text-subtle mt-1 tabular-nums">
+                            <span className="text-slate font-medium">{numberOfUnits} lots</span>
+                            <span className="mx-1.5 text-subtle/50">·</span>
+                            DPE <span className="font-semibold">{input.currentDPE}</span>
+                            <span className="mx-1">→</span>
+                            <span className="font-semibold">{input.targetDPE}</span>
+                            <span className="mx-1.5 text-subtle/50">·</span>
+                            Gain énergétique <span className="font-semibold">{Math.round(financing.energyGainPercent * 100)}%</span>
                         </p>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
                         <PDFDownloadButton
                             document={<DiagnosticPDF result={result} />}
                             fileName={`diagnostic-${input.address ? input.address.slice(0, 30).replace(/\s/g, "_") : "copro"}.pdf`}
+                            className="px-4 py-2 h-9 rounded-md border-border border bg-white text-brass-dark text-[11px] font-bold uppercase tracking-wider hover:border-brass hover:bg-brass-muted transition-all duration-200 shadow-sm"
                         />
                         <StatusBadge label={compliance.statusLabel} color={compliance.statusColor} />
                     </div>
@@ -254,15 +267,15 @@ export default function DiagnosticResults() {
 
             {/* ── Financial Ledger ────────────────────────────── */}
             <div className="card card-content">
-                <div className="flex items-center gap-2 mb-5">
-                    <div className="w-1 h-5 bg-navy rounded-full" />
-                    <h3 className="font-serif text-lg font-semibold text-oxford">
+                <div className="flex items-center gap-2.5 mb-6">
+                    <div className="w-0.5 h-5 bg-brass rounded-full" />
+                    <h3 className="font-serif text-lg font-semibold text-oxford tracking-tight">
                         Ticket de Caisse
                     </h3>
                 </div>
 
                 {/* ══ BLOC A : Coût du Projet (Résolution AG) ═════════════════════ */}
-                <SectionHeader accent="bg-navy" title="Bloc A — Coût du Projet (Résolution AG)" />
+                <SectionHeader accent="primary" title="Bloc A — Coût du Projet (Résolution AG)" />
 
                 <div className="space-y-0.5 rounded-lg border border-border overflow-hidden mb-2">
                     <LedgerRow label="Travaux HT" amount={financing.worksCostHT} />
@@ -278,42 +291,38 @@ export default function DiagnosticResults() {
                 </div>
 
                 {/* ══ BLOC B : Plan de Financement & Trésorerie ═══════════════════ */}
-                <SectionHeader accent="bg-brass" title="Bloc B — Plan de Financement &amp; Trésorerie" />
+                <SectionHeader accent="secondary" title="Bloc B — Plan de Financement &amp; Trésorerie" />
 
                 {/* FIX AUDIT FEV 2026 : Toggle Plan Sécurisé / Plan Optimisé
                     Plan Sécurisé (défaut) = CEE + AMO uniquement (aides certaines, MPR masquée).
                     Plan Optimisé = MPR incluse avec mention réglementaire obligatoire. */}
-                <div className="flex items-center gap-2 mb-3 rounded-md border border-border bg-slate-50/60 p-2">
+                <div className="flex flex-col sm:flex-row p-1 bg-slate-100 rounded-lg mb-6 border border-slate-200 gap-0.5">
                     <button
-                        type="button"
                         onClick={() => setSecurePlan(true)}
                         aria-pressed={securePlan}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded transition-colors duration-150 ${securePlan
-                            ? "bg-navy text-white shadow-sm"
-                            : "text-slate hover:bg-white"
+                        className={`flex-1 px-4 py-2.5 rounded-md text-center transition-all duration-200 ${securePlan
+                            ? "bg-white text-navy shadow-sm ring-1 ring-border font-semibold"
+                            : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
                             }`}
                     >
-                        <ShieldCheck className="w-3 h-3" />
-                        Plan Sécurisé
+                        <div className="font-serif font-bold text-sm">Plan Sécurisé</div>
+                        <div className={`text-[10px] mt-0.5 ${securePlan ? "text-slate" : "text-slate-400"}`}>
+                            Soutien modéré, sans MPR (+10% inclus)
+                        </div>
                     </button>
                     <button
-                        type="button"
                         onClick={() => setSecurePlan(false)}
                         aria-pressed={!securePlan}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded transition-colors duration-150 ${!securePlan
-                            ? "bg-brass-dark text-white shadow-sm"
-                            : "text-slate hover:bg-white"
+                        className={`flex-1 px-4 py-2.5 rounded-md text-center transition-all duration-200 ${!securePlan
+                            ? "bg-gradient-to-r from-brass-dark to-brass text-white shadow-md ring-1 ring-brass-dark/50 font-semibold"
+                            : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
                             }`}
                     >
-                        <Sparkles className="w-3 h-3" />
-                        Plan Optimisé
+                        <div className="font-serif font-bold text-sm">Plan Optimisé</div>
+                        <div className={`text-[10px] mt-0.5 ${!securePlan ? "text-white/90" : "text-slate-400"}`}>
+                            Soutien maximal, MPR incluse (LFI)
+                        </div>
                     </button>
-                    <span className="text-[9px] text-subtle ml-1">
-                        {securePlan
-                            ? "CEE + AMO uniquement (aides garanties)"
-                            : "Inclut MPR — sous réserve décrets LFI 2026"
-                        }
-                    </span>
                 </div>
 
                 <div className="space-y-0.5 rounded-lg border border-border overflow-hidden mb-2">
@@ -373,17 +382,29 @@ export default function DiagnosticResults() {
                         label="Éco-PTZ Copropriété (Vote Art. 25)"
                         amount={financing.ecoPtzAmount}
                         variant="loan"
-                        subNote="Prêt à taux zéro — remboursé en 240 mensualités. Inclut provision 2,5% frais de garantie SACICAP. Plafonné à 50 000 € / lot — Rénovation globale."
+                        subNote={
+                            <div className="text-[9px] text-subtle px-4 pb-1 -mt-1 leading-relaxed italic">
+                                <div className="text-sm font-semibold text-navy">
+                                    - {formatCurrency(financing.monthlyPayment)} / mois
+                                </div>
+                                <div className="text-slate-500 text-xs italic mt-2 text-right">
+                                    sur 20 ans
+                                </div>
+                                <p className="mt-1">Prêt à taux zéro — remboursé en 240 mensualités. Inclut provision 2,5% frais de garantie SACICAP. Plafonné à 50 000 € / lot — Rénovation globale.</p>
+                            </div>
+                        }
                     />
 
                     <div className="h-2" />
 
                     {/* Reste au comptant — appel immédiat */}
-                    <LedgerRow
-                        label="Reste au comptant (Appel de Fonds Immédiat)"
-                        amount={resteComptant}
-                        variant="subtotal-cost"
-                    />
+                    <div className="pt-2 pb-2">
+                        <LedgerRow
+                            label="Reste au comptant (Appel de Fonds Immédiat)"
+                            amount={resteComptant}
+                            variant="subtotal-cost"
+                        />
+                    </div>
 
                     {/* Ligne finale Brass : Effort de Trésorerie Réel Lissé */}
                     <LedgerRow
@@ -401,9 +422,9 @@ export default function DiagnosticResults() {
                 </p>
 
                 {/* Avertissement MaPrimeRénov' */}
-                <div className="mt-4 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50/60 px-4 py-3">
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-[10px] text-amber-800 leading-relaxed">
+                <div className="mt-4 flex items-start gap-2 rounded-md border border-slate-300 bg-slate-50 px-4 py-3">
+                    <AlertTriangle className="w-3.5 h-3.5 text-slate-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-slate-700 leading-relaxed">
                         <strong>MaPrimeRénov&rsquo; Copropriété :</strong> Techniquement suspendue au 1er janvier 2026
                         faute de loi de finances promulguée. Le montant affiché est une estimation conditionnelle.
                         Validation obligatoire via l&rsquo;espace conseil <strong>Mieux chez moi</strong> (Angers Loire Métropole)
@@ -415,7 +436,7 @@ export default function DiagnosticResults() {
                 <div className="mt-4 flex items-start gap-3 rounded-md border border-border bg-slate-50 px-4 py-3">
                     <Scale className="w-4 h-4 text-slate flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                        <p className="text-[10px] text-slate leading-relaxed">
+                        <p className="text-[10px] text-slate-600 leading-relaxed">
                             <strong>Avertissement Légal :</strong> L&apos;« Effort de Trésorerie Mensuel » est une estimation nette intégrant des économies d&apos;énergie théoriques. Il ne reflète pas le montant réel de vos appels de fonds travaux ou de vos mensualités d&apos;emprunt, qui doivent être réglés intégralement à leurs échéances respectives. La responsabilité du syndic ne saurait être engagée en cas de variation des tarifs de l&apos;énergie ou des barèmes de subventions étatiques.
                         </p>
                         <button
@@ -433,13 +454,13 @@ export default function DiagnosticResults() {
             {/* ── Per-Unit Summary ─────────────────────────────── */}
             {perUnit && (
                 <div className="card card-content">
-                    <div className="flex items-center gap-2 mb-5">
-                        <div className="w-1 h-5 bg-brass rounded-full" />
-                        <h3 className="font-serif text-lg font-semibold text-oxford">
+                    <div className="flex items-center gap-2.5 mb-5">
+                        <div className="w-0.5 h-5 bg-brass/40 rounded-full" />
+                        <h3 className="font-serif text-base font-semibold text-oxford tracking-tight">
                             Synthèse par lot
                         </h3>
                     </div>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-0">
                         <Row label="Coût TTC / lot" value={formatCurrency(perUnit.coutParLotTTC)} />
                         {!securePlan && (
                             <Row label="MPR / lot" value={`− ${formatCurrency(perUnit.mprParLot)}`} green />
@@ -452,26 +473,6 @@ export default function DiagnosticResults() {
                     </div>
 
                     {/* J2 — Disclaimer Loi 65-557 Art. 10 (tantièmes) */}
-                    <div className="mt-4 flex items-start gap-2 rounded-md border border-border bg-slate-50/60 px-3 py-2.5">
-                        <Scale className="w-3.5 h-3.5 text-slate flex-shrink-0 mt-0.5" />
-                        <p className="text-[10px] text-slate leading-relaxed">
-                            <strong>Répartition par lot indicative (Loi 65-557 Art. 10) :</strong> Les montants
-                            ci-dessus sont calculés à parts égales à titre d&apos;estimation. L&apos;appel de fonds
-                            réel sera établi par le syndic selon les tantièmes du règlement de copropriété.
-                        </p>
-                    </div>
-
-                    {/* J3 — Disclaimer Valeur Verte */}
-                    <div className="mt-2 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50/40 px-3 py-2.5">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
-                        <p className="text-[10px] text-amber-800 leading-relaxed">
-                            <strong>Valeur Verte — estimation statistique non opposable :</strong> La plus-value
-                            estimée est basée sur les données DVF millésimées 2024 (publication décalée de 2 ans).
-                            Elle ne remplace pas un audit réglementaire OPQIBI 1905 ni une expertise immobilière.
-                        </p>
-                    </div>
-
-                    {/* F4a — Disclaimer Déficit Foncier plafond 10 700 €/an */}
                     <div className="mt-2 flex items-start gap-2 rounded-md border border-border bg-slate-50/60 px-3 py-2.5">
                         <Scale className="w-3.5 h-3.5 text-slate flex-shrink-0 mt-0.5" />
                         <p className="text-[10px] text-slate leading-relaxed">

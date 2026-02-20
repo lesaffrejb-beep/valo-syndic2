@@ -13,9 +13,10 @@ import { Download, Loader2 } from "lucide-react";
 interface Props {
     document: ReactElement;
     fileName: string;
+    className?: string;
 }
 
-export default function PDFDownloadButton({ document, fileName }: Props) {
+export default function PDFDownloadButton({ document, fileName, className }: Props) {
     const [mounted, setMounted] = useState(false);
     const [PDFDownloadLink, setPDFDownloadLink] = useState<React.ComponentType<{
         document: ReactElement;
@@ -31,15 +32,17 @@ export default function PDFDownloadButton({ document, fileName }: Props) {
         });
     }, []);
 
+    const baseClass = className || "btn-secondary";
+
     if (!mounted || !PDFDownloadLink) {
         return (
             <button
                 type="button"
                 disabled
-                className="flex items-center gap-2 px-4 py-2.5 rounded-md border border-border bg-white text-xs font-semibold text-subtle cursor-wait"
+                className={`${baseClass} gap-2 opacity-70 cursor-wait flex items-center justify-center`}
             >
                 <Loader2 className="w-3.5 h-3.5 animate-spin" strokeWidth={1.5} />
-                Chargement…
+                <span className="hidden sm:inline">Chargement…</span>
             </button>
         );
     }
@@ -50,21 +53,17 @@ export default function PDFDownloadButton({ document, fileName }: Props) {
                 <button
                     type="button"
                     disabled={loading}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-md border text-xs font-semibold transition-colors duration-150
-                        ${loading
-                            ? "border-border bg-white text-subtle cursor-wait"
-                            : "border-border bg-white text-slate hover:bg-navy hover:text-white hover:border-navy shadow-sm"
-                        }`}
+                    className={`${baseClass} gap-2 flex items-center justify-center ${loading ? "opacity-70 cursor-wait" : ""}`}
                 >
                     {loading ? (
                         <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" strokeWidth={1.5} />
-                            Génération…
+                            <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
+                            <span className="hidden sm:inline">Génération…</span>
                         </>
                     ) : (
                         <>
-                            <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
-                            Télécharger le Rapport
+                            <Download className="w-4 h-4" strokeWidth={1.5} />
+                            <span className="hidden sm:inline">Télécharger le Rapport</span>
                         </>
                     )}
                 </button>

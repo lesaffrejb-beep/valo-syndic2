@@ -80,7 +80,7 @@ export function PdfButtonContent({
 
                 return (
                     <>
-                        <FileText className="w-5 h-5" />
+                        <FileText className="w-4 h-4" />
                         <span>Télécharger le Rapport</span>
                     </>
                 );
