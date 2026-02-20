@@ -246,8 +246,18 @@ export function simulateFinancing(
     // Règle CGI Art. 31 & 156 : Le capital emprunté N'EST PAS déductible.
     // L'assiette déductible = le décaissement réel au comptant (racComptantParLot).
     // Si c'est financé par prêt à 0%, il n'y a pas de charge foncière déductible additionnelle.
+    // Sont EXCLUS : Provision Aléas (dépense incertaine)
+    const assietteEligibleDfTotal = totalCostTTC
+        - contingencyFees // Exclu car provisionnel
+        - metrics.subsidies.mpr
+        - metrics.subsidies.cee
+        - amoSubvention
+        - localAidAmount;
+
+    const assietteEligibleDfParLot = assietteEligibleDfTotal / nbLots;
+
     const avantagesFiscauxAnnee1 = Math.round(
-        racComptantParLot * FINANCES_2026.DEFICIT_FONCIER.TAUX_EFFECTIF
+        Math.max(0, assietteEligibleDfParLot * FINANCES_2026.DEFICIT_FONCIER.TAUX_EFFECTIF)
     );
 
     const perUnit = {
@@ -275,12 +285,14 @@ export function simulateFinancing(
         energyGainPercent,
         mprAmount: Math.round(metrics.subsidies.mpr),
         amoAmount: Math.round(amoAmount),
+        amoCostTTC: Math.round(amoTTC),
         localAidAmount: Math.round(localAidAmount),
         mprRate,
         exitPassoireBonus,
         ecoPtzAmount: Math.round(metrics.financing.loanAmount),
         ceeAmount: Math.round(metrics.subsidies.cee),
         remainingCost: Math.round(metrics.financing.initialRac),
+        cashDownPayment: Math.round(metrics.financing.cashDownPayment),
         monthlyPayment: Math.round(metrics.financing.monthlyLoanPayment),
         monthlyEnergySavings: Math.round(metrics.kpi.monthlyEnergySavings),
         netMonthlyCashFlow: Math.round(metrics.kpi.netMonthlyCashFlow),
@@ -381,14 +393,8 @@ export function calculateValuation(
     // 3. Valeur actuelle (sans surcote DPE)
     const currentValue = totalSurface * BASE_PRICE_PER_SQM;
 
-    // 4. Valeur Verte via moteur en cascade
-    const DPE_INDEX: Record<string, number> = { A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7 };
-    const currentIndex = DPE_INDEX[input.currentDPE] || 7;
-    const targetIndex = DPE_INDEX[input.targetDPE] || 3;
-    const jumps = Math.max(0, currentIndex - targetIndex);
-    const CASCADE_RATE_PER_JUMP = 0.05;
-
-    const greenValueGainPercent = jumps * CASCADE_RATE_PER_JUMP;
+    // 4. Valeur Verte via paramètre global
+    const greenValueGainPercent = TECHNICAL_PARAMS.greenValueAppreciation; // 0.12
     const greenValueGain = currentValue * greenValueGainPercent;
     const projectedValue = currentValue + greenValueGain;
 

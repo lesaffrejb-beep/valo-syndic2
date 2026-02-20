@@ -338,7 +338,7 @@ export default function DiagnosticPDF({ result }: { result: DiagnosticResult }) 
     const effortReel = monthlyPerLot - savingsPerLot;
 
     const totalAids = financing.mprAmount + financing.ceeAmount + financing.localAidAmount + financing.amoAmount;
-    const resteComptant = Math.max(0, financing.remainingCost - financing.ecoPtzAmount);
+    const resteComptant = financing.cashDownPayment;
     const mprRateLabel = `${Math.round(financing.mprRate * 100)}%`;
 
     return (
@@ -431,14 +431,15 @@ export default function DiagnosticPDF({ result }: { result: DiagnosticResult }) 
                 <LedgerRow label="Travaux HT" amount={formatCurrency(financing.worksCostHT)} />
                 <LedgerRow label="Honoraires Syndic (3%)" amount={formatCurrency(financing.syndicFees)} />
                 <LedgerRow label="Assurance Dommages-Ouvrage (2%)" amount={formatCurrency(financing.doFees)} />
-                <LedgerRow label="Provision Aléas (3%)" amount={formatCurrency(financing.contingencyFees)} />
-                <LedgerRow label="AMO Ingénierie" amount={formatCurrency(financing.amoAmount)} />
+                <LedgerRow label="Provision Aléas (5%)" amount={formatCurrency(financing.contingencyFees)} />
+                <LedgerRow label="AMO Ingénierie" amount={formatCurrency(financing.amoCostTTC)} />
                 <SubtotalRow label="TOTAL TTC" amount={formatCurrency(financing.totalCostTTC)} />
 
                 {/* Group 2: Subsidies */}
                 <Text style={s.sectionTitle}>Aides &amp; Subventions</Text>
                 <AidRow label={`MaPrimeRénov' Copro (${mprRateLabel})`} amount={formatCurrency(financing.mprAmount)} />
                 <AidRow label="CEE (Certificats d'Économie d'Énergie)" amount={formatCurrency(financing.ceeAmount)} />
+                <AidRow label="Subvention AMO (50%)" amount={formatCurrency(financing.amoAmount)} />
                 {financing.localAidAmount > 0 && (
                     <AidRow label="Aides locales" amount={formatCurrency(financing.localAidAmount)} />
                 )}

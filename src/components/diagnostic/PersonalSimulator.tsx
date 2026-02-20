@@ -3,21 +3,30 @@
 /**
  * VALO-SYNDIC — PersonalSimulator
  * ================================
- * Tantièmes-based individual cost simulator.
- * "Combien ça me coûte MOI ?" — The AG closing tool.
+ * Simulateur individuel : "Combien ça me coûte MOI ?"
+ *
+ * Conformité Loi 65 — Art. 10 : disclaimer répartition légale obligatoire.
+ * Bailleur : TMI sélectionnable (11/30/41/45%) + toggle régime Micro-Foncier / Réel.
+ * Sémantique de conseil : termes estimatifs, pas affirmatifs de rendement.
  */
 
 import { useState, useMemo } from "react";
+import { Info } from "lucide-react";
 import type { DiagnosticResult } from "@/lib/schemas";
 import { formatCurrency } from "@/lib/calculator";
-import { FINANCES_2026 } from "@/lib/financialConstants";
+import { FINANCES_2026, type TmiBracket } from "@/lib/financialConstants";
 
 type InvestorType = "occupant" | "bailleur";
+type FiscalRegime = "micro" | "reel";
+
+const PS = FINANCES_2026.DEFICIT_FONCIER.PRELEVEMENT_SOCIAUX; // 17.2%
 
 export default function PersonalSimulator({ result }: { result: DiagnosticResult }) {
     const [tantiemes, setTantiemes] = useState(100);
     const [totalTantiemes, setTotalTantiemes] = useState(1000);
     const [investorType, setInvestorType] = useState<InvestorType>("occupant");
+    const [tmi, setTmi] = useState<TmiBracket>(0.30);
+    const [fiscalRegime, setFiscalRegime] = useState<FiscalRegime>("reel");
 
     const personal = useMemo(() => {
         const ratio = totalTantiemes > 0 ? tantiemes / totalTantiemes : 0;
@@ -26,15 +35,18 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
         const totalTTC = financing.totalCostTTC * ratio;
         const subsidies = (financing.mprAmount + financing.ceeAmount + financing.localAidAmount + financing.amoAmount) * ratio;
         const loanAmount = financing.ecoPtzAmount * ratio;
-        const cashDown = Math.max(0, financing.remainingCost * ratio - loanAmount);
         const racBrut = financing.remainingCost * ratio;
+        const cashDown = Math.max(0, racBrut - loanAmount);
         const monthlyPayment = financing.monthlyPayment * ratio;
         const greenValue = valuation.greenValueGain * ratio;
         const monthlySavings = financing.monthlyEnergySavings * ratio;
         const netCashflow = financing.netMonthlyCashFlow * ratio;
 
-        // Déficit Foncier: assiette = RAC comptant (cash réellement décaissé)
-        const deficitFoncier = cashDown * FINANCES_2026.DEFICIT_FONCIER.TAUX_EFFECTIF;
+        // Déficit Foncier : assiette = RAC comptant (cash réellement décaissé)
+        // Ne s'active qu'en régime Réel (Art. 156 CGI).
+        const deficitFoncier = fiscalRegime === "reel"
+            ? cashDown * (tmi + PS)
+            : 0;
 
         return {
             ratio,
@@ -49,7 +61,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
             netCashflow,
             deficitFoncier,
         };
-    }, [tantiemes, totalTantiemes, result]);
+    }, [tantiemes, totalTantiemes, result, tmi, fiscalRegime]);
 
     const inputCls =
         "w-full h-10 px-3 text-sm text-oxford bg-white border border-border rounded-md " +
@@ -58,15 +70,32 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
         "focus:outline-none focus:border-navy focus:ring-1 focus:ring-navy/20 " +
         "transition-colors duration-150 tabular-nums text-center";
 
+    const selectCls =
+        "h-9 px-2.5 text-xs text-oxford bg-white border border-border rounded-md " +
+        "hover:border-border-strong " +
+        "focus:outline-none focus:border-navy focus:ring-1 focus:ring-navy/20 " +
+        "transition-colors duration-150 cursor-pointer";
+
     return (
         <section className="border-t-2 border-brass bg-slate-50/60 rounded-b-card -mx-6 -mb-6 md:-mx-8 md:-mb-8 px-6 py-8 md:px-8">
 
             {/* ── Header ──────────────────────────────────────── */}
-            <div className="flex items-center gap-2 mb-6">
+            <div className="flex items-center gap-2 mb-4">
                 <div className="w-1 h-5 bg-brass rounded-full" />
                 <h3 className="font-serif text-lg font-semibold text-oxford">
                     Bilan Patrimonial Personnel
                 </h3>
+            </div>
+
+            {/* ── Disclaimer Art. 10 Loi 65 ───────────────────── */}
+            <div className="flex items-start gap-2 rounded-md border border-navy/15 bg-navy/5 px-3.5 py-2.5 mb-6">
+                <Info className="w-3 h-3 text-navy flex-shrink-0 mt-0.5" />
+                <p className="text-[10px] text-navy/80 leading-relaxed">
+                    <strong>Calcul estimatif lissé.</strong> La répartition légale exacte sera appliquée selon les grilles
+                    de votre Règlement de Copropriété{" "}
+                    <strong>(Art. 10 Loi 65 : Charges générales vs Utilité)</strong>.
+                    Tantièmes et clés de répartition peuvent différer selon la nature des travaux.
+                </p>
             </div>
 
             {/* ── Controls ────────────────────────────────────── */}
@@ -79,7 +108,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                             htmlFor="tantiemes"
                             className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-1"
                         >
-                            Tantièmes
+                            Vos tantièmes
                         </label>
                         <input
                             id="tantiemes"
@@ -99,7 +128,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                             htmlFor="totalTantiemes"
                             className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-1"
                         >
-                            Total
+                            Total copro
                         </label>
                         <input
                             id="totalTantiemes"
@@ -124,8 +153,8 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                         type="button"
                         onClick={() => setInvestorType("occupant")}
                         className={`px-4 py-2 text-xs font-semibold transition-colors duration-150 ${investorType === "occupant"
-                                ? "bg-navy text-white"
-                                : "bg-white text-slate hover:bg-slate-50"
+                            ? "bg-navy text-white"
+                            : "bg-white text-slate hover:bg-slate-50"
                             }`}
                     >
                         Propriétaire Occupant
@@ -134,8 +163,8 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                         type="button"
                         onClick={() => setInvestorType("bailleur")}
                         className={`px-4 py-2 text-xs font-semibold border-l border-border transition-colors duration-150 ${investorType === "bailleur"
-                                ? "bg-navy text-white"
-                                : "bg-white text-slate hover:bg-slate-50"
+                            ? "bg-navy text-white"
+                            : "bg-white text-slate hover:bg-slate-50"
                             }`}
                     >
                         Propriétaire Bailleur
@@ -154,7 +183,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                     <span className="text-2xl md:text-3xl font-serif font-bold text-oxford tabular-nums">
                         {formatCurrency(personal.cashDown)}
                     </span>
-                    <span className="text-[10px] text-subtle mt-1">à régler immédiatement</span>
+                    <span className="text-[10px] text-subtle mt-1">appel de fonds immédiat</span>
                 </div>
 
                 {/* Card 2: Mensualité Éco-PTZ */}
@@ -168,15 +197,15 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                     <span className="text-[10px] text-subtle mt-1">/ mois pendant 20 ans</span>
                 </div>
 
-                {/* Card 3: Gain Valeur Verte */}
+                {/* Card 3: Potentiel de Valorisation Patrimoniale */}
                 <div className="flex flex-col items-center justify-center p-5 rounded-card bg-white border border-border text-center">
                     <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-2">
-                        Gain Valeur Verte
+                        Potentiel Valeur Verte
                     </span>
                     <span className="text-2xl md:text-3xl font-serif font-bold text-gain tabular-nums">
                         + {formatCurrency(personal.greenValue)}
                     </span>
-                    <span className="text-[10px] text-subtle mt-1">plus-value estimée</span>
+                    <span className="text-[10px] text-subtle mt-1">potentiel de valorisation patrimoniale (est. marché)</span>
                 </div>
             </div>
 
@@ -185,31 +214,105 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                 <MiniStat label="Coût TTC" value={formatCurrency(personal.totalTTC)} />
                 <MiniStat label="Total Aides" value={`− ${formatCurrency(personal.subsidies)}`} green />
                 <MiniStat label="Éco-PTZ" value={formatCurrency(personal.loanAmount)} />
-                <MiniStat label="Éco. énergie / mois" value={`+ ${formatCurrency(personal.monthlySavings)}`} green />
+                <MiniStat
+                    label="Éco. énergie théorique / mois"
+                    value={`+ ${formatCurrency(personal.monthlySavings)}`}
+                    green
+                />
             </div>
 
             {/* ── Bailleur: Déficit Foncier Block ─────────────── */}
             <div
                 className={`
                     overflow-hidden transition-all duration-300 ease-out
-                    ${investorType === "bailleur" ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}
+                    ${investorType === "bailleur" ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}
                 `}
             >
-                <div className="rounded-card bg-brass-muted border border-brass/15 p-5">
-                    <div className="flex items-start sm:items-center justify-between gap-4 flex-col sm:flex-row">
+                <div className="rounded-card bg-brass-muted border border-brass/15 p-5 space-y-4">
+
+                    <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-semibold text-oxford">
+                            Avantage Fiscal — Régime Réel / Déficit Foncier
+                        </h4>
+                    </div>
+
+                    {/* Fiscal Controls */}
+                    <div className="flex flex-col sm:flex-row gap-3">
+
+                        {/* TMI Selector */}
                         <div>
-                            <h4 className="text-sm font-semibold text-oxford">
-                                Avantage Fiscal — Déficit Foncier Année 1
-                            </h4>
-                            <p className="text-[10px] text-slate mt-1 leading-relaxed max-w-md">
-                                Déduction estimée sur vos revenus fonciers (TMI 30% + PS 17.2% = 47.2%).
-                                Assiette : RAC comptant uniquement. Reportable sur 10 ans.
+                            <label
+                                htmlFor="tmi-select"
+                                className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-1"
+                            >
+                                Tranche d&rsquo;imposition (TMI)
+                            </label>
+                            <select
+                                id="tmi-select"
+                                className={selectCls}
+                                value={tmi}
+                                onChange={(e) => setTmi(parseFloat(e.target.value) as TmiBracket)}
+                            >
+                                {FINANCES_2026.DEFICIT_FONCIER.TMI_BRACKETS.map((t) => (
+                                    <option key={t} value={t}>
+                                        {Math.round(t * 100)}%
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Régime Fiscal Toggle */}
+                        <div>
+                            <span className="block text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-1">
+                                Régime fiscal
+                            </span>
+                            <div className="flex rounded-md border border-border overflow-hidden">
+                                <button
+                                    type="button"
+                                    onClick={() => setFiscalRegime("reel")}
+                                    className={`px-3 py-1.5 text-[11px] font-semibold transition-colors duration-150 ${fiscalRegime === "reel"
+                                        ? "bg-navy text-white"
+                                        : "bg-white text-slate hover:bg-slate-50"
+                                        }`}
+                                >
+                                    Réel (Déficit Foncier)
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setFiscalRegime("micro")}
+                                    className={`px-3 py-1.5 text-[11px] font-semibold border-l border-border transition-colors duration-150 ${fiscalRegime === "micro"
+                                        ? "bg-navy text-white"
+                                        : "bg-white text-slate hover:bg-slate-50"
+                                        }`}
+                                >
+                                    Micro-Foncier (30%)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Résultat fiscal */}
+                    {fiscalRegime === "reel" ? (
+                        <div className="flex items-start sm:items-center justify-between gap-4 flex-col sm:flex-row">
+                            <p className="text-[10px] text-slate leading-relaxed max-w-md">
+                                Déduction estimée sur vos revenus fonciers ({Math.round(tmi * 100)}% TMI + 17,2% PS = {((tmi + PS) * 100).toFixed(1)}%).
+                                Assiette : RAC comptant uniquement (Art. 156 CGI). Reportable sur 10 ans.
+                            </p>
+                            <span className="text-2xl font-serif font-bold text-brass-dark tabular-nums whitespace-nowrap">
+                                − {formatCurrency(personal.deficitFoncier)}
+                            </span>
+                        </div>
+                    ) : (
+                        <div className="rounded-md border border-navy/10 bg-white/60 px-3.5 py-3">
+                            <p className="text-[10px] text-slate leading-relaxed">
+                                En régime <strong>Micro-Foncier</strong>, l&rsquo;abattement forfaitaire de 30% s&rsquo;applique
+                                sur l&rsquo;ensemble des revenus fonciers bruts — mais ne permet pas de déduire spécifiquement
+                                les charges de travaux. Le calcul du gain fiscal au titre du Déficit Foncier{" "}
+                                <strong>n&rsquo;est pas applicable dans ce régime.</strong>{" "}
+                                Consultez votre conseiller fiscal pour évaluer l&rsquo;opportunité d&rsquo;opter pour le régime Réel.
                             </p>
                         </div>
-                        <span className="text-2xl font-serif font-bold text-brass-dark tabular-nums whitespace-nowrap">
-                            − {formatCurrency(personal.deficitFoncier)}
-                        </span>
-                    </div>
+                    )}
                 </div>
             </div>
         </section>

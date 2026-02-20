@@ -19,6 +19,11 @@ export const FINANCES_2026 = {
         MIN_ENERGY_GAIN: 0.35,
         /** Seuil de haute performance (gain > 50%) */
         HIGH_PERF_THRESHOLD: 0.50,
+        /**
+         * Statut réglementaire 2026 : MaPrimeRénov' Copropriété techniquement suspendue
+         * au 1er janvier 2026, faute de loi de finances promulguée.
+         */
+        STATUS_2026: "suspended" as const,
     },
     CEE: {
         /** Estimation conservatrice des CEE (8% des travaux HT) */
@@ -55,9 +60,16 @@ export const FINANCES_2026 = {
         TMI_DEFAULT: 0.30,
         /** Prélèvements sociaux (17.2%) cumulés sur revenus fonciers */
         PRELEVEMENT_SOCIAUX: 0.172,
-        /** Taux effectif de déduction = TMI + PS (47.2%) */
+        /** Taux effectif de déduction = TMI + PS (47.2%) — calculé sur base TMI 30% */
         TAUX_EFFECTIF: 0.472,
+        /**
+         * Tranches Marginales d'Imposition (TMI) applicables au Déficit Foncier
+         * Art. 156 CGI — Régime Réel uniquement.
+         * Source : Barème de l'impôt sur le revenu 2026 (revenus 2025).
+         */
+        TMI_BRACKETS: [0.11, 0.30, 0.41, 0.45] as const,
     },
 } as const;
 
 export type Finances2026 = typeof FINANCES_2026;
+export type TmiBracket = typeof FINANCES_2026.DEFICIT_FONCIER.TMI_BRACKETS[number];

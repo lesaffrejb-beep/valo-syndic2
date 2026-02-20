@@ -207,6 +207,9 @@ export const FinancingPlanSchema = z.object({
     /** Montant Aide AMO */
     amoAmount: z.number(),
 
+    /** Montant AMO TTC (pour affichage brut réel) */
+    amoCostTTC: z.number(),
+
     /** Montant Aides Locales */
     localAidAmount: z.number(),
 
@@ -227,6 +230,9 @@ export const FinancingPlanSchema = z.object({
 
     /** Mensualité Éco-PTZ (sur 20 ans) — immeuble entier */
     monthlyPayment: z.number(),
+
+    /** Reste au comptant (RAC comptant global) */
+    cashDownPayment: z.number(),
 
     /** Économies mensuelles estimées sur facture énergétique */
     monthlyEnergySavings: z.number().default(0),

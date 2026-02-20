@@ -3,13 +3,17 @@
 /**
  * VALO-SYNDIC — DiagnosticResults
  * ================================
- * Financial ledger view: Macro KPIs + Ticket de Caisse (cost/aid/financing breakdown).
- * Reads `result` from useDiagnosticStore. Renders an elegant empty state when null.
+ * Financial ledger view: Macro KPIs + Ticket de Caisse restructuré en 2 temps financiers.
+ *
+ * Bloc A : Coût du Projet (Résolution AG) — ce que le syndicat vote.
+ * Bloc B : Plan de Financement & Trésorerie — ce que le syndicat doit trouver.
+ *
+ * Conformité Loi 65 / Paramètres réglementaires 2026.
  */
 
 import { useDiagnosticStore } from "@/stores/useDiagnosticStore";
 import { formatCurrency } from "@/lib/calculator";
-import { FileText } from "lucide-react";
+import { FileText, AlertTriangle } from "lucide-react";
 import PersonalSimulator from "@/components/diagnostic/PersonalSimulator";
 import PDFDownloadButton from "@/components/pdf/PDFDownloadButton";
 import DiagnosticPDF from "@/components/pdf/DiagnosticPDF";
@@ -31,21 +35,47 @@ function StatusBadge({ label, color }: { label: string; color: "danger" | "warni
     );
 }
 
+/** Badge d'alerte réglementaire — affiché sur les aides à statut incertain */
+function AlertBadge({ label }: { label: string }) {
+    return (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-semibold rounded border bg-amber-50 text-amber-700 border-amber-200 whitespace-nowrap">
+            <AlertTriangle className="w-2.5 h-2.5 flex-shrink-0" />
+            {label}
+        </span>
+    );
+}
+
+function SectionHeader({ accent, title }: { accent: string; title: string }) {
+    return (
+        <div className="flex items-center gap-2 mb-3 mt-5 first:mt-0">
+            <div className={`w-1 h-4 rounded-full ${accent}`} />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate">{title}</span>
+        </div>
+    );
+}
+
 function LedgerRow({
     label,
     amount,
     variant = "default",
     tag,
+    alertBadge,
+    subNote,
 }: {
     label: string;
     amount: number;
-    variant?: "default" | "subtotal-cost" | "subtotal-aid" | "final";
+    variant?: "default" | "subtotal-cost" | "subtotal-aid" | "final" | "call";
     tag?: string;
+    /** Badge d'alerte réglementaire (ex : suspension LFI 2026) */
+    alertBadge?: string;
+    /** Sous-ligne informative en gris (ex : frais garantie SACICAP) */
+    subNote?: string;
 }) {
     const rowStyles: Record<string, string> = {
         default: "py-2.5",
         "subtotal-cost": "py-3 bg-slate-50/80 font-semibold border-t border-border",
         "subtotal-aid": "py-3 bg-gain-light/40 font-semibold border-t border-border",
+        call: "py-3 bg-navy/5 font-semibold border-t border-border",
         final: "py-4 bg-brass-muted border-t-2 border-brass/30 font-bold",
     };
 
@@ -53,6 +83,7 @@ function LedgerRow({
         default: "text-sm text-slate",
         "subtotal-cost": "text-sm text-oxford",
         "subtotal-aid": "text-sm text-gain",
+        call: "text-sm text-navy",
         final: "text-base font-serif text-oxford",
     };
 
@@ -60,22 +91,31 @@ function LedgerRow({
         default: "text-sm text-oxford tabular-nums",
         "subtotal-cost": "text-sm text-oxford tabular-nums font-semibold",
         "subtotal-aid": "text-sm text-gain tabular-nums font-semibold",
+        call: "text-sm text-navy tabular-nums font-semibold",
         final: "text-lg font-serif text-oxford tabular-nums font-bold",
     };
 
+    const isAid = variant === "subtotal-aid";
+
     return (
-        <div className={`flex items-center justify-between px-4 rounded-md ${rowStyles[variant]}`}>
-            <div className="flex items-center gap-2">
-                <span className={labelStyles[variant]}>{label}</span>
-                {tag && (
-                    <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-navy/5 text-navy border border-navy/10">
-                        {tag}
-                    </span>
-                )}
+        <div>
+            <div className={`flex items-center justify-between px-4 rounded-md ${rowStyles[variant]}`}>
+                <div className="flex items-center flex-wrap gap-2 min-w-0">
+                    <span className={`${labelStyles[variant]} leading-snug`}>{label}</span>
+                    {tag && (
+                        <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-navy/5 text-navy border border-navy/10">
+                            {tag}
+                        </span>
+                    )}
+                    {alertBadge && <AlertBadge label={alertBadge} />}
+                </div>
+                <span className={`${amountStyles[variant]} ml-3 flex-shrink-0`}>
+                    {isAid ? `− ${formatCurrency(Math.abs(amount))}` : formatCurrency(amount)}
+                </span>
             </div>
-            <span className={amountStyles[variant]}>
-                {variant === "subtotal-aid" ? `− ${formatCurrency(Math.abs(amount))}` : formatCurrency(amount)}
-            </span>
+            {subNote && (
+                <p className="text-[9px] text-subtle px-4 pb-1 -mt-1 leading-relaxed italic">{subNote}</p>
+            )}
         </div>
     );
 }
@@ -142,16 +182,20 @@ export default function DiagnosticResults() {
         : 0;
 
     const cashflowPerLot = perUnit?.cashflowNetParLot ?? 0;
-
     const mprRateLabel = `${Math.round(financing.mprRate * 100)}%`;
 
     // Total aids sum
-    const totalAids = financing.mprAmount + financing.amoAmount + financing.ceeAmount + financing.localAidAmount + (input.alurFund ?? 0);
+    const totalAids =
+        financing.mprAmount +
+        financing.amoAmount +
+        financing.ceeAmount +
+        financing.localAidAmount;
 
-    // Reste au comptant = remaining cost - ecoPtz (what must be paid immediately)
-    const resteComptant = perUnit?.racComptantParLot
-        ? perUnit.racComptantParLot * numberOfUnits
-        : Math.max(0, financing.remainingCost - financing.ecoPtzAmount);
+    // Reste au comptant (appel de fonds immédiat)
+    const resteComptant = financing.cashDownPayment;
+
+    // Effort de trésorerie réel lissé = mensualité Éco-PTZ − économies énergie / mois
+    const effortMensuel = Math.max(0, financing.monthlyPayment - financing.monthlyEnergySavings);
 
     return (
         <div className="space-y-6 animate-fadeInUp">
@@ -185,9 +229,9 @@ export default function DiagnosticResults() {
                     unit="par lot / mois"
                 />
                 <KpiCard
-                    label="Économie énergie"
+                    label="Économie énergie théorique"
                     value={`${monthlySavingsPerLot} €`}
-                    unit="par lot / mois"
+                    unit="par lot / mois (Base DPE post-travaux)"
                     accent="positive"
                 />
                 <KpiCard
@@ -207,49 +251,114 @@ export default function DiagnosticResults() {
                     </h3>
                 </div>
 
-                <div className="space-y-0.5">
+                {/* ══ BLOC A : Coût du Projet (Résolution AG) ═════════════════════ */}
+                <SectionHeader accent="bg-navy" title="Bloc A — Coût du Projet (Résolution AG)" />
 
-                    {/* ── Group 1: Costs ──────────────────────── */}
+                <div className="space-y-0.5 rounded-lg border border-border overflow-hidden mb-2">
                     <LedgerRow label="Travaux HT" amount={financing.worksCostHT} />
-                    <LedgerRow label="Honoraires Syndic (3%)" amount={financing.syndicFees} />
+                    <LedgerRow
+                        label="Honoraires Syndic (3%)"
+                        amount={financing.syndicFees}
+                        tag="Art. 11 ALUR"
+                    />
                     <LedgerRow label="Assurance DO (2%)" amount={financing.doFees} />
-                    <LedgerRow label="Provision Aléas (3%)" amount={financing.contingencyFees} />
-                    <LedgerRow label="AMO Ingénierie" amount={financing.amoAmount} />
+                    <LedgerRow label="Provision Aléas (5%)" amount={financing.contingencyFees} />
+                    <LedgerRow label="AMO Ingénierie" amount={financing.amoCostTTC} />
                     <LedgerRow label="TOTAL TTC" amount={financing.totalCostTTC} variant="subtotal-cost" />
+                </div>
 
-                    <div className="h-3" />
+                {/* ══ BLOC B : Plan de Financement & Trésorerie ═══════════════════ */}
+                <SectionHeader accent="bg-brass" title="Bloc B — Plan de Financement &amp; Trésorerie" />
 
-                    {/* ── Group 2: Subsidies ──────────────────── */}
-                    <LedgerRow label="MaPrimeRénov' Copro" amount={financing.mprAmount} variant="subtotal-aid" tag={mprRateLabel} />
-                    <LedgerRow label="CEE" amount={financing.ceeAmount} variant="subtotal-aid" />
-                    {financing.localAidAmount > 0 && (
-                        <LedgerRow label="Aides locales" amount={financing.localAidAmount} variant="subtotal-aid" />
+                <div className="space-y-0.5 rounded-lg border border-border overflow-hidden mb-2">
+
+                    {/* Appel de fonds initial */}
+                    <LedgerRow
+                        label="Appel de Fonds Initial (Préfinancement Loi 65)"
+                        amount={financing.totalCostTTC}
+                        variant="call"
+                    />
+
+                    <div className="h-1" />
+
+                    {/* Aides */}
+                    <LedgerRow
+                        label="MaPrimeRénov' Copropriété"
+                        amount={financing.mprAmount}
+                        variant="subtotal-aid"
+                        tag={mprRateLabel}
+                        alertBadge="Aide conditionnelle — En attente LFI 2026"
+                    />
+                    <LedgerRow
+                        label="CEE (Certificats d'Économie d'Énergie)"
+                        amount={financing.ceeAmount}
+                        variant="subtotal-aid"
+                    />
+                    <LedgerRow
+                        label="Subvention AMO (50%)"
+                        amount={financing.amoAmount}
+                        variant="subtotal-aid"
+                    />
+                    {(financing.localAidAmount > 0 || true) && (
+                        <LedgerRow
+                            label="Mieux chez moi (Angers Loire Métropole)"
+                            amount={financing.localAidAmount}
+                            variant="subtotal-aid"
+                        />
                     )}
                     {(input.alurFund ?? 0) > 0 && (
-                        <LedgerRow label="Fonds Travaux ALUR" amount={input.alurFund ?? 0} variant="subtotal-aid" />
+                        <LedgerRow
+                            label="Fonds Travaux ALUR"
+                            amount={input.alurFund ?? 0}
+                            variant="subtotal-aid"
+                        />
                     )}
                     <LedgerRow label="TOTAL AIDES" amount={totalAids} variant="subtotal-aid" />
 
-                    <div className="h-3" />
+                    <div className="h-1" />
 
-                    {/* ── Group 3: Financing ──────────────────── */}
-                    <LedgerRow label="Reste à charge brut" amount={financing.remainingCost} />
-                    <LedgerRow label="Éco-PTZ accordé (20 ans, 0%)" amount={financing.ecoPtzAmount} variant="subtotal-aid" />
+                    {/* Éco-PTZ */}
+                    <LedgerRow
+                        label="Éco-PTZ Copropriété (Vote Art. 25)"
+                        amount={financing.ecoPtzAmount}
+                        variant="subtotal-aid"
+                        subNote="Inclut provision 2,5% pour frais de garantie SACICAP et assurance emprunteur. Plafonné à 50 000 € / lot — Rénovation globale."
+                    />
 
                     <div className="h-2" />
 
-                    {/* ── Final: Reste au comptant ────────────── */}
+                    {/* Reste au comptant — appel immédiat */}
                     <LedgerRow
-                        label="RESTE AU COMPTANT"
+                        label="Reste au comptant (Appel de Fonds Immédiat)"
                         amount={resteComptant}
+                        variant="subtotal-cost"
+                    />
+
+                    {/* Ligne finale Brass : Effort de Trésorerie Réel Lissé */}
+                    <LedgerRow
+                        label="Effort de Trésorerie Réel Lissé"
+                        amount={effortMensuel}
                         variant="final"
+                        subNote="Mensualité Éco-PTZ − Économie d'énergie théorique (Base DPE post-travaux) / mois"
                     />
                 </div>
 
                 <p className="text-[10px] text-subtle mt-4 leading-relaxed">
-                    Montant à régler immédiatement par le syndicat des copropriétaires.
-                    Le capital Éco-PTZ est remboursé en 240 mensualités à taux zéro.
+                    L&rsquo;Appel de Fonds Initial correspond au montant brut à mobiliser avant rentrée des aides.
+                    Les subventions sont versées a posteriori — le syndicat assume la trésorerie intermédiaire.
+                    L&rsquo;Éco-PTZ est remboursé en 240 mensualités à taux zéro (vote Art. 25 requis).
                 </p>
+
+                {/* Avertissement MaPrimeRénov' */}
+                <div className="mt-4 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50/60 px-4 py-3">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-amber-800 leading-relaxed">
+                        <strong>MaPrimeRénov&rsquo; Copropriété :</strong> Techniquement suspendue au 1er janvier 2026
+                        faute de loi de finances promulguée. Le montant affiché est une estimation conditionnelle.
+                        Validation obligatoire via l&rsquo;espace conseil <strong>Mieux chez moi</strong> (Angers Loire Métropole)
+                        avant tout engagement.
+                    </p>
+                </div>
             </div>
 
             {/* ── Per-Unit Summary ─────────────────────────────── */}
@@ -268,7 +377,7 @@ export default function DiagnosticResults() {
                         <Row label="Éco-PTZ / lot" value={formatCurrency(perUnit.ecoPtzParLot)} />
                         <Row label="RAC comptant / lot" value={formatCurrency(perUnit.racComptantParLot)} bold />
                         <Row label="Avantage fiscal An 1" value={`− ${formatCurrency(perUnit.avantagesFiscauxAnnee1)}`} green />
-                        <Row label="Valeur Verte / lot" value={`+ ${formatCurrency(perUnit.valeurVerteParLot)}`} green />
+                        <Row label="Potentiel Valeur Verte / lot" value={`+ ${formatCurrency(perUnit.valeurVerteParLot)}`} green />
                     </div>
                 </div>
             )}
