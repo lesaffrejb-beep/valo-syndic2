@@ -5,7 +5,7 @@
  */
 
 import { z } from "zod";
-import { DPE_ORDER, type DPELetter } from "./constants";
+import { DPE_ORDER, DPE_KWH_VALUES, type DPELetter } from "./constants";
 
 // =============================================================================
 // 1. ENTRÉES UTILISATEUR
@@ -334,23 +334,26 @@ export function validateDPEProgression(
 }
 
 /**
- * Calcule le gain énergétique estimé entre deux classes DPE
- * Simplification : chaque saut de classe = ~15-20% de gain
+ * Calcule le gain énergétique entre deux classes DPE.
+ *
+ * FIX AUDIT FEV 2026 (F1) : utilise les valeurs kWh/m²/an réelles (DPE_KWH_VALUES)
+ * au lieu d'un barème par paliers fixes.
+ * L'ancienne approche par paliers donnait des approximations incorrectes pour
+ * certaines transitions (ex : C→B : paliers = 15%, kWh = 40%).
+ *
+ * Formule : gain = (kWh_actuel - kWh_cible) / kWh_actuel
  */
 export function estimateEnergyGain(
     current: DPELetter,
     target: DPELetter
 ): number {
-    const currentIndex = DPE_ORDER.indexOf(current);
-    const targetIndex = DPE_ORDER.indexOf(target);
-    const steps = targetIndex - currentIndex;
+    const currentKwh = DPE_KWH_VALUES[current];
+    const targetKwh = DPE_KWH_VALUES[target];
 
-    if (steps <= 0) return 0;
-    if (steps === 1) return 0.15; // 15% pour 1 classe (ex: E->D)
-    if (steps === 2) return 0.40; // 40% pour 2 classes (ex: E->C)
-    if (steps >= 3) return 0.55;  // 55% pour 3 classes ou + (ex: F->C)
+    if (targetKwh >= currentKwh) return 0;
 
-    return Math.min(steps * 0.15, 0.70);
+    const gain = (currentKwh - targetKwh) / currentKwh;
+    return Math.round(gain * 10000) / 10000; // 4 décimales (ex: 0.5714 pour F→C)
 }
 
 // =============================================================================
