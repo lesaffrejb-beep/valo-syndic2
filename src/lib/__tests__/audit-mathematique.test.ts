@@ -241,19 +241,21 @@ describe("AUDIT MATHEMATIQUE - Cas #1: Petite copropriété F → C", () => {
 
         // Assiette Éco-PTZ = travaux HT + AMO nette HT (CGI Art. 244 quater U)
         const ecoPtzEligibleHT = input.estimatedCostHT + amoNetCostHT; // 181,800
-        // FIX AUDIT FEV 2026 (F5) : déduire les subventions (HT) de l'assiette HT,
-        // PUIS appliquer la TVA. On ne soustrait pas des montants HT d'une base TTC.
-        // netEligibleHT = 181,800 - (99,000 + 14,400) = 68,400
-        // netEligibleTTC = 68,400 × 1.055 = 72,162
-        const netEligibleHT = Math.max(0, ecoPtzEligibleHT - (mprAmount + ceeAmount)); // 68,400
-        const racEligible = Math.max(0, Math.min(initialRac, netEligibleHT * 1.055)); // 72,162
+        // FORMULE CORRECTE : eligibleTTC − (mprAmount + ceeAmount)
+        // Raisonnement : l'artisan facture la TVA sur la TOTALITÉ des travaux HT.
+        // Les subventions (MPR, CEE) sont des chèques nets versés à la copro — pas des montants HT.
+        // Reste à financer par Éco-PTZ = Facture TTC − Chèques reçus
+        // eligibleTTC = 181,800 × 1,055 = 191,799
+        // racEligible = Min(94,159 ; 191,799 − 113,400) = Min(94,159 ; 78,399) = 78,399
+        const eligibleTTC = ecoPtzEligibleHT * 1.055; // 191,799
+        const racEligible = Math.max(0, Math.min(initialRac, eligibleTTC - (mprAmount + ceeAmount))); // 78,399
 
         const GUARANTEE_FEE = 500;
         const ecoPtzCeiling = input.numberOfUnits * ECO_PTZ_COPRO.ceilingPerUnit; // 400,000
         const loanPrincipal = Math.min(racEligible, ecoPtzCeiling - GUARANTEE_FEE);
-        const expectedEcoPTZ = loanPrincipal + GUARANTEE_FEE; // 72,662
+        const expectedEcoPTZ = loanPrincipal + GUARANTEE_FEE; // 78,899
 
-        auditApprox("Cas#1", "Montant Éco-PTZ (F5 — assiette HT nette × TVA)", result.financing.ecoPtzAmount, expectedEcoPTZ, 10);
+        auditApprox("Cas#1", "Montant Éco-PTZ (eligibleTTC − subsidies)", result.financing.ecoPtzAmount, expectedEcoPTZ, 10);
     });
 
     it("calcule correctement le reste à charge (avant Éco-PTZ) et l'apport comptant", () => {
