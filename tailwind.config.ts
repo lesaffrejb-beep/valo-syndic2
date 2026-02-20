@@ -7,59 +7,67 @@ const config: Config = {
     theme: {
         extend: {
             colors: {
-                // Backgrounds Deep Space
-                deep: {
-                    DEFAULT: "#050507", // Almost black
-                    surface: "#1a1f2e", // Dark Blueish Grey
-                    highlight: "#252b3d",
-                },
-                // Gold Premium (Refined)
-                gold: {
-                    DEFAULT: "#E5C07B",
-                    light: "#F2D8A7",
-                    dark: "#997D3D",
-                    dim: "rgba(229, 192, 123, 0.1)",
-                },
-                // Earthy Tones - Stealth Wealth Finance
-                terracotta: {
-                    DEFAULT: "hsl(10, 60%, 65%)", // Softer Terracotta
-                    light: "#F2CCB7",
-                    dark: "#3D1F16",
-                    muted: "hsl(10, 40%, 50%)", // For text
-                },
-                // Functional Colors (Muted/Pastel)
-                success: { DEFAULT: '#34D399', glow: 'rgba(52, 211, 153, 0.1)' }, // Emerald
-                warning: { DEFAULT: '#FBBF24', glow: 'rgba(251, 191, 36, 0.1)' }, // Amber
-                danger: { DEFAULT: 'hsl(10, 60%, 65%)', glow: 'rgba(224, 122, 95, 0.1)' }, // Replaced Red with Terracotta
-                info: { DEFAULT: '#60A5FA', glow: 'rgba(96, 165, 250, 0.1)' },   // Soft Blue
+                // ── Backgrounds ──────────────────────────────────────
+                alabaster: "#F9F8F6",      // App background — warm off-white
+                card: "#FFFFFF",           // Card / panel surface
 
-                // Text Colors
-                main: "#EDEDED",      // High contrast text
-                muted: "#94A3B8",     // Secondary text
-                subtle: "#475569",    // Tertiary/Borders
+                // ── Text ─────────────────────────────────────────────
+                oxford: "#111827",         // Primary text — deep navy-black
+                slate: "#475569",          // Secondary / muted text
+                subtle: "#94A3B8",         // Tertiary / placeholders
+
+                // ── Accents ──────────────────────────────────────────
+                brass: {
+                    DEFAULT: "#B8963E",    // Primary action / highlights
+                    light: "#D4B066",      // Hover state
+                    dark: "#8A6F2E",       // Active / pressed
+                    muted: "rgba(184, 150, 62, 0.08)", // Subtle bg tint
+                },
+                navy: {
+                    DEFAULT: "#1E3A8A",    // Structural / headers
+                    light: "#2B4FAF",      // Hover
+                    dark: "#162D6B",       // Active
+                },
+
+                // ── Status (Muted / Institutional) ───────────────────
+                gain: {
+                    DEFAULT: "#166534",    // Financial gains — forest green
+                    light: "#DCFCE7",      // Light background
+                },
+                cost: {
+                    DEFAULT: "#991B1B",    // Costs / alerts — crimson
+                    light: "#FEE2E2",      // Light background
+                },
+                info: {
+                    DEFAULT: "#1E40AF",    // Informational — deep blue
+                    light: "#DBEAFE",      // Light background
+                },
+
+                // ── Borders ──────────────────────────────────────────
+                border: "#E2E8F0",         // Fine 1px border — slate-200
+                "border-strong": "#CBD5E1", // Emphasized border — slate-300
             },
             fontFamily: {
-                sans: ["var(--font-jakarta)", "system-ui", "sans-serif"],
-                mono: ["var(--font-mono)", "monospace"],
-            },
-            backgroundImage: {
-                'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-                'glass-gradient': 'linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)',
-                'glass-border': 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%)',
-                'dots-pattern': "radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px)",
+                serif: ["var(--font-serif)", "Cormorant Garamond", "Georgia", "serif"],
+                sans: ["var(--font-jakarta)", "Plus Jakarta Sans", "system-ui", "sans-serif"],
+                mono: ["var(--font-mono)", "JetBrains Mono", "monospace"],
             },
             boxShadow: {
-                'glass': '0 4px 30px rgba(0, 0, 0, 0.1)',
-                'neon': '0 0 20px -5px rgba(229, 192, 123, 0.3)',
-                'card-premium': '0 20px 40px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
+                'card': '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03)',
+                'elevated': '0 4px 12px -2px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04)',
+                'modal': '0 20px 60px -15px rgba(0, 0, 0, 0.12)',
+            },
+            borderRadius: {
+                'card': '0.625rem',   // 10px — slightly rounded, not playful
+                'button': '0.5rem',    // 8px
+                'input': '0.5rem',     // 8px
             },
             animation: {
-                'fadeInUp': 'fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                'fadeInUp': 'fadeInUp 0.5s cubic-bezier(0.33, 1, 0.68, 1) forwards',
             },
             keyframes: {
                 fadeInUp: {
-                    '0%': { opacity: '0', transform: 'translateY(20px)' },
+                    '0%': { opacity: '0', transform: 'translateY(12px)' },
                     '100%': { opacity: '1', transform: 'translateY(0)' },
                 },
             },

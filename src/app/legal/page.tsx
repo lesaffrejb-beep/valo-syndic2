@@ -4,7 +4,6 @@
  */
 
 import { LEGAL } from "@/lib/constants";
-import { LegalWarning } from "@/components/business/LegalWarning";
 import Link from "next/link";
 
 export default function LegalPage() {
@@ -39,7 +38,9 @@ export default function LegalPage() {
                             des simulations indicatives basées sur les barèmes publics en
                             vigueur.
                         </p>
-                        <LegalWarning variant="banner" />
+                        <div className="p-4 bg-amber-50 text-amber-800 border border-amber-200 rounded-md text-sm">
+                            ⚠️ Ce simulateur ne remplace pas une étude thermique ou financière certifiée.
+                        </div>
                     </section>
 
                     {/* Section 2 */}

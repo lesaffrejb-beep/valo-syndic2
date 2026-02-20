@@ -6,7 +6,6 @@ import { useBrandStore } from "@/stores/useBrandStore";
 import { useAuth } from "@/hooks/useAuth";
 import { ShareButton } from "@/components/ui/ShareButton";
 import { ProjectionModeToggle } from "@/components/ui/ProjectionModeToggle";
-import { JsonImporter } from "@/components/import/JsonImporter";
 import { Save } from 'lucide-react';
 import { type GhostExtensionImport } from '@/lib/schemas';
 
@@ -77,7 +76,6 @@ export function Header({
 
                     {/* LEFT: Actions (Import/Save) */}
                     <div className="flex items-center justify-start gap-2">
-                        {onImport && <JsonImporter onImport={onImport} />}
 
                         {/* File Import Button (Legacy support) */}
                         {onLoad && fileInputRef && (

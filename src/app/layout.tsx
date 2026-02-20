@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { Cormorant_Garamond, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import { AppProviders } from "@/components/AppProviders";
 
-// Typographie Premium : Plus Jakarta Sans (Swiss Style)
-// Weight 500 for medium titles, 400 for body, 600 for emphasis
+// ── Typographie Serif : Cormorant Garamond (Authoritative / Editorial) ──
+const cormorantGaramond = Cormorant_Garamond({
+    subsets: ["latin"],
+    display: "swap",
+    variable: "--font-serif",
+    weight: ["400", "500", "600", "700"],
+});
+
+// ── Typographie Sans : Plus Jakarta Sans (Clean / Geometric / Legible) ──
 const plusJakarta = Plus_Jakarta_Sans({
     subsets: ["latin"],
     display: "swap",
@@ -13,7 +20,7 @@ const plusJakarta = Plus_Jakarta_Sans({
     weight: ["300", "400", "500", "600", "700"],
 });
 
-// Typographie Mono : Pour données financières alignées
+// ── Typographie Mono : Pour données financières alignées ──
 const jetbrainsMono = JetBrains_Mono({
     subsets: ["latin"],
     display: "swap",
@@ -40,8 +47,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
-        <html lang="fr" className={`${plusJakarta.variable} ${jetbrainsMono.variable}`}>
-            <body className="min-h-screen bg-deep font-sans antialiased">
+        <html lang="fr" className={`${cormorantGaramond.variable} ${plusJakarta.variable} ${jetbrainsMono.variable}`}>
+            <body className="min-h-screen bg-alabaster font-sans antialiased">
                 <AppProviders>{children}</AppProviders>
             </body>
         </html>
