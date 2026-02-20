@@ -34,7 +34,7 @@ jest.mock('../supabaseClient', () => ({
 
 describe('MaPrimeRénov Copropriété 2026', () => {
     describe('simulateFinancing', () => {
-        it('calcule correctement 45% pour gain > 50% (sans bonus passoire)', () => {
+        it('calcule correctement 45% + 10% bonus pour gain > 50% (avec bonus passoire)', () => {
             const result = simulateFinancing(
                 300000, // coût HT
                 20,     // nb lots
@@ -47,8 +47,9 @@ describe('MaPrimeRénov Copropriété 2026', () => {
             );
 
             // Gain énergétique F→C = 3 classes = 55%
-            expect(result.mprRate).toBeCloseTo(0.45, 2);
-            expect(result.exitPassoireBonus).toBe(0);
+            // Taux performance (45%) + Bonus Sortie Passoire (10%) = 55%
+            expect(result.mprRate).toBeCloseTo(0.55, 2);
+            expect(result.exitPassoireBonus).toBe(0.10);
         });
 
         it('calcule correctement 30% pour amélioration standard (35-50% gain)', () => {
@@ -61,11 +62,13 @@ describe('MaPrimeRénov Copropriété 2026', () => {
             );
 
             // 40% gain = taux standard 30%
+            // E n'est pas une passoire au sens strict pour le bonus immédiat F/G->D
+            // (Note: E est passoire 2034, mais bonus actif pour F/G)
             expect(result.mprRate).toBeCloseTo(0.30, 2);
             expect(result.exitPassoireBonus).toBe(0);
         });
 
-        it('calcule correctement 45% pour performance (>50% gain)', () => {
+        it('calcule correctement 55% pour performance (>50% gain + bonus)', () => {
             const result = simulateFinancing(
                 300000,
                 20,
@@ -74,9 +77,9 @@ describe('MaPrimeRénov Copropriété 2026', () => {
                 0, 0, 0, 0
             );
 
-            // 55% gain = taux performance 45%
-            expect(result.mprRate).toBeCloseTo(0.45, 2);
-            expect(result.exitPassoireBonus).toBe(0);
+            // 55% gain = taux performance 45% + Bonus Sortie Passoire 10%
+            expect(result.mprRate).toBeCloseTo(0.55, 2);
+            expect(result.exitPassoireBonus).toBe(0.10);
         });
 
         it('exclut les lots commerciaux du calcul MPR', () => {
@@ -239,7 +242,7 @@ describe('Intégration — Scénario complet', () => {
         const financing = simulateFinancing(300000, 20, 'F', 'C');
 
         // Vérifications cohérence
-        expect(financing.mprRate).toBeCloseTo(0.45, 2);
+        expect(financing.mprRate).toBeCloseTo(0.55, 2);
         expect(financing.totalCostHT).toBeGreaterThan(300000); // Avec frais
         expect(financing.remainingCost).toBeGreaterThanOrEqual(0);
         expect(financing.monthlyPayment).toBeGreaterThanOrEqual(0);
@@ -342,21 +345,22 @@ describe('Règles Critiques MPR Copro 2026 — Blindage Mathématique', () => {
         });
     });
 
-    describe('Bonus Sortie de Passoire (désactivé en mode strict)', () => {
-        test('ne doit jamais appliquer de bonus passoire', () => {
+    describe('Bonus Sortie de Passoire (activé)', () => {
+        test('doit appliquer le bonus passoire pour F/G vers D+', () => {
             const resultFG = simulateFinancing(300_000, 20, 'G', 'D');
             const resultFA = simulateFinancing(300_000, 20, 'F', 'A');
 
-            expect(resultFG.exitPassoireBonus).toBe(0);
-            expect(resultFA.exitPassoireBonus).toBe(0);
+            expect(resultFG.exitPassoireBonus).toBe(0.10);
+            expect(resultFA.exitPassoireBonus).toBe(0.10);
         });
 
-        test('mprRate suit uniquement le seuil de performance', () => {
-            const standard = simulateFinancing(300_000, 20, 'E', 'C'); // 40% gain
-            const performance = simulateFinancing(300_000, 20, 'G', 'A'); // 55% gain
+        test('mprRate inclut le bonus passoire', () => {
+            const standard = simulateFinancing(300_000, 20, 'E', 'C'); // 40% gain (pas de bonus)
+            const performance = simulateFinancing(300_000, 20, 'G', 'A'); // 55% gain + 10% bonus
 
             expect(standard.mprRate).toBeCloseTo(0.30, 2);
-            expect(performance.mprRate).toBeCloseTo(0.45, 2);
+            // 45% base + 10% bonus = 55%
+            expect(performance.mprRate).toBeCloseTo(0.55, 2);
         });
     });
 
