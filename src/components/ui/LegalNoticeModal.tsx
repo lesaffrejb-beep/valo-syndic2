@@ -1,9 +1,13 @@
-"use client";
-
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
-import { useEffect } from "react";
-
 export default function LegalNoticeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = "hidden";
@@ -13,9 +17,9 @@ export default function LegalNoticeModal({ isOpen, onClose }: { isOpen: boolean;
         return () => { document.body.style.overflow = ""; };
     }, [isOpen]);
 
-    if (!isOpen) return null;
+    if (!isOpen || !mounted) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
             <div
                 className="absolute inset-0 bg-oxford/40 backdrop-blur-sm transition-opacity"
@@ -63,7 +67,7 @@ export default function LegalNoticeModal({ isOpen, onClose }: { isOpen: boolean;
 
                         <h5 className="font-medium text-oxford mt-3 mb-1">1.3. Absence de Dol et Information des Copropriétaires</h5>
                         <p className="mb-3">
-                            Le présent document ne dispense pas le syndic de présenter en Assemblée Générale les devis définitifs des entreprises ainsi que le contrat de prêt collectif, conformément au Décret n° 67-223 du 17 mars 1967. L&apos;indicateur « Effort de Trésorerie » est une grandeur théorique et n&apos;exonère pas le copropriétaire du paiement intégral des appels de fonds travaux décidés selon les majorités de la Loi du 10 juillet 1965 (Art. 24, 25 ou 26).
+                            Le présent document ne dispense pas le syndic de présenter en Assemblée Générale les devis définitifs des entreprises ainsi que le contrat de prêt collectif, conformément au Décret n° 67-223 du 17 mars 1967. L&apos;indicateur « Effort de Trésorerie » est une grandeur théorique et n&apos;exonère pas le copropriétaire du paiement intégral des appels de fonds travaux décidés selon les majorités de la Loi du 10 juillet 1965 (Art. 24, 25 ou 26).
                         </p>
                     </section>
 
@@ -98,6 +102,7 @@ export default function LegalNoticeModal({ isOpen, onClose }: { isOpen: boolean;
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
