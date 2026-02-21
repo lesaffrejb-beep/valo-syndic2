@@ -51,7 +51,7 @@ function SectionHeader({ title, accent = "primary" }: { title: string; accent?: 
     const isPrimary = accent === "primary";
     return (
         <div className="flex items-center gap-3 mb-5">
-            <div className={`w-0.5 h-5 rounded-full flex-shrink-0 ${isPrimary ? "bg-brass" : "bg-brass/40"}`} />
+            <div className={`w-0.5 h-5 rounded-full flex-shrink-0 ${isPrimary ? "bg-navy" : "bg-navy/40"}`} />
             <h2 className={`text-base font-serif font-semibold tracking-tight ${isPrimary ? "text-oxford" : "text-slate"}`}>{title}</h2>
         </div>
     );
@@ -80,7 +80,7 @@ function LedgerRow({
         "subtotal-aid": "py-3 font-semibold border-t border-border",
         loan: "py-3 font-semibold border-t border-border",
         call: "py-3 bg-slate-50 font-semibold border-t border-border",
-        final: "py-4 bg-brass-muted border-t-2 border-brass font-bold",
+        final: "py-4 bg-slate-50 border-t-2 border-navy font-bold",
     };
 
     const labelStyles: Record<string, string> = {
@@ -89,7 +89,7 @@ function LedgerRow({
         "subtotal-aid": "text-sm text-oxford",
         loan: "text-sm text-oxford",
         call: "text-sm text-oxford",
-        final: "text-base font-serif text-brass-dark",
+        final: "text-base font-serif text-navy",
     };
 
     const amountStyles: Record<string, string> = {
@@ -98,7 +98,7 @@ function LedgerRow({
         "subtotal-aid": "text-sm text-gain tabular-nums font-semibold",
         loan: "text-sm text-info tabular-nums font-semibold",
         call: "text-sm text-oxford tabular-nums font-semibold",
-        final: "text-xl font-serif text-brass-dark tabular-nums font-bold",
+        final: "text-xl font-serif text-navy tabular-nums font-bold",
     };
 
     const isDeduction = variant === "subtotal-aid" || variant === "loan";
@@ -148,7 +148,7 @@ function KpiCard({
     };
     return (
         <div className="flex flex-col items-center justify-center p-5 rounded-card border border-border bg-white text-center relative overflow-hidden">
-            <div className="absolute top-0 inset-x-0 h-0.5 bg-brass" />
+            <div className="absolute top-0 inset-x-0 h-0.5 bg-navy" />
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-2">
                 {label}
             </span>
@@ -237,7 +237,7 @@ export default function DiagnosticResults() {
                         <PDFDownloadButton
                             document={<DiagnosticPDF result={result} />}
                             fileName={`diagnostic-${input.address ? input.address.slice(0, 30).replace(/\s/g, "_") : "copro"}.pdf`}
-                            className="px-4 py-2 h-9 rounded-md border-border border bg-white text-brass-dark text-[11px] font-bold uppercase tracking-wider hover:border-brass hover:bg-brass-muted transition-all duration-200 shadow-sm"
+                            className="px-4 py-2 h-9 rounded-md border-border border bg-white text-navy text-[11px] font-bold uppercase tracking-wider hover:border-navy/30 hover:bg-slate-50 transition-all duration-200 shadow-sm"
                         />
                         <StatusBadge label={compliance.statusLabel} color={compliance.statusColor} />
                     </div>
@@ -268,7 +268,7 @@ export default function DiagnosticResults() {
             {/* ── Financial Ledger ────────────────────────────── */}
             <div className="card card-content">
                 <div className="flex items-center gap-2.5 mb-6">
-                    <div className="w-0.5 h-5 bg-brass rounded-full" />
+                    <div className="w-0.5 h-5 bg-navy rounded-full" />
                     <h3 className="font-serif text-lg font-semibold text-oxford tracking-tight">
                         Ticket de Caisse
                     </h3>
@@ -314,7 +314,7 @@ export default function DiagnosticResults() {
                         onClick={() => setSecurePlan(false)}
                         aria-pressed={!securePlan}
                         className={`flex-1 px-4 py-2.5 rounded-md text-center transition-all duration-200 ${!securePlan
-                            ? "bg-gradient-to-r from-brass-dark to-brass text-white shadow-md ring-1 ring-brass-dark/50 font-semibold"
+                            ? "bg-navy text-white shadow-md ring-1 ring-navy font-semibold"
                             : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
                             }`}
                     >
@@ -455,7 +455,7 @@ export default function DiagnosticResults() {
             {perUnit && (
                 <div className="card card-content">
                     <div className="flex items-center gap-2.5 mb-5">
-                        <div className="w-0.5 h-5 bg-brass/40 rounded-full" />
+                        <div className="w-0.5 h-5 bg-navy/40 rounded-full" />
                         <h3 className="font-serif text-base font-semibold text-oxford tracking-tight">
                             Synthèse par lot
                         </h3>

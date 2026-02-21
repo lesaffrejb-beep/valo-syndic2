@@ -141,11 +141,11 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
         "transition-colors duration-150 cursor-pointer";
 
     return (
-        <section className="border border-brass/30 bg-slate-50/60 rounded-xl mt-6 px-6 py-8 md:px-8 shadow-sm">
+        <section className="border border-slate-200 bg-slate-50/60 rounded-xl mt-6 px-6 py-8 md:px-8 shadow-sm">
 
             {/* ── Header ──────────────────────────────────────── */}
             <div className="flex items-center gap-2 mb-4">
-                <div className="w-1 h-5 bg-gradient-to-b from-brass-dark to-brass rounded-full" />
+                <div className="w-1 h-5 bg-navy rounded-full" />
                 <h3 className="font-serif text-lg font-bold text-oxford">
                     Bilan Patrimonial Personnel
                 </h3>
@@ -234,7 +234,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                             type="button"
                             onClick={() => setInvestorType("bailleur")}
                             className={`flex-1 px-4 py-2 text-[11px] font-bold uppercase tracking-wide rounded transition-all duration-300 ${investorType === "bailleur"
-                                ? "bg-gradient-to-r from-brass-dark to-brass text-white shadow-sm ring-1 ring-brass-dark/50"
+                                ? "bg-navy text-white shadow-sm ring-1 ring-navy"
                                 : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
                                 }`}
                         >
@@ -283,7 +283,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
 
                 {/* Card 1 : Reste au comptant */}
                 <div className="flex flex-col items-center justify-between p-6 min-h-[120px] rounded-xl bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100/50 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-shadow duration-300 text-center relative overflow-hidden group">
-                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-brass-dark to-brass-light opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute top-0 inset-x-0 h-1 bg-navy opacity-80 group-hover:opacity-100 transition-opacity" />
                     <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate mb-3 mt-1">
                         Reste au comptant
                     </span>
@@ -300,7 +300,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
 
                 {/* Card 2: Mensualité Éco-PTZ */}
                 <div className="flex flex-col items-center justify-between p-6 min-h-[120px] rounded-xl bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100/50 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-shadow duration-300 text-center relative overflow-hidden group">
-                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-brass-dark to-brass-light opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute top-0 inset-x-0 h-1 bg-navy opacity-80 group-hover:opacity-100 transition-opacity" />
                     <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate mb-3 mt-1">
                         Mensualité Éco-PTZ
                     </span>
@@ -312,7 +312,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
 
                 {/* Card 3: Potentiel de Valorisation Patrimoniale */}
                 <div className="flex flex-col items-center justify-between p-6 min-h-[120px] rounded-xl bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100/50 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-shadow duration-300 text-center relative overflow-hidden group">
-                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-brass-dark to-brass-light opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute top-0 inset-x-0 h-1 bg-navy opacity-80 group-hover:opacity-100 transition-opacity" />
                     <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate mb-3 mt-1">
                         Valeur Verte
                     </span>
@@ -342,7 +342,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                     ${investorType === "bailleur" ? "max-h-[700px] opacity-100" : "max-h-0 opacity-0"}
                 `}
             >
-                <div className="rounded-card bg-brass-muted border border-brass/15 p-5 space-y-5">
+                <div className="rounded-card bg-slate-50 border border-slate-200 p-5 space-y-5">
 
                     <div className="flex items-center gap-2">
                         <h4 className="text-sm font-semibold text-oxford">
@@ -500,7 +500,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                                 {revenusFonciers > 0 && " Revenus fonciers existants inclus dans la base de calcul PS."}
                                 {" "}Reportable sur 10 ans.
                             </p>
-                            <span className="text-2xl font-serif font-bold text-brass-dark tabular-nums whitespace-nowrap">
+                            <span className="text-2xl font-serif font-bold text-navy tabular-nums whitespace-nowrap">
                                 − {formatCurrency(personal.deficitFoncier)}
                             </span>
                         </div>

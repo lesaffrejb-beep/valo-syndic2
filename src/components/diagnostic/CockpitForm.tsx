@@ -23,7 +23,7 @@ const TARGET_DPE: DPELetter[] = ["A", "B", "C", "D", "E"];
 function SectionTitle({ children }: { children: React.ReactNode }) {
     return (
         <div className="flex items-center gap-2.5">
-            <div className="w-0.5 h-5 bg-brass rounded-full flex-shrink-0" />
+            <div className="w-0.5 h-5 bg-navy rounded-full flex-shrink-0" />
             <h3 className="font-serif text-base font-semibold text-oxford tracking-tight">
                 {children}
             </h3>
@@ -78,12 +78,11 @@ function DPESelector({
                                 transition-all duration-200 relative
                                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-1
                                 ${isActive
-                                    ? "text-white shadow-md z-10"
+                                    ? "bg-navy text-white shadow-md z-10"
                                     : "bg-transparent text-slate-400 hover:text-slate-700 hover:bg-slate-100/60"
                                 }
                             `}
                             style={{
-                                backgroundColor: isActive ? DPE_COLORS[dpe] : "transparent",
                                 transform: isActive ? "scale(1.04)" : "scale(1)"
                             }}
                         >
@@ -291,14 +290,14 @@ export default function CockpitForm() {
                 </div>
 
                 {/* Devis Valide */}
-                <div className="pt-2">
+                <div className="pt-2 pb-6">
                     <label className="flex items-start gap-3 cursor-pointer group">
                         <div className="flex items-center h-5 mt-0.5">
                             <input
                                 type="checkbox"
                                 checked={input.devisValide || false}
                                 onChange={(e) => updateInput({ devisValide: e.target.checked })}
-                                className="h-4 w-4 rounded border-border text-brass-dark focus:ring-brass/30 transition-shadow duration-150 cursor-pointer"
+                                className="h-4 w-4 rounded border-border text-navy focus:ring-navy/30 transition-shadow duration-150 cursor-pointer"
                             />
                         </div>
                         <div className="flex flex-col">
@@ -322,7 +321,7 @@ export default function CockpitForm() {
                 <button
                     type="button"
                     onClick={() => setAdvancedOpen(!advancedOpen)}
-                    className="w-full flex items-center justify-between py-2.5 px-4 bg-slate-50 border border-slate-200 rounded-md hover:bg-brass-muted hover:border-brass/30 transition-all duration-200 group"
+                    className="w-full flex items-center justify-between py-2.5 px-4 bg-slate-50 border border-slate-200 rounded-md hover:bg-slate-100/80 hover:border-slate-300 transition-all duration-200 group"
                     aria-expanded={advancedOpen}
                 >
                     <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-navy">
@@ -491,9 +490,9 @@ export default function CockpitForm() {
                     className={`
                         w-full h-12 rounded-md text-sm font-semibold tracking-[0.04em]
                         transition-all duration-200
-                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white
+                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white
                         ${isValid && !isCalculating
-                            ? "bg-gradient-to-r from-brass-dark via-brass to-brass-light text-white hover:opacity-90 shadow-[0_4px_14px_0_rgba(184,150,62,0.39)] border border-brass-light/30 active:scale-[0.99]"
+                            ? "bg-navy text-white hover:bg-navy-dark shadow-sm border border-navy active:scale-[0.99]"
                             : "bg-slate-100 text-slate-400 cursor-not-allowed"
                         }
                     `}
