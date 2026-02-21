@@ -196,7 +196,7 @@ function ExpertSummary({
     cashDownPayment: number;
 }) {
     return (
-        <div className="rounded-card border border-border bg-slate-50/50 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+        <div className="rounded-card border border-navy/20 bg-navy/5 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
             <div className="flex items-center gap-2 flex-shrink-0">
                 <ShieldCheck className="w-3.5 h-3.5 text-navy flex-shrink-0" strokeWidth={1.8} />
                 <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-navy">Résumé Décideur</span>
@@ -408,12 +408,12 @@ export default function DiagnosticResults() {
                         onClick={() => setSecurePlan(true)}
                         aria-pressed={securePlan}
                         className={`flex-1 px-4 py-2.5 rounded-md text-center transition-all duration-200 ${securePlan
-                            ? "bg-white text-navy shadow-sm ring-1 ring-border font-semibold"
+                            ? "bg-navy text-white shadow-md ring-1 ring-navy font-semibold"
                             : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
                             }`}
                     >
                         <div className="font-serif font-bold text-sm">Plan Sécurisé</div>
-                        <div className={`text-[10px] mt-0.5 ${securePlan ? "text-slate" : "text-slate-400"}`}>
+                        <div className={`text-[10px] mt-0.5 ${securePlan ? "text-white/90" : "text-slate-400"}`}>
                             Soutien modéré, sans MPR (+10% inclus)
                         </div>
                     </button>
