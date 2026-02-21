@@ -251,16 +251,16 @@ export default function CockpitForm() {
             {/* ════════════════════════════════════════════════════════
                SECTION 3 — PARAMÈTRES AVANCÉS (collapsible)
                ════════════════════════════════════════════════════════ */}
-            <div className="bg-white rounded-2xl border border-border p-4 shadow-sm">
-                <button
-                    type="button"
+            <div className="bg-white rounded-2xl border border-border p-6 shadow-sm">
+                <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setAdvancedOpen(!advancedOpen)}
-                    className="w-full flex items-center justify-between py-2.5 px-4 bg-slate-50 border border-slate-200 rounded-md hover:bg-slate-100/80 hover:border-slate-300 transition-all duration-200 group"
+                    onKeyDown={(e) => e.key === "Enter" && setAdvancedOpen(!advancedOpen)}
                     aria-expanded={advancedOpen}
+                    className="flex items-center justify-between cursor-pointer group select-none"
                 >
-                    <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-navy">
-                        Paramètres financiers avancés
-                    </span>
+                    <SectionTitle>Paramètres financiers avancés</SectionTitle>
                     <svg
                         className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 flex-shrink-0 ${advancedOpen ? "rotate-180" : ""}`}
                         fill="none"
@@ -270,7 +270,7 @@ export default function CockpitForm() {
                     >
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
-                </button>
+                </div>
 
                 {advancedOpen && (
                     <div className="mt-4 space-y-4 animate-fadeInUp" style={{ animationDuration: "200ms" }}>
