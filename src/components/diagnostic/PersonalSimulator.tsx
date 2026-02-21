@@ -141,7 +141,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
         "transition-colors duration-150 cursor-pointer";
 
     return (
-        <section className="border border-navy/20 bg-navy/5 rounded-xl mt-6 px-6 py-8 md:px-8 shadow-sm">
+        <section className="border border-border bg-white rounded-xl mt-6 px-6 py-8 md:px-8 shadow-sm">
 
             {/* ── Header ──────────────────────────────────────── */}
             <div className="flex items-center gap-2 mb-4">
