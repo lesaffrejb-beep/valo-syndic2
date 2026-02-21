@@ -224,7 +224,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                             type="button"
                             onClick={() => setInvestorType("occupant")}
                             className={`flex-1 px-4 py-2 text-[11px] font-bold uppercase tracking-wide rounded transition-all duration-300 ${investorType === "occupant"
-                                ? "bg-white text-brass-dark shadow-sm ring-1 ring-border"
+                                ? "bg-white text-navy shadow-sm ring-1 ring-border"
                                 : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
                                 }`}
                         >
