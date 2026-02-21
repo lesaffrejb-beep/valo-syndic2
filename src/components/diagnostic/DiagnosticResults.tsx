@@ -385,8 +385,7 @@ export default function DiagnosticResults() {
                     </h3>
                 </div>
 
-                {/* ══ BLOC A : Coût du Projet (Résolution AG) ═════════════════════ */}
-                <SectionHeader accent="primary" title="Bloc A — Coût du Projet (Résolution AG)" />
+                {/* ── Coût du Projet (Résolution AG) ── */}
 
                 <div className="space-y-0.5 rounded-lg border border-border overflow-hidden mb-2">
                     <LedgerRow label="Travaux HT" amount={financing.worksCostHT} />
@@ -401,8 +400,7 @@ export default function DiagnosticResults() {
                     <LedgerRow label="TOTAL TTC" amount={financing.totalCostTTC} variant="subtotal-cost" />
                 </div>
 
-                {/* ══ BLOC B : Plan de Financement & Trésorerie ═══════════════════ */}
-                <SectionHeader accent="secondary" title="Bloc B — Plan de Financement &amp; Trésorerie" />
+                {/* ── Plan de Financement & Trésorerie ── */}
 
                 {/* FIX AUDIT FEV 2026 : Toggle Plan Sécurisé / Plan Optimisé */}
                 <div className="flex flex-col sm:flex-row p-1 bg-slate-100 rounded-lg mb-6 border border-slate-200 gap-0.5">
