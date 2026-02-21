@@ -78,7 +78,7 @@ export default function LegalNoticeModal({ isOpen, onClose }: { isOpen: boolean;
                             <li>
                                 <strong>Conservation :</strong>
                                 <ul className="list-[circle] pl-5 mt-1 space-y-1 text-subtle">
-                                    <li><em>Mode Simulation Seule :</em> Aucune donnée n&apos;est stockée sur nos serveurs après la fermeture de la session de navigation (traitement local "client-side").</li>
+                                    <li><em>Mode Simulation Seule :</em> Aucune donnée n&apos;est stockée sur nos serveurs après la fermeture de la session de navigation (traitement local &quot;client-side&quot;).</li>
                                     <li><em>Mode Rapport PDF :</em> Les données sont conservées uniquement le temps de la génération du document.</li>
                                 </ul>
                             </li>

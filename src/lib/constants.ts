@@ -30,8 +30,8 @@ export const DPE_PROHIBITION_DATES: Record<DPELetter, Date | null> = {
 
 export const DPE_STATUS_LABELS = {
     G: { label: "INTERDIT", color: "danger", emoji: "🔴" },
-    F: { label: "Interdit 2028", color: "warning", emoji: "🟡" },
-    E: { label: "Interdit 2034", color: "warning", emoji: "🟢" },
+    F: { label: "Interdiction de louer (Loi Climat 2028)", color: "danger", emoji: "🔴" },
+    E: { label: "Interdit 2034", color: "warning", emoji: "🟡" },
     D: { label: "Conforme", color: "success", emoji: "✅" },
     C: { label: "Conforme", color: "success", emoji: "✅" },
     B: { label: "Performant", color: "success", emoji: "✅" },
@@ -266,11 +266,11 @@ export { getLiveConstants as getDynamicConstants } from "@/lib/api/settingsServi
 // =============================================================================
 
 export const DPE_COLORS: Record<DPELetter, string> = {
-    A: "#2E7D32", // Vert foncé
-    B: "#4CAF50", // Vert
-    C: "#8BC34A", // Vert clair
-    D: "#CDDC39", // Jaune-vert
-    E: "#FFEB3B", // Jaune
-    F: "#FF9800", // Orange
-    G: "#F44336", // Rouge
+    A: "#009246", // Dark green
+    B: "#52B153", // Green
+    C: "#A4D152", // Light green
+    D: "#F3E723", // Yellow
+    E: "#F1B52D", // Orange-yellow
+    F: "#EA812B", // Orange
+    G: "#DF322B", // Red
 } as const;

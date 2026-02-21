@@ -278,7 +278,7 @@
   }
 
   .status-dot-warning {
-    @apply status-dot bg-amber-500;
+    @apply status-dot bg-slate-500;
   }
 
   .status-dot-danger {

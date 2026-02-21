@@ -116,7 +116,7 @@ export default function CockpitForm() {
                 runDiagnostic();
             }
         },
-        [isValid, isCalculating, runDiagnostic, input]
+        [isValid, isCalculating, runDiagnostic]
     );
 
     // Generic number handler — sets to undefined when empty to keep Partial<> clean
@@ -262,7 +262,7 @@ export default function CockpitForm() {
 
                 {/* Travaux d'amélioration standard (hors énergie) */}
                 <div>
-                    <FieldLabel htmlFor="montantTravauxAmeliorationHT">Travaux d'amélioration HT (€)</FieldLabel>
+                    <FieldLabel htmlFor="montantTravauxAmeliorationHT">Travaux d&apos;amélioration HT (€)</FieldLabel>
                     <input
                         id="montantTravauxAmeliorationHT"
                         type="number"

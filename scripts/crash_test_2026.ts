@@ -5,7 +5,8 @@ const baseInput: DiagnosticInput = {
     currentDPE: "G", targetDPE: "C", numberOfUnits: 10, estimatedCostHT: 150000,
     averageUnitSurface: 65, averagePricePerSqm: 3000, isCostTTC: true, includeHonoraires: true,
     devisValide: true, revenusFonciersExistants: 0, montantTravauxAmeliorationHT: 0, statutLot: 'bailleur',
-    optionLocAvantages: false,
+    optionLocAvantages: false, commercialLots: 0, localAidAmount: 0, alurFund: 0, ceeBonus: 0,
+    currentEnergyBill: 0, investorRatio: 0
 };
 
 console.log("=== CRASH TEST TERRAIN (Moteur ValoSyndic 2026) ===");
