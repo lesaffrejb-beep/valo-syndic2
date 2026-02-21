@@ -250,31 +250,33 @@ function LegalDisclosureAccordion({ onOpenModal }: { onOpenModal: () => void }) 
                     strokeWidth={2}
                 />
             </summary>
-            <div className="px-4 pb-4 pt-1 space-y-3 border-t border-slate-200">
+            <div className="px-4 pb-4 pt-4 space-y-3.5 border-t border-slate-200">
                 {/* Avertissement MaPrimeRénov' */}
-                <div className="flex items-start gap-2 rounded-md border border-slate-200 bg-white px-3 py-2.5">
-                    <AlertTriangle className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 rounded-md border border-slate-200 bg-white px-4 py-3">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
                     <p className="text-[10px] text-slate-600 leading-relaxed">
-                        <strong>MaPrimeRénov&rsquo; Copropriété :</strong> Techniquement suspendue au 1er janvier 2026
+                        <strong className="text-slate-700">MaPrimeRénov&rsquo; Copropriété :</strong> Techniquement suspendue au 1er janvier 2026
                         faute de loi de finances promulguée. Le montant affiché est une estimation conditionnelle.
-                        Validation obligatoire via l&rsquo;espace conseil <strong>Mieux chez moi</strong> (Angers Loire Métropole)
+                        Validation obligatoire via l&rsquo;espace conseil <strong className="text-slate-700">Mieux chez moi</strong> (Angers Loire Métropole)
                         avant tout engagement.
                     </p>
                 </div>
                 {/* Avertissement légal principal */}
-                <div className="flex items-start gap-2 rounded-md border border-slate-200 bg-white px-3 py-2.5">
-                    <Scale className="w-3 h-3 text-slate-400 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 rounded-md border border-slate-200 bg-white px-4 py-3">
+                    <Scale className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
                     <p className="text-[10px] text-slate-500 leading-relaxed">
                         <strong className="text-slate-600">Avertissement Légal :</strong> L&apos;« Effort de Trésorerie Mensuel » est une estimation nette intégrant des économies d&apos;énergie théoriques. Il ne reflète pas le montant réel de vos appels de fonds travaux ou de vos mensualités d&apos;emprunt, qui doivent être réglés intégralement à leurs échéances respectives. La responsabilité du syndic ne saurait être engagée en cas de variation des tarifs de l&apos;énergie ou des barèmes de subventions étatiques.
                     </p>
                 </div>
                 {/* Bouton modal mentions légales */}
-                <button
-                    onClick={onOpenModal}
-                    className="text-[10px] font-semibold text-oxford hover:underline underline-offset-2 transition-all"
-                >
-                    Ouvrir les mentions légales complètes &amp; RGPD →
-                </button>
+                <div className="pt-1">
+                    <button
+                        onClick={onOpenModal}
+                        className="text-[10px] font-semibold text-navy hover:text-navy-light hover:underline underline-offset-2 transition-all"
+                    >
+                        Ouvrir les mentions légales complètes &amp; RGPD →
+                    </button>
+                </div>
             </div>
         </details>
     );
@@ -489,14 +491,16 @@ export default function DiagnosticResults() {
                         amount={financing.ecoPtzAmount}
                         variant="loan"
                         subNote={
-                            <div className="text-[9px] text-subtle px-4 pb-1 -mt-1 leading-relaxed italic">
-                                <div className="text-sm font-semibold text-navy">
-                                    - {formatCurrency(financing.monthlyPayment)} / mois
+                            <div className="px-4 pb-2 mt-1 flex flex-col gap-1.5">
+                                <div className="flex items-baseline justify-between border-t border-slate-200/60 pt-2.5">
+                                    <span className="text-sm font-semibold text-navy italic">
+                                        − {formatCurrency(financing.monthlyPayment)} / mois
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 italic">sur 20 ans</span>
                                 </div>
-                                <div className="text-slate-500 text-xs italic mt-2 text-right">
-                                    sur 20 ans
-                                </div>
-                                <p className="mt-1">Prêt à taux zéro — remboursé en 240 mensualités. Inclut provision 2,5% frais de garantie SACICAP. Plafonné à 50 000 € / lot — Rénovation globale.</p>
+                                <p className="text-[9px] text-subtle leading-relaxed italic pr-4">
+                                    Prêt à taux zéro — remboursé en 240 mensualités. Inclut provision 2,5% frais de garantie SACICAP. Plafonné à 50 000 € / lot — Rénovation globale.
+                                </p>
                             </div>
                         }
                     />
