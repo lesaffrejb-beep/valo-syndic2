@@ -48,10 +48,10 @@ export default function DiagnosticPage() {
                                 <h1 className="text-2xl md:text-3xl font-serif font-bold text-oxford tracking-tight">
                                     Diagnostic Patrimonial
                                 </h1>
-                                <span className="px-2.5 py-0.5 rounded border border-brass/30 bg-brass-muted text-brass-dark text-[10px] font-bold uppercase tracking-widest flex-shrink-0">ANAH 2026</span>
+                                <span className="px-2.5 py-0.5 rounded border border-navy/30 bg-slate-50 text-navy text-[10px] font-bold uppercase tracking-widest flex-shrink-0">ANAH 2026</span>
                             </div>
                             <p className="mt-1.5 text-xs text-slate font-sans">
-                                Ingénierie financière copropriété <span className="text-brass mx-1">·</span> MaPrimeRénov&apos; <span className="text-brass mx-1">·</span> Éco-PTZ <span className="text-brass mx-1">·</span> CEE <span className="text-brass mx-1">·</span> Déficit Foncier
+                                Ingénierie financière copropriété <span className="text-navy mx-1">·</span> MaPrimeRénov&apos; <span className="text-navy mx-1">·</span> Éco-PTZ <span className="text-navy mx-1">·</span> CEE <span className="text-navy mx-1">·</span> Déficit Foncier
                             </p>
                         </div>
 
@@ -60,14 +60,14 @@ export default function DiagnosticPage() {
                             {result && (
                                 <DownloadPdfButton
                                     result={result}
-                                    className="flex items-center justify-center gap-2 px-4 h-9 rounded-md border-border border bg-white text-brass-dark text-[11px] font-bold uppercase tracking-wider hover:border-brass hover:bg-brass-muted transition-all duration-200 shadow-sm"
+                                    className="flex items-center justify-center gap-2 px-4 h-9 rounded-md border-border border bg-white text-navy text-[11px] font-bold uppercase tracking-wider hover:border-navy/30 hover:bg-slate-50 transition-all duration-200 shadow-sm"
                                 />
                             )}
                             {/* View Mode Toggle */}
                             <button
                                 type="button"
                                 onClick={() => setViewMode("presentation")}
-                                className="flex-shrink-0 flex items-center justify-center gap-2 px-4 h-9 rounded-md border-border border bg-white text-brass-dark text-[11px] font-bold uppercase tracking-wider hover:border-brass hover:bg-brass-muted transition-all duration-200 shadow-sm"
+                                className="flex-shrink-0 flex items-center justify-center gap-2 px-4 h-9 rounded-md border-border border bg-white text-navy text-[11px] font-bold uppercase tracking-wider hover:border-navy/30 hover:bg-slate-50 transition-all duration-200 shadow-sm"
                                 title="Mode Présentation AG"
                             >
                                 <Monitor className="w-4 h-4" strokeWidth={1.5} />
@@ -85,8 +85,8 @@ export default function DiagnosticPage() {
                     {/* ── Left Column: Cockpit Form ──────────────────── */}
                     <aside className="lg:col-span-4">
                         <div className="card card-content lg:sticky lg:top-8">
-                            <div className="flex items-center gap-2.5 mb-6 pb-4 border-b border-brass/15">
-                                <div className="w-0.5 h-5 bg-brass rounded-full" />
+                            <div className="flex items-center gap-2.5 mb-6 pb-4 border-b border-border">
+                                <div className="w-0.5 h-5 bg-navy rounded-full" />
                                 <h2 className="text-base font-serif font-semibold text-oxford tracking-tight">
                                     Paramètres de la copropriété
                                 </h2>
