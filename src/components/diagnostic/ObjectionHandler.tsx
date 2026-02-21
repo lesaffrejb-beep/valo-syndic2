@@ -82,7 +82,7 @@ export default function ObjectionHandler() {
                 onClick={() => setIsOpen(true)}
                 className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 bg-navy text-white rounded-full shadow-lg
                            hover:bg-navy-light active:bg-navy-dark transition-colors duration-150
-                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2"
+                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-2"
                 aria-label="Ouvrir le module Objections"
             >
                 <ShieldAlert className="w-4 h-4" strokeWidth={1.5} />
@@ -108,7 +108,7 @@ export default function ObjectionHandler() {
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
                     <div className="flex items-center gap-2">
-                        <ShieldAlert className="w-5 h-5 text-brass" strokeWidth={1.5} />
+                        <ShieldAlert className="w-5 h-5 text-white" strokeWidth={1.5} />
                         <h2 className="text-lg font-serif font-semibold text-white">
                             Avocat du Diable
                         </h2>
@@ -152,7 +152,7 @@ export default function ObjectionHandler() {
                                     className={`overflow-hidden transition-all duration-300 ease-out ${isActive ? "max-h-60 opacity-100" : "max-h-0 opacity-0"
                                         }`}
                                 >
-                                    <div className="ml-11 mr-4 mb-3 px-4 py-3 rounded-lg bg-white/5 border-l-2 border-brass">
+                                    <div className="ml-11 mr-4 mb-3 px-4 py-3 rounded-lg bg-white/5 border-l-2 border-navy-light">
                                         <p className="text-sm text-white/80 leading-relaxed">
                                             {obj.getAnswer(result)}
                                         </p>

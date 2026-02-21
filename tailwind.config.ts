@@ -17,12 +17,6 @@ const config: Config = {
                 subtle: "#94A3B8",         // Tertiary / placeholders
 
                 // ── Accents ──────────────────────────────────────────
-                brass: {
-                    DEFAULT: "#B8963E",    // Primary action / highlights
-                    light: "#D4B066",      // Hover state
-                    dark: "#8A6F2E",       // Active / pressed
-                    muted: "rgba(184, 150, 62, 0.08)", // Subtle bg tint
-                },
                 navy: {
                     DEFAULT: "#1E3A8A",    // Structural / headers
                     light: "#2B4FAF",      // Hover

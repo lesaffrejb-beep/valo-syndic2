@@ -31,7 +31,7 @@ function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.Re
     return (
         <label
             htmlFor={htmlFor}
-            className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate mb-1.5"
+            className="block text-xs font-semibold uppercase tracking-[0.05em] text-slate-600 mb-1.5"
         >
             {children}
         </label>
@@ -40,7 +40,7 @@ function FieldLabel({ htmlFor, children }: { htmlFor: string; children: React.Re
 
 function HelperText({ children }: { children: React.ReactNode }) {
     return (
-        <p className="text-[10px] text-subtle mt-1 leading-tight">{children}</p>
+        <p className="text-[11px] text-slate-500 mt-1 leading-tight">{children}</p>
     );
 }
 
@@ -88,17 +88,17 @@ export default function CockpitForm() {
     const inputCls =
         "w-full h-10 px-3 text-sm text-oxford bg-white border border-border rounded-md " +
         "placeholder:text-slate-400 " +
-        "hover:border-border-strong " +
-        "focus:outline-none focus:border-navy focus:ring-1 focus:ring-navy/20 " +
-        "transition-colors duration-150";
+        "hover:border-slate-300 " +
+        "focus:outline-none focus:border-navy focus:ring-2 focus:ring-navy/10 " +
+        "transition-all duration-200";
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-0">
+        <form onSubmit={handleSubmit} className="space-y-6 mb-8">
 
             {/* ════════════════════════════════════════════════════════
                SECTION 1 — IDENTIFICATION
                ════════════════════════════════════════════════════════ */}
-            <div className="space-y-6">
+            <div className="bg-white rounded-2xl border border-border p-6 shadow-sm space-y-6">
                 <SectionTitle>Identification</SectionTitle>
 
                 {/* Address */}
@@ -158,13 +158,11 @@ export default function CockpitForm() {
                 />
             </div>
 
-            <hr className="border-border my-8" />
-
             {/* ════════════════════════════════════════════════════════
                SECTION 2 — BUDGET & ÉNERGIE
                ════════════════════════════════════════════════════════ */}
-            <div className="space-y-6">
-                <div className="mt-6 mb-2">
+            <div className="bg-white rounded-2xl border border-border p-6 shadow-sm space-y-6">
+                <div className="mb-2">
                     <SectionTitle>Budget &amp; Énergie</SectionTitle>
                 </div>
 
@@ -250,12 +248,10 @@ export default function CockpitForm() {
                 </div>
             </div>
 
-            <hr className="border-border my-8" />
-
             {/* ════════════════════════════════════════════════════════
                SECTION 3 — PARAMÈTRES AVANCÉS (collapsible)
                ════════════════════════════════════════════════════════ */}
-            <div>
+            <div className="bg-white rounded-2xl border border-border p-4 shadow-sm">
                 <button
                     type="button"
                     onClick={() => setAdvancedOpen(!advancedOpen)}
@@ -307,7 +303,7 @@ export default function CockpitForm() {
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-3 items-end">
                             {/* Lots commerciaux */}
                             <div>
                                 <FieldLabel htmlFor="commercialLots">Lots commerciaux</FieldLabel>
@@ -430,7 +426,7 @@ export default function CockpitForm() {
                         transition-all duration-200
                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white
                         ${isValid && !isCalculating
-                            ? "bg-navy text-white hover:bg-navy-dark shadow-sm border border-navy active:scale-[0.99]"
+                            ? "bg-navy text-white hover:bg-navy-dark shadow-[0_4px_14px_0_rgba(30,58,138,0.15)] active:scale-[0.99]"
                             : "bg-slate-100 text-slate-400 cursor-not-allowed"
                         }
                     `}

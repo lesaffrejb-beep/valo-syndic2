@@ -196,12 +196,12 @@ function ExpertSummary({
     cashDownPayment: number;
 }) {
     return (
-        <div className="rounded-card border border-[#B8963E]/30 bg-[#B8963E]/[0.03] px-4 py-3.5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+        <div className="rounded-card border border-border bg-slate-50/50 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
             <div className="flex items-center gap-2 flex-shrink-0">
-                <ShieldCheck className="w-3.5 h-3.5 text-brass flex-shrink-0" strokeWidth={1.8} />
-                <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-brass">Résumé Décideur</span>
+                <ShieldCheck className="w-3.5 h-3.5 text-navy flex-shrink-0" strokeWidth={1.8} />
+                <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-navy">Résumé Décideur</span>
             </div>
-            <div className="h-px sm:h-5 sm:w-px bg-[#B8963E]/20 flex-shrink-0" />
+            <div className="h-px sm:h-5 sm:w-px bg-border flex-shrink-0" />
             <div className="grid grid-cols-2 sm:flex sm:flex-row sm:items-center gap-x-6 gap-y-2 flex-1">
                 {/* Adresse */}
                 <div className="flex flex-col gap-0.5">
@@ -351,33 +351,6 @@ export default function DiagnosticResults() {
                 cashDownPayment={financing.cashDownPayment}
             />
 
-            {/* ── Header ──────────────────────────────────────── */}
-            <div className="card card-content">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div>
-                        <h2 className="text-xl md:text-2xl font-serif font-bold text-oxford tracking-tight">
-                            {input.address || "Copropriété"}
-                        </h2>
-                        <p className="text-[11px] text-subtle mt-1 tabular-nums">
-                            <span className="text-slate font-medium">{numberOfUnits} lots</span>
-                            <span className="mx-1.5 text-subtle/50">·</span>
-                            DPE <span className="font-semibold">{input.currentDPE}</span>
-                            <span className="mx-1">→</span>
-                            <span className="font-semibold">{input.targetDPE}</span>
-                            <span className="mx-1.5 text-subtle/50">·</span>
-                            Gain énergétique <span className="font-semibold">{Math.round(financing.energyGainPercent * 100)}%</span>
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                        <PDFDownloadButton
-                            document={<DiagnosticPDF result={result} />}
-                            fileName={`diagnostic-${input.address ? input.address.slice(0, 30).replace(/\s/g, "_") : "copro"}.pdf`}
-                            className="px-4 py-2 h-9 rounded-md border-border border bg-white text-navy text-[11px] font-bold uppercase tracking-wider hover:border-navy/30 hover:bg-slate-50 transition-all duration-200 shadow-sm"
-                        />
-                        <StatusBadge label={compliance.statusLabel} color={compliance.statusColor} />
-                    </div>
-                </div>
-            </div>
 
             {/* ── Feature 4 : Macro KPIs with Semaphores ──────── */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -595,9 +568,7 @@ export default function DiagnosticResults() {
             )}
 
             {/* ── Personal Simulator ─────────────────────────────── */}
-            <div className="card card-content">
-                <PersonalSimulator result={result} />
-            </div>
+            <PersonalSimulator result={result} />
         </div>
     );
 }

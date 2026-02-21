@@ -17,6 +17,7 @@ import { useState } from "react";
 export default function PresentationView() {
     const { result } = useDiagnosticStore();
     const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
+    const [showWarning, setShowWarning] = useState(true);
 
     // ── Empty State ──────────────────────────────────────────
     if (!result) {
@@ -117,29 +118,41 @@ export default function PresentationView() {
                 </p>
 
                 {/* ⚠️ AVERTISSEMENT LÉGAL UI */}
-                <div className="mt-12 max-w-2xl w-full text-left animate-fadeInUp" style={{ animationDelay: "300ms", animationFillMode: "both" }}>
-                    <div className="flex bg-brass-muted/30 border border-brass/20 rounded-lg p-4 sm:p-5 shadow-sm">
-                        <AlertTriangle className="w-5 h-5 text-brass-dark flex-shrink-0 mt-0.5" />
-                        <div className="ml-3 sm:ml-4">
-                            <h3 className="text-sm font-bold text-oxford tracking-tight">Avertissement Légal</h3>
-                            <p className="mt-1.5 text-[11px] text-slate-600 leading-relaxed font-medium">
-                                L&apos;« Effort de Trésorerie Mensuel » est une estimation nette intégrant des économies d&apos;énergie théoriques. Il ne reflète pas le montant réel de vos appels de fonds travaux ou de vos mensualités d&apos;emprunt, qui doivent être réglés intégralement à leurs échéances respectives. La responsabilité du syndic ne saurait être engagée en cas de variation des tarifs de l&apos;énergie ou des barèmes de subventions étatiques.
-                            </p>
+                {showWarning && (
+                    <div className="mt-12 max-w-2xl w-full text-left animate-fadeInUp" style={{ animationDelay: "300ms", animationFillMode: "both" }}>
+                        <div className="flex bg-navy-light/10 border border-navy/20 rounded-lg p-4 sm:p-5 shadow-sm relative pr-10">
                             <button
-                                onClick={() => setIsLegalModalOpen(true)}
-                                className="mt-3 text-[11px] font-bold tracking-wide uppercase text-brass-dark hover:text-brass transition-colors flex items-center gap-1 group"
+                                onClick={() => setShowWarning(false)}
+                                className="absolute top-3 right-3 p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-black/5 transition-colors"
+                                aria-label="Fermer l'avertissement"
                             >
-                                Lire les mentions légales complètes &amp; RGPD
-                                <svg className="w-3 h-3 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
+                            <AlertTriangle className="w-5 h-5 text-navy flex-shrink-0 mt-0.5" />
+                            <div className="ml-3 sm:ml-4">
+                                <h3 className="text-sm font-bold text-oxford tracking-tight">Avertissement Légal</h3>
+                                <p className="mt-1.5 text-[11px] text-slate-600 leading-relaxed font-medium">
+                                    L&apos;« Effort de Trésorerie Mensuel » est une estimation nette intégrant des économies d&apos;énergie théoriques. Il ne reflète pas le montant réel de vos appels de fonds travaux ou de vos mensualités d&apos;emprunt, qui doivent être réglés intégralement à leurs échéances respectives. La responsabilité du syndic ne saurait être engagée en cas de variation des tarifs de l&apos;énergie ou des barèmes de subventions étatiques.
+                                </p>
+                                <button
+                                    onClick={() => setIsLegalModalOpen(true)}
+                                    className="mt-3 text-[11px] font-bold tracking-wide uppercase text-navy hover:text-navy-light transition-colors flex items-center gap-1 group"
+                                >
+                                    Lire les mentions légales complètes &amp; RGPD
+                                    <svg className="w-3 h-3 transform group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 <LegalNoticeModal isOpen={isLegalModalOpen} onClose={() => setIsLegalModalOpen(false)} />
             </div>
+
 
             {/* ── Bottom: Macro Figures ───────────────────────── */}
             <div className="flex-shrink-0 bg-alabaster/50 border-t border-border mt-auto">
@@ -156,7 +169,7 @@ export default function PresentationView() {
                         label="Gain Valeur Verte"
                         value={`+ ${formatCurrency(valuation.greenValueGain)}`}
                         sublabel="gain patrimonial latent — illiquide"
-                        accent="brass"
+                        accent="navy"
                     />
                     <MacroCard
                         label="Subventions obtenues"
@@ -182,11 +195,10 @@ function MacroCard({
     label: string;
     value: string;
     sublabel: string;
-    accent?: "navy" | "brass" | "slate";
+    accent?: "navy" | "slate";
 }) {
     const textColors = {
         navy: "text-navy",
-        brass: "text-brass-dark",
         slate: "text-oxford"
     };
 

@@ -83,8 +83,8 @@ export default function DiagnosticPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
 
                     {/* ── Left Column: Cockpit Form ──────────────────── */}
-                    <aside className="lg:col-span-4">
-                        <div className="card card-content lg:sticky lg:top-8">
+                    <aside className="lg:col-span-4 lg:sticky lg:top-8 lg:self-start z-10">
+                        <div className="card card-content">
                             <div className="flex items-center gap-2.5 mb-6 pb-4 border-b border-border">
                                 <div className="w-0.5 h-5 bg-navy rounded-full" />
                                 <h2 className="text-base font-serif font-semibold text-oxford tracking-tight">

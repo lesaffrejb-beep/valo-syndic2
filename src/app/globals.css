@@ -132,8 +132,8 @@
   }
 
   .input:focus {
-    @apply border-brass bg-white;
-    box-shadow: 0 0 0 3px rgba(184, 150, 62, 0.1);
+    @apply border-navy bg-white;
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
   }
 
   /* Hide native spinners */
@@ -157,25 +157,25 @@
   }
 
   /* ================================================
-     BUTTONS — Brass Primary, Navy Secondary
+     BUTTONS — Navy Primary, White Secondary
      ================================================ */
   .btn-primary {
-    @apply inline-flex items-center justify-center px-6 py-3 bg-brass text-white font-sans font-medium text-sm rounded-button transition-all outline-none;
+    @apply inline-flex items-center justify-center px-6 py-3 bg-navy text-white font-sans font-medium text-sm rounded-button transition-all outline-none;
     letter-spacing: 0.01em;
-    box-shadow: 0 1px 3px rgba(184, 150, 62, 0.2);
+    box-shadow: 0 1px 3px rgba(30, 58, 138, 0.2);
   }
 
   .btn-primary:hover {
-    @apply bg-brass-light;
-    box-shadow: 0 4px 12px rgba(184, 150, 62, 0.25);
+    @apply bg-navy-light;
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
   }
 
   .btn-primary:focus-visible {
-    @apply ring-2 ring-brass/30 ring-offset-2 ring-offset-alabaster;
+    @apply ring-2 ring-navy/30 ring-offset-2 ring-offset-alabaster;
   }
 
   .btn-primary:active {
-    @apply bg-brass-dark;
+    @apply bg-navy-dark;
     transform: scale(0.98);
   }
 
