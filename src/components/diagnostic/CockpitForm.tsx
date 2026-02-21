@@ -64,6 +64,7 @@ export default function CockpitForm() {
             e.preventDefault();
             if (isValid && !isCalculating) {
                 runDiagnostic();
+                window.scrollTo({ top: 0, behavior: "smooth" });
             }
         },
         [isValid, isCalculating, runDiagnostic]
