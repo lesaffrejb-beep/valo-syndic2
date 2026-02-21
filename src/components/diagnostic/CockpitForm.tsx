@@ -12,11 +12,7 @@ import { useState, useCallback, type FormEvent } from "react";
 import { Zap } from "lucide-react";
 import { useDiagnosticStore } from "@/stores/useDiagnosticStore";
 import { DPE_COLORS, type DPELetter } from "@/lib/constants";
-
-// ─── DPE Constants ─────────────────────────────────────────────────────────────
-
-const ALL_DPE: DPELetter[] = ["A", "B", "C", "D", "E", "F", "G"];
-const TARGET_DPE: DPELetter[] = ["A", "B", "C", "D", "E"];
+import AdvancedDPESelector from "./AdvancedDPESelector";
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
@@ -48,52 +44,7 @@ function HelperText({ children }: { children: React.ReactNode }) {
     );
 }
 
-function DPESelector({
-    label,
-    options,
-    value,
-    onChange,
-}: {
-    label: string;
-    options: DPELetter[];
-    value: DPELetter | undefined;
-    onChange: (dpe: DPELetter) => void;
-}) {
-    return (
-        <fieldset>
-            <legend className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate mb-2">
-                {label}
-            </legend>
-            <div className="flex bg-slate-50 border border-slate-200 rounded-md p-1 gap-0.5 shadow-inner">
-                {options.map((dpe) => {
-                    const isActive = value === dpe;
-                    return (
-                        <button
-                            key={dpe}
-                            type="button"
-                            onClick={() => onChange(dpe)}
-                            aria-pressed={isActive}
-                            className={`
-                                flex-1 h-10 rounded font-bold text-base
-                                transition-all duration-200 relative
-                                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-1
-                                ${isActive
-                                    ? "bg-navy text-white shadow-md z-10"
-                                    : "bg-transparent text-slate-400 hover:text-slate-700 hover:bg-slate-100/60"
-                                }
-                            `}
-                            style={{
-                                transform: isActive ? "scale(1.04)" : "scale(1)"
-                            }}
-                        >
-                            {dpe}
-                        </button>
-                    );
-                })}
-            </div>
-        </fieldset>
-    );
-}
+
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
@@ -195,28 +146,14 @@ export default function CockpitForm() {
                     />
                 </div>
 
-                {/* Current DPE */}
-                <DPESelector
-                    label="DPE actuel"
-                    options={ALL_DPE}
-                    value={input.currentDPE}
-                    onChange={(dpe) => updateInput({ currentDPE: dpe })}
-                />
-
-                {/* Target DPE */}
-                <DPESelector
-                    label="DPE cible après travaux"
-                    options={TARGET_DPE}
-                    value={input.targetDPE}
-                    onChange={(dpe) => updateInput({ targetDPE: dpe })}
-                />
-
-                {/* DPE Projeté */}
-                <DPESelector
-                    label="DPE projeté (Déficit Foncier LdF 2026)"
-                    options={ALL_DPE}
-                    value={input.dpeProjete}
-                    onChange={(dpe) => updateInput({ dpeProjete: dpe })}
+                {/* Sélecteur DPE Avancé */}
+                <AdvancedDPESelector
+                    currentDPE={input.currentDPE}
+                    targetDPE={input.targetDPE}
+                    dpeProjete={input.dpeProjete}
+                    onChangeCurrent={(dpe) => updateInput({ currentDPE: dpe })}
+                    onChangeTarget={(dpe) => updateInput({ targetDPE: dpe })}
+                    onChangeProjete={(dpe) => updateInput({ dpeProjete: dpe })}
                 />
             </div>
 
