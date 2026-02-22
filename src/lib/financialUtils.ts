@@ -161,11 +161,11 @@ export function calculateProjectMetrics(
         alerts.push("MPR non éligible: gain énergétique < 35%.");
     }
 
-    const mprCeiling = FINANCES_2026.MPR.CEILING_PER_LOT * lots;
-    const mprRaw = worksHT * mprRate;
-    const mprAmount = Math.min(mprRaw, mprCeiling);
-    if (mprRaw > mprCeiling) {
-        alerts.push("Attention, plafond MPR atteint.");
+    const maxEligibleBase = FINANCES_2026.MPR.CEILING_PER_LOT * lots;
+    const eligibleBase = Math.min(worksHT, maxEligibleBase);
+    const mprAmount = eligibleBase * mprRate;
+    if (worksHT > maxEligibleBase) {
+        alerts.push("Attention, le coût des travaux dépasse l'assiette maximale éligible MPR plafonnée à 25 000 € par lot.");
     }
 
     // ==============================
