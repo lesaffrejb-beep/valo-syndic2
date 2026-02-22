@@ -9,8 +9,9 @@
  */
 
 import { useState, useCallback, type FormEvent } from "react";
-import { Zap } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { useDiagnosticStore } from "@/stores/useDiagnosticStore";
+import MethodologieModal from "@/components/ui/MethodologieModal";
 import { DPE_COLORS, type DPELetter } from "@/lib/constants";
 import AdvancedDPESelector from "./AdvancedDPESelector";
 
@@ -52,6 +53,7 @@ export default function CockpitForm() {
     const { input, updateInput, runDiagnostic, isCalculating, error } = useDiagnosticStore();
     const [advancedOpen, setAdvancedOpen] = useState(false);
     const [heatingMenuOpen, setHeatingMenuOpen] = useState(false);
+    const [methodologieOpen, setMethodologieOpen] = useState(false);
 
     const isValid =
         input.numberOfUnits !== undefined &&
@@ -418,16 +420,24 @@ export default function CockpitForm() {
                         </div>
                     </div>
                 )}
+
+                {!isValid && (
+                    <p className="mb-3 text-[11px] text-slate-500 text-center">
+                        Renseignez le nombre de lots, le DPE actuel et le DPE cible.
+                    </p>
+                )}
+
                 <button
                     type="submit"
                     disabled={!isValid || isCalculating}
                     className={`
                         w-full h-12 rounded-md text-sm font-semibold tracking-[0.04em]
+                        bg-navy text-white
                         transition-all duration-200
                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white
                         ${isValid && !isCalculating
-                            ? "bg-navy text-white hover:bg-navy-dark shadow-[0_4px_14px_0_rgba(30,58,138,0.15)] active:scale-[0.99]"
-                            : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                            ? "hover:bg-navy-dark shadow-[0_4px_14px_0_rgba(30,58,138,0.20)] active:scale-[0.99]"
+                            : "opacity-40 cursor-not-allowed"
                         }
                     `}
                 >
@@ -441,12 +451,25 @@ export default function CockpitForm() {
                         </span>
                     ) : (
                         <span className="flex items-center justify-center gap-2">
-                            <Zap className="w-4 h-4" />
-                            Générer l&lsquo;Analyse Financière
+                            <TrendingUp className="w-4 h-4" strokeWidth={2} />
+                            Générer l&rsquo;Analyse Financière
                         </span>
                     )}
                 </button>
+
+                {/* Lien méthode — transparence financière */}
+                <div className="mt-4 text-center">
+                    <button
+                        type="button"
+                        onClick={() => setMethodologieOpen(true)}
+                        className="text-[11px] text-slate-400 hover:text-navy transition-colors underline underline-offset-2 decoration-dotted"
+                    >
+                        Notre méthode d&rsquo;ingénierie financière →
+                    </button>
+                </div>
             </div>
+
+            <MethodologieModal isOpen={methodologieOpen} onClose={() => setMethodologieOpen(false)} />
         </form>
     );
 }

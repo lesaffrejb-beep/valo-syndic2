@@ -19,6 +19,7 @@ import PDFDownloadButton from "@/components/pdf/PDFDownloadButton";
 import DiagnosticPDF from "@/components/pdf/DiagnosticPDF";
 import { useState } from "react";
 import LegalNoticeModal from "@/components/ui/LegalNoticeModal";
+import MethodologieModal from "@/components/ui/MethodologieModal";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -291,6 +292,7 @@ export default function DiagnosticResults() {
     // Défaut sur Plan Sécurisé pour éviter toute promesse commerciale trompeuse.
     const [securePlan, setSecurePlan] = useState(true);
     const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
+    const [isMethodologieOpen, setIsMethodologieOpen] = useState(false);
 
     // ── Empty State ──────────────────────────────────────────
     if (!result) {
@@ -388,15 +390,32 @@ export default function DiagnosticResults() {
                 {/* ── Coût du Projet (Résolution AG) ── */}
 
                 <div className="space-y-0.5 rounded-lg border border-border overflow-hidden mb-2">
-                    <LedgerRow label="Travaux HT" amount={financing.worksCostHT} />
                     <LedgerRow
-                        label="Honoraires Syndic (3%)"
-                        amount={financing.syndicFees}
-                        tag="Art. 11 ALUR"
+                        label="Travaux HT"
+                        amount={financing.worksCostHT}
+                        subNote="Assiette des travaux énergétiques éligibles MPR et Éco-PTZ. TVA 5,5 % appliquée (Art. 279-0 bis A CGI)."
                     />
-                    <LedgerRow label="Assurance DO (2%)" amount={financing.doFees} />
-                    <LedgerRow label="Provision Aléas (5%)" amount={financing.contingencyFees} />
-                    <LedgerRow label="AMO Ingénierie" amount={financing.amoCostTTC} />
+                    <LedgerRow
+                        label="Honoraires Syndic (3 %)"
+                        amount={financing.syndicFees}
+                        tag="Art. 18-1 A Loi 65"
+                        subNote="Hors assiette MPR et Éco-PTZ — non subventionnable, non finançable par prêt collectif. TVA 20 %. Remplacé par le montant saisi si renseigné."
+                    />
+                    <LedgerRow
+                        label="Assurance DO (2 %)"
+                        amount={financing.doFees}
+                        subNote="Dommages-Ouvrage — obligatoire pour chantier > 2 ans (Art. L. 242-1 Code Assurances). Taxe sur conventions d'assurance 9 % (Art. 991 CGI)."
+                    />
+                    <LedgerRow
+                        label="Provision Aléas (5 %)"
+                        amount={financing.contingencyFees}
+                        subNote="Imprévus de chantier. TVA latente 5,5 % intégrée (dépense future probable). Non déductible en Déficit Foncier (dépense non engagée — BOI-RFPI-BASE-20-60)."
+                    />
+                    <LedgerRow
+                        label="AMO Ingénierie"
+                        amount={financing.amoCostTTC}
+                        subNote="Assistance à Maîtrise d'Ouvrage — 600 € HT/lot. Subventionnée à 50 % par l'ANAH (Art. L. 321-1). TVA 20 %."
+                    />
                     <LedgerRow label="TOTAL TTC" amount={financing.totalCostTTC} variant="subtotal-cost" />
                 </div>
 
@@ -534,7 +553,22 @@ export default function DiagnosticResults() {
                 {/* ── Feature 2 : Legal Disclosure Accordion ───── */}
                 <LegalDisclosureAccordion onOpenModal={() => setIsLegalModalOpen(true)} />
 
+                {/* ── Notre méthode d'ingénierie financière ───────── */}
+                <div className="mt-3 flex items-center justify-center">
+                    <button
+                        type="button"
+                        onClick={() => setIsMethodologieOpen(true)}
+                        className="flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-navy transition-colors underline underline-offset-2 decoration-dotted"
+                    >
+                        <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        Notre méthode d&rsquo;ingénierie financière — Formules &amp; sources réglementaires
+                    </button>
+                </div>
+
                 <LegalNoticeModal isOpen={isLegalModalOpen} onClose={() => setIsLegalModalOpen(false)} />
+                <MethodologieModal isOpen={isMethodologieOpen} onClose={() => setIsMethodologieOpen(false)} />
             </div>
 
             {/* ── Per-Unit Summary ─────────────────────────────── */}

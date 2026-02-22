@@ -110,6 +110,7 @@ export const useDiagnosticStore = create<DiagnosticState>((set, get) => ({
                 devisValide: input.devisValide ?? false,
                 revenusFonciersExistants: input.revenusFonciersExistants ?? 0,
                 montantTravauxAmeliorationHT: input.montantTravauxAmeliorationHT ?? 0,
+                ...(input.montantHonorairesSyndicHT !== undefined && { montantHonorairesSyndicHT: input.montantHonorairesSyndicHT }),
                 statutLot: input.statutLot ?? 'occupant',
                 optionLocAvantages: input.optionLocAvantages ?? false,
                 ...(input.address && { address: input.address }),
