@@ -511,6 +511,7 @@ export default function DiagnosticResults() {
                             label="Reste au comptant (Appel de Fonds Immédiat)"
                             amount={resteComptant}
                             variant="subtotal-cost"
+                            subNote="= RAF total (TTC − Σ Subventions) − Éco-PTZ collectif. Inclut honoraires syndic (TVA 20%) non éligibles Éco-PTZ."
                         />
                     </div>
 
@@ -524,9 +525,10 @@ export default function DiagnosticResults() {
                 </div>
 
                 <p className="text-[10px] text-subtle mt-4 leading-relaxed">
-                    L&rsquo;Appel de Fonds Initial correspond au montant brut à mobiliser avant rentrée des aides.
-                    Les subventions sont versées a posteriori — le syndicat assume la trésorerie intermédiaire.
-                    L&rsquo;Éco-PTZ est remboursé en 240 mensualités à taux zéro (vote Art. 25 requis).
+                    <strong className="text-slate-600">Logique financière :</strong> RAF = TTC − Σ Subventions.
+                    Le RAF se décompose en Éco-PTZ (prêt à taux zéro, 240 mensualités) + Apport Cash immédiat.
+                    Les aides (MPR, CEE, AMO) sont versées a posteriori — le syndicat préfinance via l&rsquo;Appel de Fonds Initial (Loi 65).
+                    TVA appliquée ligne par ligne : 5,5% travaux énergétiques, 9% assurance DO, 20% honoraires syndic et AMO (Art. 279-0 bis CGI).
                 </p>
 
                 {/* ── Feature 2 : Legal Disclosure Accordion ───── */}
