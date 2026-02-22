@@ -96,7 +96,7 @@ export default function DiagnosticPage() {
                     </aside>
 
                     {/* ── Right Column: Results ──────────────────────── */}
-                    <section className="lg:col-span-8">
+                    <section id="diagnostic-results" className="lg:col-span-8">
                         <DiagnosticResults />
                     </section>
 

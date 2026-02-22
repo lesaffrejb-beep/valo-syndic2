@@ -31,16 +31,16 @@ function Section({ title, children, defaultOpen = false }: SectionProps) {
             <button
                 type="button"
                 onClick={() => setOpen(!open)}
-                className="w-full flex items-center justify-between px-5 py-3.5 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+                className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left gap-3"
             >
-                <span className="text-xs font-bold uppercase tracking-[0.08em] text-oxford">{title}</span>
+                <span className="text-xs font-bold uppercase tracking-[0.06em] text-oxford leading-snug">{title}</span>
                 <ChevronDown
                     className={`w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0 ${open ? "rotate-180" : ""}`}
                     strokeWidth={2}
                 />
             </button>
             {open && (
-                <div className="px-5 py-4 space-y-3 text-sm text-slate bg-white border-t border-border">
+                <div className="px-4 py-4 space-y-3 text-sm text-slate bg-white border-t border-border">
                     {children}
                 </div>
             )}
@@ -52,7 +52,7 @@ function Section({ title, children, defaultOpen = false }: SectionProps) {
 
 function Formula({ children }: { children: React.ReactNode }) {
     return (
-        <div className="my-2 px-4 py-3 bg-slate-50 border border-border rounded font-mono text-[12px] text-oxford leading-relaxed">
+        <div className="my-2 px-4 py-3 bg-slate-50 border border-border rounded font-mono text-[11px] sm:text-[12px] text-oxford leading-relaxed overflow-x-auto">
             {children}
         </div>
     );
@@ -72,10 +72,14 @@ function Ref({ children }: { children: React.ReactNode }) {
 
 function ValRow({ label, value, note }: { label: string; value: string; note?: string }) {
     return (
-        <div className="flex items-start justify-between gap-4 py-1.5 border-b border-dashed border-slate-200 last:border-0">
-            <span className="text-[12px] text-slate leading-snug flex-1">{label}</span>
-            <span className="text-[12px] font-semibold text-oxford tabular-nums flex-shrink-0">{value}</span>
-            {note && <span className="text-[10px] text-subtle italic leading-snug flex-shrink-0 max-w-[140px] text-right">{note}</span>}
+        <div className="py-1.5 border-b border-dashed border-slate-200 last:border-0">
+            <div className="flex items-start justify-between gap-3">
+                <span className="text-[12px] text-slate leading-snug flex-1">{label}</span>
+                <span className="text-[12px] font-semibold text-oxford tabular-nums flex-shrink-0 text-right">{value}</span>
+            </div>
+            {note && (
+                <span className="block text-[10px] text-subtle italic leading-snug mt-0.5">{note}</span>
+            )}
         </div>
     );
 }
@@ -110,21 +114,21 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
             <div className="relative bg-white w-full max-w-3xl rounded-2xl shadow-modal overflow-hidden flex flex-col max-h-[92vh] animate-fadeInUp">
 
                 {/* Header */}
-                <div className="flex items-start justify-between px-6 py-5 border-b border-border bg-white flex-shrink-0">
-                    <div>
-                        <div className="flex items-center gap-2.5 mb-1">
+                <div className="flex items-start justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-border bg-white flex-shrink-0 gap-3">
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-1">
                             <div className="w-0.5 h-5 bg-navy rounded-full flex-shrink-0" />
-                            <h2 className="font-serif text-xl font-bold text-oxford">
+                            <h2 className="font-serif text-base sm:text-xl font-bold text-oxford leading-snug">
                                 Notre méthode d&rsquo;ingénierie financière
                             </h2>
                         </div>
-                        <p className="text-[11px] text-subtle ml-4">
-                            Formules, valeurs réglementaires et textes de référence — Version Février 2026
+                        <p className="text-[11px] text-subtle ml-3.5">
+                            Formules, valeurs réglementaires et textes de référence — Février 2026
                         </p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 -mr-2 -mt-1 text-slate hover:text-oxford hover:bg-slate-50 rounded-full transition-colors flex-shrink-0"
+                        className="p-2 -mr-1 -mt-1 text-slate hover:text-oxford hover:bg-slate-50 rounded-full transition-colors flex-shrink-0"
                         aria-label="Fermer"
                     >
                         <X className="w-5 h-5" />
@@ -132,7 +136,7 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
                 </div>
 
                 {/* Body */}
-                <div className="p-6 overflow-y-auto space-y-3 flex-1">
+                <div className="px-4 sm:px-6 py-5 overflow-y-auto space-y-3 flex-1">
 
                     {/* ── Avertissement général ── */}
                     <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-[11px] text-amber-800 leading-relaxed">
@@ -520,13 +524,13 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-border bg-slate-50 flex items-center justify-between flex-shrink-0 gap-4">
-                    <p className="text-[10px] text-subtle">
+                <div className="px-4 sm:px-6 py-4 border-t border-border bg-slate-50 flex flex-col sm:flex-row sm:items-center sm:justify-between flex-shrink-0 gap-3">
+                    <p className="text-[10px] text-subtle leading-snug">
                         Simulation indicative — Ne remplace pas un audit réglementaire OPQIBI 1905.
                     </p>
                     <button
                         onClick={onClose}
-                        className="px-5 py-2.5 bg-oxford text-white text-sm font-semibold rounded-lg shadow hover:bg-oxford/90 transition-all active:scale-95 flex-shrink-0"
+                        className="self-end sm:self-auto px-5 py-2.5 bg-oxford text-white text-sm font-semibold rounded-lg shadow hover:bg-oxford/90 transition-all active:scale-95 flex-shrink-0"
                     >
                         Compris
                     </button>

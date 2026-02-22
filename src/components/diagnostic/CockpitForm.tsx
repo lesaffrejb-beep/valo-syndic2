@@ -66,7 +66,15 @@ export default function CockpitForm() {
             e.preventDefault();
             if (isValid && !isCalculating) {
                 runDiagnostic();
-                window.scrollTo({ top: 0, behavior: "smooth" });
+                if (window.innerWidth >= 1024) {
+                    // Desktop: results visible alongside — scroll sidebar to top
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                } else {
+                    // Mobile: results are below the form — scroll down to show them
+                    setTimeout(() => {
+                        document.getElementById("diagnostic-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 200);
+                }
             }
         },
         [isValid, isCalculating, runDiagnostic]
