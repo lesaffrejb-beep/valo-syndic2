@@ -590,9 +590,9 @@ const MonthlyHero = ({ result }: { result: DiagnosticResult }) => {
             <Text style={{ fontSize: 8, color: C.textMuted, textAlign: 'center', marginTop: 4 }}>
                 Duree : 20 ans - Taux : 0% - Aucun interet a payer
             </Text>
-            {result.financing.remainingCost === 0 && (
+            {result.financing.cashDownPayment === 0 && (
                 <Text style={{ fontSize: 10, color: C.success, fontFamily: 'Helvetica-Bold', marginTop: 10 }}>
-                    [OK] 0 EUR d&apos;apport personnel requis
+                    [OK] 0 EUR d&apos;apport cash immediat requis
                 </Text>
             )}
         </View>
@@ -634,10 +634,13 @@ const FinancingTable = ({ result }: { result: DiagnosticResult }) => (
                 <Text style={[styles.tableCellRight, { color: C.gold }]}>{formatCurrency(result.financing.ecoPtzAmount / result.input.numberOfUnits)}</Text>
             </View>
 
+            {/* Apport Cash = RAC apres Eco-PTZ. remainingCost = RAF total (avant Eco-PTZ) */}
             <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
-                <Text style={[styles.tableCell, { fontFamily: 'Helvetica-Bold' }]}>Reste a charge</Text>
-                <Text style={[styles.tableCellRight, { fontFamily: 'Helvetica-Bold' }]}>{formatCurrency(result.financing.remainingCost)}</Text>
-                <Text style={[styles.tableCellRight, { fontFamily: 'Helvetica-Bold' }]}>{formatCurrency(result.financing.remainingCostPerUnit)}</Text>
+                <Text style={[styles.tableCell, { fontFamily: 'Helvetica-Bold' }]}>Apport Cash immediat</Text>
+                <Text style={[styles.tableCellRight, { fontFamily: 'Helvetica-Bold' }]}>{formatCurrency(result.financing.cashDownPayment)}</Text>
+                <Text style={[styles.tableCellRight, { fontFamily: 'Helvetica-Bold' }]}>
+                    {formatCurrency(result.financing.perUnit?.racComptantParLot ?? Math.round(result.financing.cashDownPayment / result.input.numberOfUnits))}
+                </Text>
             </View>
         </View>
     </Section>
@@ -647,7 +650,8 @@ const FinancingBreakdown = ({ result }: { result: DiagnosticResult }) => {
     const totalCost = result.financing.totalCostHT;
     const mprPercent = Math.round((result.financing.mprAmount / totalCost) * 100);
     const ptzPercent = Math.round((result.financing.ecoPtzAmount / totalCost) * 100);
-    const remainingPercent = Math.round((result.financing.remainingCost / totalCost) * 100);
+    // Apport Cash = RAC apres Eco-PTZ (cashDownPayment), pas le RAF total (remainingCost)
+    const remainingPercent = Math.round((result.financing.cashDownPayment / totalCost) * 100);
 
     return (
         <Section title="[6] REPARTITION DES FINANCEMENTS">
@@ -664,13 +668,13 @@ const FinancingBreakdown = ({ result }: { result: DiagnosticResult }) => {
                 </View>
                 <Text style={styles.progressLabel}>{ptzPercent}% - {formatCurrency(result.financing.ecoPtzAmount)}</Text>
 
-                {result.financing.remainingCost > 0 && (
+                {result.financing.cashDownPayment > 0 && (
                     <>
-                        <Text style={{ fontSize: 8, color: C.textSecondary, marginBottom: 4, marginTop: 10 }}>Reste a charge (apport)</Text>
+                        <Text style={{ fontSize: 8, color: C.textSecondary, marginBottom: 4, marginTop: 10 }}>Apport Cash immediat</Text>
                         <View style={styles.progressBar}>
                             <View style={[styles.progressFill, { width: `${remainingPercent}%`, backgroundColor: C.textMuted }]} />
                         </View>
-                        <Text style={styles.progressLabel}>{remainingPercent}% - {formatCurrency(result.financing.remainingCost)}</Text>
+                        <Text style={styles.progressLabel}>{remainingPercent}% - {formatCurrency(result.financing.cashDownPayment)}</Text>
                     </>
                 )}
             </View>

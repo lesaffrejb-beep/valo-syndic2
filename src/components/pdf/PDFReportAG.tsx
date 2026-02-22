@@ -416,6 +416,14 @@ export const PDFReportAG = ({ result }: PDFReportAGProps) => {
     // Calculate approximate annual energy savings
     const annualSavings = result.financing.monthlyEnergySavings * 12;
 
+    // Exemple concret T2 (profils[1] = 100 tantiemes = 10% de l'immeuble)
+    // rafT2 = RAF individuel = remainingCost × 10%
+    // ecoPtzT2 = part Eco-PTZ individuelle = monthly × 240 mois
+    // cashT2 = apport cash individuel = rafT2 − ecoPtzT2
+    const rafT2 = Math.round((profiles[1]?.quotePart || 0) - (profiles[1]?.aids || 0));
+    const ecoPtzT2 = Math.round((profiles[1]?.monthly || 0) * 240);
+    const cashT2 = Math.max(0, rafT2 - ecoPtzT2);
+
     return (
         <Document>
             {/* PAGE 1: EXECUTIVE SUMMARY */}
@@ -485,7 +493,7 @@ export const PDFReportAG = ({ result }: PDFReportAGProps) => {
                     </View>
 
                     <View style={styles.tableRow}>
-                        <Text style={styles.tableCell}>Cout total travaux TTC (TVA 5.5%)</Text>
+                        <Text style={styles.tableCell}>Cout total projet TTC (TVA multi-taux)</Text>
                         <Text style={styles.tableCellRightBold}>{formatCurrency(result.financing.totalCostTTC)}</Text>
                     </View>
 
@@ -528,22 +536,46 @@ export const PDFReportAG = ({ result }: PDFReportAGProps) => {
                         </Text>
                     </View>
 
+                    {/* RAF = TTC - Σ Subventions. Il se decompose en Eco-PTZ + Apport Cash. */}
                     <View style={[styles.tableRow, { backgroundColor: '#FEF3C7' }]}>
-                        <Text style={styles.tableCellBold}>Reste a Financer</Text>
+                        <Text style={styles.tableCellBold}>Reste a Financer (TTC − Subventions)</Text>
                         <Text style={[styles.tableCellRightBold, { fontSize: 11 }]}>
-                            {formatCurrency(result.financing.ecoPtzAmount + result.financing.remainingCost)}
+                            {formatCurrency(result.financing.remainingCost)}
                         </Text>
                     </View>
 
                     <View style={styles.tableRow}>
-                        <Text style={styles.tableCell}>Eco-PTZ Collectif (Pret 0%, 20 ans)</Text>
-                        <Text style={styles.tableCellRight}>{formatCurrency(result.financing.ecoPtzAmount)}</Text>
+                        <Text style={[styles.tableCell, { paddingLeft: 12, color: COLORS.textSecondary }]}>
+                            dont Eco-PTZ Collectif (Pret 0%, 20 ans)
+                        </Text>
+                        <Text style={[styles.tableCellRight, { color: COLORS.textSecondary }]}>
+                            {formatCurrency(result.financing.ecoPtzAmount)}
+                        </Text>
                     </View>
 
                     <View style={styles.tableRowLast}>
-                        <Text style={styles.tableCellBold}>Apport Cash (si necessaire)</Text>
-                        <Text style={styles.tableCellRightBold}>{formatCurrency(result.financing.remainingCost)}</Text>
+                        <Text style={[styles.tableCellBold, { paddingLeft: 12 }]}>
+                            dont Apport Cash immediat (Appel de Fonds)
+                        </Text>
+                        <Text style={styles.tableCellRightBold}>
+                            {formatCurrency(result.financing.cashDownPayment)}
+                        </Text>
                     </View>
+                </View>
+
+                {/* Bloc methodologie — rassure le professionnel sur la rigueur des calculs */}
+                <View style={{ marginTop: 10, padding: 10, backgroundColor: '#EFF6FF', borderRadius: 4, borderLeftWidth: 3, borderLeftColor: COLORS.primary }}>
+                    <Text style={{ fontSize: 8, color: COLORS.primary, fontFamily: 'Helvetica-Bold', marginBottom: 3 }}>
+                        Methodologie de calcul
+                    </Text>
+                    <Text style={{ fontSize: 8, color: COLORS.primary, lineHeight: 1.4 }}>
+                        RAF = TTC − Σ Subventions  |  RAF = Eco-PTZ + Apport Cash
+                    </Text>
+                    <Text style={{ fontSize: 7, color: COLORS.textMuted, lineHeight: 1.4, marginTop: 3 }}>
+                        TVA appliquee ligne par ligne (Art. 279-0 bis CGI) : 5,5% travaux energetiques — 9% assurance DO — 20% honoraires syndic et AMO.
+                        {' '}Taux MPR applique : {formatPercent(result.financing.mprRate)} sur travaux HT{result.financing.exitPassoireBonus > 0 ? ` (taux haute performance ${formatPercent(result.financing.mprRate - result.financing.exitPassoireBonus)} + bonus sortie passoire +${formatPercent(result.financing.exitPassoireBonus)})` : ''}.
+                        {' '}Eco-PTZ : plafond 50 000 EUR/lot, taux 0%, 240 mensualites (CGI Art. 244 quater U). Inclut frais de garantie forfaitaire 500 EUR (Art. R. 312-11).
+                    </Text>
                 </View>
 
                 <View style={[styles.callout, { marginTop: 20 }]}>
@@ -591,16 +623,35 @@ export const PDFReportAG = ({ result }: PDFReportAGProps) => {
 
                 <View style={{ marginTop: 20, padding: 12, backgroundColor: '#ECFDF5', borderRadius: 4 }}>
                     <Text style={[styles.sectionSubtitle, { marginTop: 0, color: COLORS.success }]}>
-                        Exemple concret (T2 Standard - 100 tantiemes) :
+                        Exemple concret (T2 Standard — 100 tantiemes = 10% de l&apos;immeuble) :
                     </Text>
+
+                    {/* Ligne 1 : coût et aides */}
                     <Text style={{ fontSize: 10, color: COLORS.text, lineHeight: 1.5, marginTop: 6 }}>
-                        Travaux : {formatCurrency(profiles[1]?.quotePart || 0)} → Aides : {formatCurrency(profiles[1]?.aids || 0)}
-                        {' '}→ Pret 0% : {formatCurrency((profiles[1]?.quotePart || 0) - (profiles[1]?.aids || 0))}
-                        {' '}→ Mensualite : {formatCurrency(profiles[1]?.monthly || 0)}/mois pendant 20 ans
+                        Quote-part travaux : {formatCurrency(profiles[1]?.quotePart || 0)}
+                        {'  |  '}Aides deduites : −{formatCurrency(profiles[1]?.aids || 0)}
                     </Text>
+
+                    {/* Ligne 2 : RAF individuel (valeur correcte = remainingCost × 10%) */}
+                    <Text style={{ fontSize: 11, color: COLORS.primary, fontFamily: 'Helvetica-Bold', lineHeight: 1.6, marginTop: 4 }}>
+                        = Reste a Financer : {formatCurrency(rafT2)}
+                    </Text>
+
+                    {/* Ligne 3 : decomposition RAF = Eco-PTZ + Cash */}
+                    <Text style={{ fontSize: 10, color: COLORS.textSecondary, lineHeight: 1.5, paddingLeft: 10 }}>
+                        dont Eco-PTZ (Pret 0%) : {formatCurrency(ecoPtzT2)}
+                        {'  →  '}Mensualite : {formatCurrency(profiles[1]?.monthly || 0)}/mois × 240 mois
+                    </Text>
+                    {cashT2 > 0 && (
+                        <Text style={{ fontSize: 10, color: COLORS.textSecondary, lineHeight: 1.5, paddingLeft: 10 }}>
+                            dont Apport Cash immediat : {formatCurrency(cashT2)}
+                        </Text>
+                    )}
+
+                    {/* Note economies energie */}
                     <Text style={{ fontSize: 9, color: COLORS.textSecondary, marginTop: 8, fontStyle: 'italic' }}>
-                        Avec les economies d&apos;energie ({formatCurrency(result.financing.monthlyEnergySavings)}/mois estimees),
-                        l&apos;effort reel est reduit.
+                        Avec les economies d&apos;energie ({formatCurrency(result.financing.monthlyEnergySavings)}/mois estimees pour l&apos;immeuble),
+                        l&apos;effort net mensuel est reduit d&apos;autant.
                     </Text>
                 </View>
 
