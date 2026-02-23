@@ -557,6 +557,83 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                     )}
                 </div>
             </div>
+            {/* ── PAR+ — Prêt Avance Mutation (Profils Bleu & Jaune) ─────────────── */}
+            {personal.primeANAH > 0 && (
+                <div className="mt-6 rounded-xl border border-navy/15 bg-navy/3 p-5">
+                    <div className="flex items-start gap-3 mb-4">
+                        <div className="flex-shrink-0 mt-0.5 w-6 h-6 rounded-full bg-navy/10 flex items-center justify-center">
+                            <span className="text-[10px] font-bold text-navy">0%</span>
+                        </div>
+                        <div>
+                            <h4 className="text-sm font-semibold text-oxford leading-tight">
+                                Prêt Avance Mutation (PAR+)
+                            </h4>
+                            <p className="text-[10px] text-slate mt-0.5 leading-relaxed">
+                                Prêt hypothécaire à <strong>taux 0 % / 10 ans</strong>, remboursable in fine
+                                (vente ou succession). Levier alternatif pour financer le reste au comptant
+                                sans décaissement immédiat — <strong>parties privatives uniquement</strong>.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Grille des plafonds */}
+                    <div className="bg-white/70 rounded-lg border border-slate-200/70 overflow-hidden mb-3">
+                        <table className="w-full text-[10px]">
+                            <thead>
+                                <tr className="border-b border-slate-200/70 bg-slate-50/80">
+                                    <th className="text-left px-3 py-2 font-bold uppercase tracking-[0.07em] text-slate">
+                                        Nature des travaux
+                                    </th>
+                                    <th className="text-right px-3 py-2 font-bold uppercase tracking-[0.07em] text-slate">
+                                        Plafond PAR+
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                <tr>
+                                    <td className="px-3 py-1.5 text-oxford">1 action parois vitrées uniquement</td>
+                                    <td className="px-3 py-1.5 text-right tabular-nums text-oxford">7 000 €</td>
+                                </tr>
+                                <tr>
+                                    <td className="px-3 py-1.5 text-oxford">1 geste d&apos;isolation autre</td>
+                                    <td className="px-3 py-1.5 text-right tabular-nums text-oxford">15 000 €</td>
+                                </tr>
+                                <tr>
+                                    <td className="px-3 py-1.5 text-oxford">Bouquet ≥ 2 gestes</td>
+                                    <td className="px-3 py-1.5 text-right tabular-nums text-oxford">25 000 €</td>
+                                </tr>
+                                <tr className="bg-navy/3">
+                                    <td className="px-3 py-1.5 font-semibold text-navy">Rénovation globale</td>
+                                    <td className="px-3 py-1.5 text-right tabular-nums font-bold text-navy">50 000 €</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Conditions & non-cumul */}
+                    <div className="flex flex-col sm:flex-row gap-2 text-[9.5px] leading-relaxed">
+                        <div className="flex-1 rounded-md border border-slate-200/70 bg-white/60 px-3 py-2">
+                            <span className="font-bold text-slate uppercase tracking-[0.06em]">Conditions</span>
+                            <p className="text-slate/80 mt-1">
+                                Revenus modestes ou très modestes (barèmes ANAH 2026) ·
+                                Résidence principale &gt; 2 ans · 1 seul PAR+ par logement.
+                            </p>
+                        </div>
+                        <div className="flex-1 rounded-md border border-amber-200/70 bg-amber-50/60 px-3 py-2">
+                            <span className="font-bold text-amber-700 uppercase tracking-[0.06em]">⚠ Non-cumul</span>
+                            <p className="text-amber-700/80 mt-1">
+                                Incompatible avec l&apos;éco-PTZ sur les mêmes postes de travaux.
+                                Cumulable avec MaPrimeRénov&apos;.
+                            </p>
+                        </div>
+                    </div>
+
+                    <p className="text-[9px] text-slate/50 mt-3 leading-relaxed">
+                        Sources : service-public.gouv.fr/F38425 (màj 01/01/2026) · Décret n°2024-887 du 03/09/2024
+                        · Arrêté du 10/12/2025 · Code consommation art. L315-1 à L315-23
+                    </p>
+                </div>
+            )}
         </section>
     );
 }

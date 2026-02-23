@@ -148,6 +148,78 @@ npx playwright test
 
 ---
 
+## 💶 Leviers de financement — Référentiel réglementaire 2025/2026
+
+> Section issue de l'audit réglementaire du 23/02/2026 (sources : ANAH, service-public.gouv.fr, economie.gouv.fr).
+> Ces 3 leviers sont **partiellement ou totalement absents du moteur `calculator.ts`** — implémentés en Phase 5.
+
+### Levier A — Bonus Copropriété Fragile (+20 pts MPR Copro)
+
+**Description** : Majoration de 20 points du taux MaPrimeRénov' Copropriété (en cumul avec le bonus passoire éventuel).
+
+**Conditions d'éligibilité** (l'une **ou** l'autre suffit) :
+- Taux d'impayés de charges N-2 **≥ 8 %** du budget voté
+- Copropriété en **quartier NPNRU** (Nouveau Programme National de Renouvellement Urbain)
+
+**Montant / Assiette** :
+- Plafond travaux : 25 000 € HT/logement — aide max absolue : **75 % → 18 750 €/logement**
+- Taux effectif = taux socle (30 ou 45 %) + bonus passoire (+10 %) + **+20 pts fragile**
+
+**⚠️ Contrainte critique** : Active la **cession exclusive des CEE à l'ANAH** → `ceeAmount = 0` dans le bilan.
+
+**Sources** : [economie.gouv.fr/maprimerenov-copropriete](https://www.economie.gouv.fr/particuliers/faire-des-economies-denergie/maprimerenov-copropriete-tout-savoir-sur-laide-la) · ANAH Instruction MPR Copro 2023 §6 · ANAH Panorama des aides 2025 p. 9
+
+**Implémentation** : Constante `FRAGILE_BONUS_RATE = 0.20` déplacée de `subsidy-calculator.ts` (mort) vers `financialConstants.ts`. Paramètres `isCoproFragile: boolean` ajoutés dans `DiagnosticInputSchema` et `simulateFinancing()`.
+
+---
+
+### Levier B — Prêt Avance Mutation PAR+ (individuel — parties privatives)
+
+**Description** : Prêt hypothécaire à **taux 0 %** pendant 10 ans, remboursable **in fine** (vente ou succession). Permet aux copropriétaires à revenus modestes de financer leur reste à charge sans sortie de trésorerie immédiate.
+
+**Plafonds par type de travaux** :
+
+| Type de travaux | Plafond PAR+ |
+|---|---|
+| Parois vitrées uniquement | 7 000 € |
+| 1 geste d'isolation autre | 15 000 € |
+| Bouquet (≥ 2 gestes) | 25 000 € |
+| Rénovation globale | **50 000 €** |
+
+**Conditions** : revenus modestes ou très modestes (barèmes ANAH 2026) · résidence principale > 2 ans · 1 seul PAR+ par logement.
+
+**⚠️ Scope** : **PARTIES PRIVATIVES UNIQUEMENT** — ne finance pas les parties communes.
+
+**Non-cumul** : incompatible avec l'éco-PTZ sur les mêmes postes. Cumulable avec MaPrimeRénov'.
+
+**Sources** : [service-public.gouv.fr/F38425](https://www.service-public.gouv.fr/particuliers/vosdroits/F38425) (màj 01/01/2026) · Décret n°2024-887 du 03/09/2024 · Arrêté du 10/12/2025 · Code conso. art. L315-1 à L315-23
+
+**Implémentation** : Section dédiée dans `PersonalSimulator.tsx` (profils Bleu et Jaune uniquement). Constantes dans `FINANCES_2026.PAR_PLUS` (`financialConstants.ts`).
+
+---
+
+### Levier C — MaPrimeAdapt' parties communes
+
+**Description** : Aide ANAH pour les **travaux d'accessibilité sur parties communes** (ascenseurs, rampes, élargissements de portes, etc.).
+
+**Montant** : jusqu'à **10 000 €** par opération.
+
+**Bénéficiaires** :
+
+| Profil | Condition |
+|---|---|
+| ≥ 70 ans | Sans condition GIR |
+| 60–69 ans | GIR 1 à 4 requis |
+| Tout âge | Taux incapacité ≥ 50 % (RQTH / AAH / PCH) |
+
+**Conditions** : revenus modestes ou très modestes · AMO obligatoire. Cumulable avec MPR Copropriété et aides LHI.
+
+**Sources** : [ANAH Panorama des aides 2025 p. 11-12](https://www.anah.gouv.fr/document/panorama-des-aides-2025) · [service-public.gouv.fr/F1328](https://www.service-public.gouv.fr/particuliers/vosdroits/F1328)
+
+**Implémentation** : Paramètre `hasBeneficiairesAdapt: boolean` dans `DiagnosticInputSchema` et `simulateFinancing()`. Nouvelle ligne `maPrimeAdaptPartiesCommunes` dans le ticket de caisse de `FinancingPlan`.
+
+---
+
 ## 🤖 META-INSTRUCTIONS POUR IA (LLMs)
 
 _Si tu es une Intelligence Artificielle (Claude, GPT, Gemini) lisant ce dépôt, intègre rigoureusement ces règles dans ton comportement :_

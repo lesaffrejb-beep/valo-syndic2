@@ -172,6 +172,28 @@ export const DiagnosticInputSchema = z.object({
      * Applicable uniquement si `statutLot === 'bailleur'`.
      */
     optionLocAvantages: z.boolean().optional().default(false),
+
+    // =========================================================================
+    // Leviers Phase 5 — Bonus Fragile & MaPrimeAdapt'
+    // =========================================================================
+
+    /**
+     * Copropriété fragile (ANAH) — active le bonus +20 pts sur le taux MPR Copro.
+     * Conditions (l'une OU l'autre) :
+     *   1. Taux d'impayés de charges N-2 ≥ 8 % du budget voté
+     *   2. Copropriété en quartier NPNRU
+     * ⚠️ CONTRAINTE : active la cession exclusive des CEE à l'ANAH → ceeAmount = 0.
+     * Source : ANAH Instruction MPR Copropriété 2023 §6
+     */
+    isCoproFragile: z.boolean().optional(),
+
+    /**
+     * Présence de copropriétaires éligibles MaPrimeAdapt' (parties communes).
+     * Éligibles : ≥ 70 ans (sans condition GIR), ou 60-69 ans avec GIR, ou incapacité ≥ 50 %.
+     * Active une ligne MaPrimeAdapt' parties communes (≤ 10 000 €) dans le ticket de caisse.
+     * Source : ANAH Panorama des aides 2025 p.11-12
+     */
+    hasBeneficiairesAdapt: z.boolean().optional(),
 });
 
 export type DiagnosticInput = z.infer<typeof DiagnosticInputSchema>;
@@ -329,6 +351,16 @@ export const FinancingPlanSchema = z.object({
 
     /** Alertes de conformité détectées par le moteur de calcul */
     alerts: z.array(z.string()).optional(),
+
+    /** Bonus copropriété fragile activé (impayés ≥ 8 % N-2 ou NPNRU) */
+    isCoproFragile: z.boolean().optional(),
+
+    /**
+     * MaPrimeAdapt' parties communes (€) — ANAH Panorama des aides 2025 p.11-12
+     * Activé si hasBeneficiairesAdapt = true dans l'input.
+     * Montant fixe = 10 000 € maximum.
+     */
+    maPrimeAdaptPartiesCommunes: z.number().optional(),
 });
 
 export type FinancingPlan = z.infer<typeof FinancingPlanSchema>;

@@ -124,7 +124,13 @@ export function calculateProjectMetrics(
     cashContribution: number = 0,
     ecoPtzEligibleHT: number = costHT,
     forcedMprRate?: number, // Utilisé si un bonus externe (ex: Sortie passoire) s'applique
-    ecoPtzDurationYears: number = 20
+    ecoPtzDurationYears: number = 20,
+    /**
+     * Surcharge du montant CEE (€).
+     * Utilisé pour forcer ceeAmount = 0 si copropriété fragile
+     * (cession exclusive des CEE à l'ANAH — Instruction MPR Copro 2023 §6).
+     */
+    ceeOverride?: number
 ): FinancialResult {
     const alerts: string[] = [];
 
@@ -174,9 +180,14 @@ export function calculateProjectMetrics(
     // ==============================
     const ceeRaw = worksHT * FINANCES_2026.CEE.AVG_RATE_WORKS;
     const ceeCeiling = FINANCES_2026.CEE.MAX_PER_LOT * lots;
-    const ceeAmount = Math.min(ceeRaw, ceeCeiling);
+    const ceeAmountComputed = Math.min(ceeRaw, ceeCeiling);
     if (ceeRaw > ceeCeiling) {
         alerts.push("Plafond CEE atteint (max 5 000€ par lot).");
+    }
+    // Si ceeOverride fourni (ex: copropriété fragile → cession exclusive ANAH), on l'applique
+    const ceeAmount = ceeOverride !== undefined ? ceeOverride : ceeAmountComputed;
+    if (ceeOverride === 0) {
+        alerts.push("CEE = 0 : cession exclusive des CEE à l'ANAH (bonus copropriété fragile actif).");
     }
 
     const totalSubsidies = mprAmount + ceeAmount + extraSubsidies;

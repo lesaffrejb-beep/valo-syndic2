@@ -96,6 +96,76 @@ export const FINANCES_2026 = {
         VIOLET: 0,
         ROSE: 0,
     },
+
+    /**
+     * Bonus Copropriété Fragile (+20 pts MPR Copro)
+     * ─────────────────────────────────────────────
+     * Conditions (l'une OU l'autre) :
+     *   1. Taux d'impayés de charges N-2 ≥ 8 % du budget voté
+     *   2. Copropriété en quartier NPNRU
+     *
+     * ⚠️ CONTRAINTE CRITIQUE : active la cession exclusive des CEE à l'ANAH.
+     *    → Si isCoproFragile = true, alors ceeAmount = 0 dans le waterfall.
+     *
+     * Source : ANAH Instruction MPR Copropriété 2023 §6,
+     *          ANAH Panorama des aides 2025 p. 9
+     * Note   : Constante précédemment présente dans subsidy-calculator.ts (fichier mort).
+     *          Déplacée ici (financialConstants.ts) — source unique de vérité.
+     */
+    FRAGILE_BONUS: {
+        /** Bonus de taux MPR pour copropriétés fragiles */
+        RATE: 0.20,
+        /** Taux maximum atteignable avec fragile + passoire (45 + 10 + 20) */
+        MAX_COMBINED_RATE: 0.75,
+    },
+
+    /**
+     * Prêt Avance Mutation à taux zéro (PAR+)
+     * ─────────────────────────────────────────
+     * Prêt hypothécaire — taux 0 % / 10 ans — remboursable in fine.
+     * Scope copropriété : PARTIES PRIVATIVES UNIQUEMENT.
+     * Personnes éligibles : revenus modestes ou très modestes (barèmes ANAH).
+     *
+     * Source : service-public.gouv.fr/F38425 (màj 01/01/2026),
+     *          Décret n°2024-887 du 03/09/2024,
+     *          Arrêté du 10/12/2025,
+     *          Code consommation art. L315-1 à L315-23
+     */
+    PAR_PLUS: {
+        /** Plafond absolu (rénovation globale) */
+        MAX: 50_000,
+        /** 1 action sur parois vitrées uniquement */
+        VITREES_SEULES: 7_000,
+        /** 1 geste d'une autre nature (hors vitrées) */
+        GESTE_SEUL: 15_000,
+        /** Bouquet de 2 postes de travaux */
+        BOUQUET_2_GESTES: 25_000,
+        /** Rénovation globale (performance minimale requise) */
+        RENOVATION_GLOBALE: 50_000,
+        /** Taux d'intérêt pendant les 10 premières années (pris en charge par l'État) */
+        TAUX_10_ANS: 0,
+        /** Durée de franchise (années) */
+        FRANCHISE_ANS: 10,
+    },
+
+    /**
+     * MaPrimeAdapt' — Volet Copropriété (Parties Communes)
+     * ──────────────────────────────────────────────────────
+     * Aide ANAH pour travaux d'accessibilité sur parties communes.
+     * AMO obligatoire. Cumulable avec MPR Copropriété et aides LHI.
+     *
+     * Profils éligibles :
+     *   - ≥ 70 ans (sans condition GIR)
+     *   - 60–69 ans avec GIR 1-4
+     *   - Taux d'incapacité ≥ 50 % (RQTH / AAH / PCH)
+     *
+     * Source : ANAH Panorama des aides 2025 p. 11-12,
+     *          service-public.gouv.fr/F1328
+     */
+    MAPRIMEADAPT: {
+        /** Aide parties communes copropriété (montant maximum) */
+        PARTIES_COMMUNES_MAX: 10_000,
+    },
 } as const;
 
 // =============================================================================

@@ -422,6 +422,55 @@ export default function CockpitForm() {
                                 </div>
                             )}
                         </div>
+
+                        {/* ── Leviers ANAH (Phase 5) ────────────────────────────── */}
+                        <div className="pt-4 border-t border-border/60 space-y-3">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-3">
+                                Leviers ANAH
+                            </p>
+
+                            {/* Toggle : Copropriété Fragile */}
+                            <label className="flex items-start gap-3 cursor-pointer group">
+                                <div className="flex items-center h-5 mt-0.5">
+                                    <input
+                                        type="checkbox"
+                                        checked={input.isCoproFragile || false}
+                                        onChange={(e) => updateInput({ isCoproFragile: e.target.checked })}
+                                        className="h-4 w-4 rounded border-border text-navy focus:ring-navy/30 transition-shadow duration-150 cursor-pointer"
+                                    />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-medium text-oxford group-hover:text-navy transition-colors">
+                                        Copropriété fragile (+20 % MPR)
+                                    </span>
+                                    <p className="text-[10px] text-slate-500 italic mt-0.5 leading-tight">
+                                        Impayés de charges N-2 ≥ 8 % ou quartier NPNRU.
+                                        ⚠️ CEE = 0 € (cession exclusive ANAH).
+                                    </p>
+                                </div>
+                            </label>
+
+                            {/* Toggle : Bénéficiaires MaPrimeAdapt' */}
+                            <label className="flex items-start gap-3 cursor-pointer group">
+                                <div className="flex items-center h-5 mt-0.5">
+                                    <input
+                                        type="checkbox"
+                                        checked={input.hasBeneficiairesAdapt || false}
+                                        onChange={(e) => updateInput({ hasBeneficiairesAdapt: e.target.checked })}
+                                        className="h-4 w-4 rounded border-border text-navy focus:ring-navy/30 transition-shadow duration-150 cursor-pointer"
+                                    />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-medium text-oxford group-hover:text-navy transition-colors">
+                                        Copropriétaires ≥ 70 ans (ou GIR/≥ 50 %)
+                                    </span>
+                                    <p className="text-[10px] text-slate-500 italic mt-0.5 leading-tight">
+                                        Active MaPrimeAdapt’ parties communes (+10 000 €).
+                                        AMO obligatoire.
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
                     </div>
                 )}
             </div>
@@ -492,6 +541,6 @@ export default function CockpitForm() {
             </div>
 
             <MethodologieModal isOpen={methodologieOpen} onClose={() => setMethodologieOpen(false)} />
-        </form>
+        </form >
     );
 }
