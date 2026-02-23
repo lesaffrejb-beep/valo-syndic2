@@ -139,7 +139,18 @@ export function simulateFinancing(
     montantTravauxAmeliorationHT: number = 0,  // Travaux amélioration TVA 10%
     devisValide: boolean = false,              // Conditions Dérogatoire: devis signé avant 31/12/2026
     revenusFonciersExistants: number = 0,       // Bailleur: revenus fonciers existants (€/an)
-    ecoPtzDuration: number = 20
+    ecoPtzDuration: number = 20,
+    /**
+     * Copropriété fragile (ANAH) — active le bonus +20 pts sur mprRate ET force CEE = 0.
+     * Source : ANAH Instruction MPR Copropriété 2023 §6 ; Panorama des aides 2025 p.9
+     */
+    isCoproFragile: boolean = false,
+    /**
+     * Présence copropriétaires éligibles MaPrimeAdapt' (parties communes).
+     * Active une aide fixe de 10 000 € dans le waterfall (réduit le RAC global).
+     * Source : ANAH Panorama des aides 2025 p.11-12
+     */
+    hasBeneficiairesAdapt: boolean = false
 ): FinancingPlan {
     // Guard: prevent division by zero
     if (!nbLots || nbLots <= 0) {
@@ -232,13 +243,27 @@ export function simulateFinancing(
     const mprRate = baseMprRate + bonusPassoire;
     const exitPassoireBonus = bonusPassoire;
 
+    // ── Bonus Copropriété Fragile (+20 pts MPR) ──────────────────────────────
+    // ANAH Instruction MPR Copropriété 2023 §6 — Panorama des aides 2025 p.9
+    // ⚠️ Incompatible avec valorisation libre des CEE → ceeOverride = 0
+    const fragileBonus = isCoproFragile ? FINANCES_2026.FRAGILE_BONUS.RATE : 0;
+    const effectiveMprRate = Math.min(
+        mprRate + fragileBonus,
+        FINANCES_2026.FRAGILE_BONUS.MAX_COMBINED_RATE
+    );
+
+    // ── MaPrimeAdapt' parties communes ───────────────────────────────────────
+    // ANAH Panorama des aides 2025 p.11-12 — travaux d'accessibilité
+    // Réduit le RAC global via le waterfall extraSubsidies
+    const maPrimeAdaptAmount = hasBeneficiairesAdapt ? FINANCES_2026.MAPRIMEADAPT.PARTIES_COMMUNES_MAX : 0;
+
     // F4 — Assiette Éco-PTZ = travaux éligibles uniquement (CGI Art. 244 quater U)
-    // Inclut : travaux énergétiques HT + AMO nette HT (prîstations d'ingénierie)
+    // Inclut : travaux énergétiques HT + AMO nette HT (prestations d'ingénierie)
     // Exclut : honoraires syndic, DO, aléas (non finançables)
     const ecoPtzEligibleHT = costHT + amoNetCostHT;
 
     // Toutes les aides supplémentaires (hors MPR/CEE = dans le moteur)
-    const extraSubsidies = amoSubvention + localAidAmount;
+    const extraSubsidies = amoSubvention + localAidAmount + maPrimeAdaptAmount;
 
     // Fonds Travaux ALUR : mobilisés en déduction visible avant prêt
     const fondsTravauxMobilise = alurFund;
@@ -260,9 +285,10 @@ export function simulateFinancing(
         pricePerSqmForMetrics,
         extraSubsidies,
         fondsTravauxMobilise,
-        ecoPtzEligibleHT,    // Assiette Éco-PTZ éligible (CGI Art. 244 quater U)
-        mprRate,             // Taux final incluant bonus sortie passoire si applicable
-        ecoPtzDuration       // Durée du prêt Éco-PTZ en années
+        ecoPtzEligibleHT,           // Assiette Éco-PTZ éligible (CGI Art. 244 quater U)
+        effectiveMprRate,           // Taux MPR final (socle + passoire + fragile si applicable)
+        ecoPtzDuration,             // Durée du prêt Éco-PTZ en années
+        isCoproFragile ? 0 : undefined  // ceeOverride : 0 si fragile (cession exclusive ANAH)
     );
 
     // ==========================================================
@@ -357,11 +383,13 @@ export function simulateFinancing(
         amoAmount: Math.round(amoAmount),
         amoCostTTC: Math.round(amoTTC),
         localAidAmount: Math.round(localAidAmount),
-        mprRate,
+        mprRate: effectiveMprRate,  // Taux effectif (inclut bonus fragile +20% si applicable)
         exitPassoireBonus,
         ecoPtzAmount: Math.round(metrics.financing.loanAmount),
         ecoPtzDuration,
-        ceeAmount: Math.round(metrics.subsidies.cee),
+        ceeAmount: Math.round(metrics.subsidies.cee),  // 0 si isCoproFragile (ceeOverride)
+        isCoproFragile,
+        maPrimeAdaptPartiesCommunes: maPrimeAdaptAmount,
         remainingCost: Math.round(metrics.financing.initialRac + ameliorationTTC + syndicTTC),
         cashDownPayment: cashDownTotal,
         monthlyPayment: Math.round(metrics.financing.monthlyLoanPayment),
@@ -542,11 +570,13 @@ export function generateDiagnostic(input: DiagnosticInput): DiagnosticResult {
         input.currentEnergyBill || 0,
         totalSurface,
         input.averagePricePerSqm || VALUATION_PARAMS.BASE_PRICE_PER_SQM,
-        input.montantHonorairesSyndicHT,            // TVA 20% — hors subv./prêt (Loi 65)
-        input.montantTravauxAmeliorationHT ?? 0,    // TVA 10% — hors éligibilité MPR/Éco-PTZ
-        input.devisValide ?? false,                  // Condition suspensive plafond 21 400 €
-        input.revenusFonciersExistants ?? 0,         // Bailleur — revenus fonciers existants
-        input.ecoPtzDuration ?? 20
+        input.montantHonorairesSyndicHT,                // TVA 20% — hors subv./prêt (Loi 65)
+        input.montantTravauxAmeliorationHT ?? 0,        // TVA 10% — hors éligibilité MPR/Éco-PTZ
+        input.devisValide ?? false,                     // Condition suspensive plafond 21 400 €
+        input.revenusFonciersExistants ?? 0,            // Bailleur — revenus fonciers existants
+        input.ecoPtzDuration ?? 20,
+        input.isCoproFragile ?? false,                  // Bonus +20% MPR + CEE = 0
+        input.hasBeneficiairesAdapt ?? false            // MaPrimeAdapt' parties communes
     );
 
     // 3. Coût de l'inaction

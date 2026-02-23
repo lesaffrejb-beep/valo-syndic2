@@ -316,14 +316,16 @@ export default function DiagnosticResults() {
         : 0;
 
     const cashflowPerLot = perUnit?.cashflowNetParLot ?? 0;
-    const mprRateLabel = `${Math.round(financing.mprRate * 100)}%`;
+    const mprRateLabel = `${Math.round(financing.mprRate * 100)}%${financing.isCoproFragile ? " (dont Fragile +20%)" : ""}`;
 
     // Total aids sum
+    const maPrimeAdaptAmount = financing.maPrimeAdaptPartiesCommunes ?? 0;
     const totalAids =
         (securePlan ? 0 : financing.mprAmount) +
         financing.amoAmount +
         financing.ceeAmount +
-        financing.localAidAmount;
+        financing.localAidAmount +
+        maPrimeAdaptAmount;
 
     // Reste au comptant (appel de fonds immédiat)
     const resteComptant = financing.cashDownPayment;
@@ -494,6 +496,15 @@ export default function DiagnosticResults() {
                             label="Mieux chez moi (Angers Loire Métropole)"
                             amount={financing.localAidAmount}
                             variant="subtotal-aid"
+                        />
+                    )}
+                    {maPrimeAdaptAmount > 0 && (
+                        <LedgerRow
+                            label="MaPrimeAdapt’ parties communes"
+                            amount={maPrimeAdaptAmount}
+                            variant="subtotal-aid"
+                            tag="ANAH 2025"
+                            subNote="Aide accessibilité parties communes (≤ 10 000 €) — bénéficiaires ≥ 70 ans ou GIR/RQTH. AMO obligatoire."
                         />
                     )}
                     <LedgerRow label="TOTAL AIDES" amount={totalAids} variant="subtotal-aid" />
