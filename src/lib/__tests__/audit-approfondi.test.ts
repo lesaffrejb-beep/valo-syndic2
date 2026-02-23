@@ -285,6 +285,7 @@ describe("🔍 AUDIT APPROFONDI - Valorisation immobilière", () => {
             montantTravauxAmeliorationHT: 0,
             statutLot: 'occupant',
             optionLocAvantages: false,
+            ecoPtzDuration: 20,
         };
 
         // Test chaque classe DPE
@@ -332,6 +333,7 @@ describe("🔍 AUDIT APPROFONDI - Valorisation immobilière", () => {
             montantTravauxAmeliorationHT: 0,
             statutLot: 'occupant',
             optionLocAvantages: false,
+            ecoPtzDuration: 20,
         };
 
         const financing = simulateFinancing(

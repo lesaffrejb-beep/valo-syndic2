@@ -67,7 +67,10 @@ describe('Déficit Foncier & AMO Subvention Rules (Loi de Finances 2026)', () =>
             "C" as any
         );
 
-        // 2 lots * 600 = 1200HT. 50% = 600. Cap = 2 * 300 = 600.
-        expect(result.amoAmount).toBe(600);
+        // 2 lots * 600 = 1200HT.
+        // Cap eligible base = 2 * 500 = 1000. 50% = 500.
+        // Plancher global = 3000.
+        // On prend min(max(500, 3000), 1200) = 1200 (plafonné au coût réel).
+        expect(result.amoAmount).toBe(1200);
     });
 });

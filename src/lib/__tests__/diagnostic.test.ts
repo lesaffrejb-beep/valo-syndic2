@@ -41,6 +41,7 @@ const BASE: DiagnosticInput = {
     ceeBonus: 0,
     currentEnergyBill: 24_000,
     investorRatio: 0,
+    ecoPtzDuration: 20,
 };
 
 // =============================================================================

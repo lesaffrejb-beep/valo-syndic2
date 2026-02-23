@@ -196,9 +196,15 @@ export function simulateFinancing(
     // ==========================================================
     // 2. AMO : Subvention ANAH 50% (Art. L. 321-1)
     // ==========================================================
-    // L'ANAH subventionne 50% de la prestation AMO, plafonnée à 300€ par lot.
+    // L'ANAH subventionne 50% de la prestation AMO, selon un plafond.
     // Le reste (amoNetCostHT) reste à la charge de la copropriété.
-    const amoSubvention = Math.min(amoCostHT * AMO_PARAMS.aidRate, nbLots * AMO_PARAMS.ceilingPerLotLarge);
+    const amoCeilingPerLot = nbLots <= AMO_PARAMS.smallCoproThreshold
+        ? AMO_PARAMS.ceilingPerLotSmall
+        : AMO_PARAMS.ceilingPerLotLarge;
+    const amoSubvention = Math.min(
+        Math.max(Math.min(amoCostHT, nbLots * amoCeilingPerLot) * AMO_PARAMS.aidRate, AMO_PARAMS.minTotal),
+        amoCostHT
+    );
     const amoNetCostHT = Math.max(0, amoCostHT - amoSubvention);  // Restant finançable
     const amoAmount = amoSubvention; // Alias pour la sortie (subvention, pas le coût)
 

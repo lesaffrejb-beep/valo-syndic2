@@ -140,6 +140,7 @@ describe("AUDIT MATHEMATIQUE - Cas #1: Petite copropriété F → C", () => {
         montantTravauxAmeliorationHT: 0,
         statutLot: 'occupant',
         optionLocAvantages: false,
+        ecoPtzDuration: 20,
     };
 
     const result = generateDiagnostic(input);
@@ -345,6 +346,7 @@ describe("AUDIT MATHEMATIQUE - Cas #2: Grande copropriété G → A", () => {
         montantTravauxAmeliorationHT: 0,
         statutLot: 'occupant',
         optionLocAvantages: false,
+        ecoPtzDuration: 20,
     };
 
     const result = generateDiagnostic(input);
@@ -358,12 +360,14 @@ describe("AUDIT MATHEMATIQUE - Cas #2: Grande copropriété G → A", () => {
         // Plafond MPR = 42 × 25k€ = 1,050,000€
         const mprCeiling = residentialLots * MPR_COPRO.ceilingPerUnit;
 
-        // FIX AUDIT FEV 2026 (F6) : MPR = min(worksHT × mprRate, plafond résidentiel)
+        // FIX AUDIT FEV 2026 (F6) : MPR = min(worksHT, plafond résidentiel) × mprRate
         // G→A = passoire exit (G ∈ {F,G}, A ∈ {A,B,C,D}) → bonus +10%
         // mprRate = taux haute perf (45%) + bonus passoire (10%) = 55%
-        // = min(1,200,000 × 0.55, 42 × 25,000) = min(660,000, 1,050,000) = 660,000€
+        // eligibleBase = min(1,200,000, 1,050,000) = 1,050,000€
+        // expectedMPR = 1,050,000 * 0.55 = 577,500€
         const mprRate = MPR_COPRO.rates.performance + MPR_COPRO.exitPassoireBonus; // 0.55
-        const expectedMPR = Math.min(input.estimatedCostHT * mprRate, mprCeiling); // 660,000
+        const eligibleBase = Math.min(input.estimatedCostHT, mprCeiling);
+        const expectedMPR = eligibleBase * mprRate;
 
         auditAssert("Cas#2", "MPR avec exclusion lots commerciaux",
             result.financing.mprAmount === Math.round(expectedMPR),
@@ -433,6 +437,7 @@ describe("AUDIT MATHEMATIQUE - Cas #3: Projet non éligible MPR", () => {
         montantTravauxAmeliorationHT: 0,
         statutLot: 'occupant',
         optionLocAvantages: false,
+        ecoPtzDuration: 20,
     };
 
     const result = generateDiagnostic(input);
@@ -497,6 +502,7 @@ describe("AUDIT MATHEMATIQUE - Cas #4: Test de stress plafonnements", () => {
         montantTravauxAmeliorationHT: 0,
         statutLot: 'occupant',
         optionLocAvantages: false,
+        ecoPtzDuration: 20,
     };
 
     const result = generateDiagnostic(input);

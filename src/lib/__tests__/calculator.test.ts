@@ -384,7 +384,7 @@ describe('Règles Critiques MPR Copro 2026 — Blindage Mathématique', () => {
             }
         });
 
-        test('mensualité stricte pour ~178k€ sur 20 ans (~744€/mois)', () => {
+        test('mensualité stricte pour ~236k€ sur 20 ans (~985€/mois)', () => {
             const metrics = calculateProjectMetrics(
                 378_723, // costHT
                 378_723, // totalCostTTC
@@ -395,14 +395,14 @@ describe('Règles Critiques MPR Copro 2026 — Blindage Mathématique', () => {
                 3_000
             );
 
-            expect(metrics.financing.loanAmount).toBeGreaterThan(175_000);
-            expect(metrics.financing.loanAmount).toBeLessThan(181_000);
+            expect(metrics.financing.loanAmount).toBeGreaterThan(235_000);
+            expect(metrics.financing.loanAmount).toBeLessThan(238_000);
 
             const expectedMonthly = Math.round(metrics.financing.loanAmount / (20 * 12));
             // financialUtils retourne des flottants bruts (arrondi différé à calculator.ts)
             expect(metrics.financing.monthlyLoanPayment).toBeCloseTo(expectedMonthly, 0);
-            expect(metrics.financing.monthlyLoanPayment).toBeGreaterThan(700);
-            expect(metrics.financing.monthlyLoanPayment).toBeLessThan(780);
+            expect(metrics.financing.monthlyLoanPayment).toBeGreaterThan(980);
+            expect(metrics.financing.monthlyLoanPayment).toBeLessThan(1000);
         });
 
         test('coût par lot cohérent avec coût global', () => {
