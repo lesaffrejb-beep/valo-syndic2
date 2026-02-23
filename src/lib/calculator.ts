@@ -301,14 +301,14 @@ export function simulateFinancing(
     // ==========================================================
     //
     // L'assiette déductible exclut :
+    //   - La TVA (règle stricte du projet README)
     //   - Provision Aléas (dépense incertaine, non engagée — BOI-RFPI-BASE-20-60)
     //   - Les subventions reçues (MPR, CEE, AMO, aides locales)
     //   - Les travaux amélioration standard (hors rénovation énergétique, critère DF strict)
-    // Cohérence HT/TTC : on soustrait les TTC des postes exclus d'une base TTC.
-    const assietteEligibleDfTotal = totalCostTTC
-        - contingencyTTC      // Exclu — provision aléatoire non engagée
-        - ameliorationTTC     // Exclu — travaux amélioration hors réno énergétique
-        - syndicTTC           // Exclu — honoraires de gestion (non déductibles comme charges Art. 31)
+    // Cohérence : on part des montants HT éligibles au Déficit Foncier (Travaux, DO, AMO)
+    const assietteEligibleDfTotal = costHT
+        + doFees
+        + amoCostHT
         - metrics.subsidies.mpr
         - metrics.subsidies.cee
         - amoSubvention
