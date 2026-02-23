@@ -493,9 +493,110 @@ export default function CockpitForm() {
             </div>
 
             {/* ════════════════════════════════════════════════════════
+               SECTION 4 — EXPORT PDF BRANDING (collapsible)
+               ════════════════════════════════════════════════════════ */}
+            <div className="bg-white rounded-2xl border border-border p-6 shadow-sm">
+                <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setBrandingOpen(!brandingOpen)}
+                    onKeyDown={(e) => e.key === "Enter" && setBrandingOpen(!brandingOpen)}
+                    aria-expanded={brandingOpen}
+                    className="flex items-center justify-between cursor-pointer group select-none"
+                >
+                    <div className="flex items-center gap-2.5">
+                        <Briefcase className="w-4 h-4 text-navy flex-shrink-0" strokeWidth={1.5} />
+                        <h3 className="font-serif text-base font-semibold text-oxford tracking-tight">
+                            Export PDF — Branding
+                        </h3>
+                    </div>
+                    <svg
+                        className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 flex-shrink-0 ${brandingOpen ? "rotate-180" : ""}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+
+                {brandingOpen && (
+                    <div className="mt-4 space-y-4 animate-fadeInUp" style={{ animationDuration: "200ms" }}>
+                        {/* Dossier ref */}
+                        <div>
+                            <FieldLabel htmlFor="dossierRef">Nom du dossier / Réf. client</FieldLabel>
+                            <input
+                                id="dossierRef"
+                                type="text"
+                                value={brand.dossierRef}
+                                onChange={e => updateBrand({ dossierRef: e.target.value })}
+                                placeholder="Ex : Copro Les Lilas — AG juin 2026"
+                                className={inputCls}
+                            />
+                        </div>
+                        {/* Agency name */}
+                        <div>
+                            <FieldLabel htmlFor="agencyName">Cabinet / Nom du Syndic</FieldLabel>
+                            <input
+                                id="agencyName"
+                                type="text"
+                                value={brand.agencyName}
+                                onChange={e => updateBrand({ agencyName: e.target.value })}
+                                placeholder="Ex : Syndic ABC"
+                                className={inputCls}
+                            />
+                        </div>
+                        {/* Logo upload */}
+                        <div>
+                            <FieldLabel htmlFor="logoUpload">Logo (PNG / SVG, max 200 Ko)</FieldLabel>
+                            <div className="flex items-center gap-3">
+                                {brand.logoUrl && (
+                                    /* eslint-disable-next-line @next/next/no-img-element */
+                                    <img
+                                        src={brand.logoUrl}
+                                        alt="Logo"
+                                        className="h-8 w-auto rounded border border-border object-contain bg-white p-0.5"
+                                    />
+                                )}
+                                <label
+                                    htmlFor="logoUpload"
+                                    className="flex-1 flex items-center justify-center gap-1.5 h-9 px-3 rounded-md border border-dashed border-slate-300 text-[11px] text-slate-500 hover:border-navy/40 hover:text-navy cursor-pointer transition-colors"
+                                >
+                                    {brand.logoUrl ? "🔄 Remplacer" : "📎 Ajouter un logo"}
+                                    <input
+                                        id="logoUpload"
+                                        type="file"
+                                        accept="image/png,image/svg+xml,image/jpeg"
+                                        className="sr-only"
+                                        onChange={e => {
+                                            const file = e.target.files?.[0];
+                                            if (!file || file.size > 204800) return; // 200 Ko max
+                                            const reader = new FileReader();
+                                            reader.onload = ev => updateBrand({ logoUrl: ev.target?.result as string });
+                                            reader.readAsDataURL(file);
+                                        }}
+                                    />
+                                </label>
+                                {brand.logoUrl && (
+                                    <button
+                                        type="button"
+                                        onClick={() => updateBrand({ logoUrl: null })}
+                                        className="text-slate-400 hover:text-red-500 text-xs transition-colors px-1"
+                                        title="Supprimer le logo"
+                                    >×</button>
+                                )}
+                            </div>
+                            <HelperText>Apparaît dans l&apos;en-tête de l&apos;export PDF</HelperText>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* ════════════════════════════════════════════════════════
                SUBMIT
                ════════════════════════════════════════════════════════ */}
-            <div className="pt-6">
+            <div className="pt-2">
                 {error && (
                     <div className="mb-4 p-3 rounded-md bg-red-50 border border-red-200">
                         <div className="flex items-start gap-2">
@@ -508,94 +609,6 @@ export default function CockpitForm() {
                         </div>
                     </div>
                 )}
-                {/* ── Section Branding PDF ─────────────────────────────── */}
-                <div className="border-t border-border pt-5 mt-1">
-                    <button
-                        type="button"
-                        onClick={() => setBrandingOpen(v => !v)}
-                        className="flex w-full items-center justify-between group mb-1"
-                        aria-expanded={brandingOpen}
-                    >
-                        <div className="flex items-center gap-2">
-                            <Briefcase className="w-3.5 h-3.5 text-slate-400" strokeWidth={1.5} />
-                            <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400 group-hover:text-navy transition-colors">
-                                Export PDF — Branding
-                            </span>
-                        </div>
-                        <span className={`text-slate-300 text-xs transition-transform duration-200 ${brandingOpen ? "rotate-90" : ""}`}>›</span>
-                    </button>
-
-                    {brandingOpen && (
-                        <div className="mt-3 space-y-3">
-                            {/* Dossier ref */}
-                            <div>
-                                <FieldLabel htmlFor="dossierRef">Nom du dossier / Réf. client</FieldLabel>
-                                <input
-                                    id="dossierRef"
-                                    type="text"
-                                    value={brand.dossierRef}
-                                    onChange={e => updateBrand({ dossierRef: e.target.value })}
-                                    placeholder="Ex : Copro Les Lilas — AG juin 2026"
-                                    className={inputCls}
-                                />
-                            </div>
-                            {/* Agency name */}
-                            <div>
-                                <FieldLabel htmlFor="agencyName">Cabinet / Nom du Syndic</FieldLabel>
-                                <input
-                                    id="agencyName"
-                                    type="text"
-                                    value={brand.agencyName}
-                                    onChange={e => updateBrand({ agencyName: e.target.value })}
-                                    placeholder="Ex : Syndic ABC"
-                                    className={inputCls}
-                                />
-                            </div>
-                            {/* Logo upload */}
-                            <div>
-                                <FieldLabel htmlFor="logoUpload">Logo (PNG / SVG, max 200 Ko)</FieldLabel>
-                                <div className="flex items-center gap-3">
-                                    {brand.logoUrl && (
-                                        /* eslint-disable-next-line @next/next/no-img-element */
-                                        <img
-                                            src={brand.logoUrl}
-                                            alt="Logo"
-                                            className="h-8 w-auto rounded border border-border object-contain bg-white p-0.5"
-                                        />
-                                    )}
-                                    <label
-                                        htmlFor="logoUpload"
-                                        className="flex-1 flex items-center justify-center gap-1.5 h-9 px-3 rounded-md border border-dashed border-slate-300 text-[11px] text-slate-500 hover:border-navy/40 hover:text-navy cursor-pointer transition-colors"
-                                    >
-                                        {brand.logoUrl ? "🔄 Remplacer" : "📎 Ajouter un logo"}
-                                        <input
-                                            id="logoUpload"
-                                            type="file"
-                                            accept="image/png,image/svg+xml,image/jpeg"
-                                            className="sr-only"
-                                            onChange={e => {
-                                                const file = e.target.files?.[0];
-                                                if (!file || file.size > 204800) return; // 200 Ko max
-                                                const reader = new FileReader();
-                                                reader.onload = ev => updateBrand({ logoUrl: ev.target?.result as string });
-                                                reader.readAsDataURL(file);
-                                            }}
-                                        />
-                                    </label>
-                                    {brand.logoUrl && (
-                                        <button
-                                            type="button"
-                                            onClick={() => updateBrand({ logoUrl: null })}
-                                            className="text-slate-400 hover:text-red-500 text-xs transition-colors px-1"
-                                            title="Supprimer le logo"
-                                        >×</button>
-                                    )}
-                                </div>
-                                <HelperText>Appearât dans l’en-tête de l’export PDF</HelperText>
-                            </div>
-                        </div>
-                    )}
-                </div>
 
                 {!isValid && (
                     <p className="mb-3 text-[11px] text-slate-500 text-center">

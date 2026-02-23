@@ -302,6 +302,80 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                     </div>
                 </div>
             </div>
+            {/* ── Primes Individuelles ANAH (tous profils) ──────── */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 sm:p-5 mb-6 shadow-sm">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate mb-3">
+                    Primes Individuelles ANAH — Revenus Modestes / Très Modestes
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 items-start">
+                    {/* Champ RFR — accessible à tous */}
+                    <div className="flex-shrink-0">
+                        <label htmlFor="rfr-all" className="block text-[10px] font-semibold text-slate mb-1.5">
+                            Revenu Fiscal de Référence N−1 ou N−2 (€/an)
+                        </label>
+                        <input
+                            id="rfr-all"
+                            type="number"
+                            min={0}
+                            placeholder="ex : 20 000"
+                            className={`${inputCls} w-36`}
+                            value={rfr || ""}
+                            onChange={(e) => {
+                                const v = parseInt(e.target.value);
+                                setRfr(isNaN(v) ? 0 : v);
+                            }}
+                        />
+                        {codePostal.length === 5 && (
+                            <p className="text-[9px] text-slate/60 mt-1">
+                                Barème {isIDF(codePostal) ? "IDF" : "Province"} détecté
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Résultat prime */}
+                    {rfr > 0 ? (
+                        <div className="flex-1">
+                            {personal.primeANAH > 0 ? (
+                                investorType === "bailleur" && !optionLocAvantages ? (
+                                    <div className="rounded-md border border-amber-200 bg-amber-50 px-3.5 py-3">
+                                        <p className="text-[10px] font-semibold text-amber-700 mb-1">
+                                            ⚠️ Prime théorique : − {formatCurrency(personal.primeANAH)} — bloquée
+                                        </p>
+                                        <p className="text-[10px] text-amber-700/80 leading-relaxed">
+                                            Votre profil ({rfr <= (isIDF(codePostal) ? BAREME_ANAH_2026_IDF : BAREME_ANAH_2026_PROVINCE).bleu.base[0] ? "Très Modeste — Bleu" : "Modeste — Jaune"})
+                                            ouvre droit à cette prime, mais elle est réservée aux bailleurs avec conventionnement Loc&apos;Avantages.
+                                            Cochez l&apos;option ci-dessous pour la débloquer.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="rounded-md border border-gain/30 bg-gain/5 px-3.5 py-3">
+                                        <p className="text-[10px] font-semibold text-gain mb-0.5">Prime individuelle estimée</p>
+                                        <p className="text-2xl font-serif font-bold text-gain tabular-nums">
+                                            − {formatCurrency(personal.primeANAH)}
+                                        </p>
+                                        <p className="text-[9px] text-subtle mt-1">
+                                            Profil {rfr <= (isIDF(codePostal) ? BAREME_ANAH_2026_IDF : BAREME_ANAH_2026_PROVINCE).bleu.base[0] ? "Bleu (Très Modeste — 3 000 €)" : "Jaune (Modeste — 1 500 €)"} — Barème {isIDF(codePostal) ? "IDF" : "Province"}
+                                        </p>
+                                    </div>
+                                )
+                            ) : (
+                                <div className="rounded-md border border-slate-200 bg-white px-3.5 py-3">
+                                    <p className="text-[10px] text-slate/70 leading-relaxed">
+                                        RFR supérieur aux plafonds ANAH (profil Violet / Rose) → pas de prime individuelle.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="flex-1 flex items-center">
+                            <p className="text-[10px] text-slate/50 italic leading-relaxed">
+                                Saisissez votre RFR pour savoir si vous êtes éligible à une prime individuelle
+                                (Bleu : 3 000 € — Très Modeste · Jaune : 1 500 € — Modeste).
+                            </p>
+                        </div>
+                    )}
+                </div>
+            </div>
 
             {/* ── Results Grid ────────────────────────────────── */}
             <div className={`grid grid-cols-1 gap-5 mb-8 ${investorType === "bailleur" ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
@@ -438,37 +512,14 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                         )}
 
                         {optionLocAvantages && (
-                            <div className="flex items-center gap-3">
-                                <div>
-                                    <label htmlFor="rfr-sim" className="block text-[10px] font-semibold text-slate mb-1">
-                                        RFR N−1 ou N−2 (€/an)
-                                    </label>
-                                    <input
-                                        id="rfr-sim"
-                                        type="number"
-                                        min={0}
-                                        placeholder="20000"
-                                        className={`${inputCls} w-32`}
-                                        value={rfr || ""}
-                                        onChange={(e) => {
-                                            const v = parseInt(e.target.value);
-                                            setRfr(isNaN(v) ? 0 : v);
-                                        }}
-                                    />
-                                </div>
-                                {personal.primeANAH > 0 ? (
-                                    <div className="flex flex-col items-start pt-5">
-                                        <span className="text-[10px] text-slate">Prime individuelle estimée</span>
-                                        <span className="text-xl font-serif font-bold text-gain tabular-nums">
-                                            − {formatCurrency(personal.primeANAH)}
-                                        </span>
-                                        <span className="text-[9px] text-subtle">
-                                            Barème {isIDF(codePostal) ? "IDF" : "Province"} — profil {rfr <= (isIDF(codePostal) ? BAREME_ANAH_2026_IDF : BAREME_ANAH_2026_PROVINCE).bleu.base[0] ? "Bleu" : "Jaune"}
-                                        </span>
-                                    </div>
-                                ) : (
-                                    rfr > 0 && <p className="text-[10px] text-slate/70 pt-5">RFR supérieur aux plafonds ANAH → pas de prime individuelle.</p>
-                                )}
+                            <div className="rounded-md bg-navy/5 border border-navy/15 px-3 py-2">
+                                <p className="text-[10px] text-navy/80 leading-relaxed">
+                                    Le RFR saisi dans le bloc <strong>Primes Individuelles ANAH</strong> ci-dessus est utilisé pour calculer votre prime.
+                                    {personal.primeANAH > 0
+                                        ? ` Prime estimée : ${formatCurrency(personal.primeANAH)} (profil ${rfr <= (isIDF(codePostal) ? BAREME_ANAH_2026_IDF : BAREME_ANAH_2026_PROVINCE).bleu.base[0] ? "Bleu" : "Jaune"}).`
+                                        : rfr > 0 ? " RFR supérieur aux plafonds → pas de prime." : " Saisissez votre RFR ci-dessus."
+                                    }
+                                </p>
                             </div>
                         )}
                     </div>
@@ -579,7 +630,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                 </div>
             </div>
             {/* ── PAR+ — Prêt Avance Mutation (Profils Bleu & Jaune) ─────────────── */}
-            {personal.primeANAH > 0 && (
+            {rfr > 0 && personal.primeANAH > 0 && (
                 <div className="mt-6 rounded-xl border border-navy/15 bg-navy/3 p-5">
                     <div className="flex items-start gap-3 mb-4">
                         <div className="flex-shrink-0 mt-0.5 w-6 h-6 rounded-full bg-navy/10 flex items-center justify-center">
