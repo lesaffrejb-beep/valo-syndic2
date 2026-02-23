@@ -422,6 +422,7 @@ function runValoSyndicEngine(
         isCostTTC: true,
         includeHonoraires: true,
         devisValide: false,
+        ecoPtzDuration: 20,
         revenusFonciersExistants: 0,
         montantTravauxAmeliorationHT: 0,
         statutLot: 'occupant',

@@ -123,7 +123,8 @@ export function calculateProjectMetrics(
     additionalSubsidies: number = 0,
     cashContribution: number = 0,
     ecoPtzEligibleHT: number = costHT,
-    forcedMprRate?: number // Utilisé si un bonus externe (ex: Sortie passoire) s'applique
+    forcedMprRate?: number, // Utilisé si un bonus externe (ex: Sortie passoire) s'applique
+    ecoPtzDurationYears: number = 20
 ): FinancialResult {
     const alerts: string[] = [];
 
@@ -227,11 +228,11 @@ export function calculateProjectMetrics(
     const monthlyLoanPayment = calculateMonthlyPayment(
         loanAmount,
         FINANCES_2026.LOAN.RATE_ECO_PTZ,
-        FINANCES_2026.LOAN.ECO_PTZ_DURATION_MONTHS
+        ecoPtzDurationYears * 12
     );
 
-    if (loanAmount > 0 && FINANCES_2026.LOAN.ECO_PTZ_DURATION_MONTHS === 240) {
-        alerts.push("Durée 240 mois appliquée (Rénovation Globale) — vérification éligibilité Art. 244 quater U requise avant dossier bancaire.");
+    if (loanAmount > 0 && ecoPtzDurationYears === 20) {
+        alerts.push("Durée 20 ans (240 mois) appliquée — vérification éligibilité requise.");
     }
 
     // ==============================

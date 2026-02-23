@@ -1,12 +1,11 @@
 import { type DPELetter } from "@/lib/constants";
+import { Sparkles } from "lucide-react";
 
 interface AdvancedDPESelectorProps {
     currentDPE?: DPELetter | undefined;
     targetDPE?: DPELetter | undefined;
-    dpeProjete?: DPELetter | undefined;
     onChangeCurrent: (val: DPELetter) => void;
     onChangeTarget: (val: DPELetter) => void;
-    onChangeProjete: (val: DPELetter) => void;
 }
 
 const ALL_DPE: DPELetter[] = ["A", "B", "C", "D", "E", "F", "G"];
@@ -14,11 +13,11 @@ const ALL_DPE: DPELetter[] = ["A", "B", "C", "D", "E", "F", "G"];
 export default function AdvancedDPESelector({
     currentDPE,
     targetDPE,
-    dpeProjete,
     onChangeCurrent,
     onChangeTarget,
-    onChangeProjete,
 }: AdvancedDPESelectorProps) {
+    const getIndex = (l: DPELetter | undefined) => l ? ALL_DPE.indexOf(l) : -1;
+    const sautDeClasse = (currentDPE && targetDPE) ? getIndex(currentDPE) - getIndex(targetDPE) : 0;
 
 
 
@@ -70,23 +69,22 @@ export default function AdvancedDPESelector({
                     </div>
                 </div>
 
-                {/* Row 2: CIBLE */}
+                {/* Row 2: APRÈS TRAVAUX */}
                 <div className="space-y-2">
                     <div className="flex items-center justify-between px-1">
-                        <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate">Cible</span>
+                        <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate">Après Travaux</span>
+                        {sautDeClasse > 0 && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                <Sparkles className="w-2.5 h-2.5" />
+                                +{sautDeClasse} classe{sautDeClasse > 1 ? 's' : ''} {sautDeClasse >= 2 && currentDPE && ["F", "G"].includes(currentDPE) ? "(Éligible Bonus Passoire)" : ""}
+                            </span>
+                        )}
+                        {sautDeClasse < 0 && (
+                            <span className="text-[10px] text-red-600 font-semibold px-2 py-0.5">⚠️ Invalide</span>
+                        )}
                     </div>
                     <div className="flex items-center justify-between bg-slate-50 rounded-[2rem] px-2 py-2 border border-slate-200 shadow-inner">
                         {ALL_DPE.map(letter => renderRowItem(letter, targetDPE, onChangeTarget))}
-                    </div>
-                </div>
-
-                {/* Row 3: PROJETÉ */}
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between px-1">
-                        <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate">Projeté</span>
-                    </div>
-                    <div className="flex items-center justify-between bg-slate-50 rounded-[2rem] px-2 py-2 border border-slate-200 shadow-inner">
-                        {ALL_DPE.map(letter => renderRowItem(letter, dpeProjete, onChangeProjete))}
                     </div>
                 </div>
             </div>

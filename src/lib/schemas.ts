@@ -145,6 +145,12 @@ export const DiagnosticInputSchema = z.object({
     // =========================================================================
 
     /**
+     * Durée de l'Éco-PTZ (en années). 
+     * Modifiable par le courtier/CGP. Défaut 20 ans.
+     */
+    ecoPtzDuration: z.number().int().min(1).max(25).optional().default(20),
+
+    /**
      * Code postal de l'immeuble (5 chiffres).
      * Utilisé pour router le barème ANAH : IDF (75,77,78,91-95) vs Province.
      */
@@ -290,6 +296,9 @@ export const FinancingPlanSchema = z.object({
 
     /** Montant Éco-PTZ disponible */
     ecoPtzAmount: z.number(),
+
+    /** Durée de l'Éco-PTZ (en années) */
+    ecoPtzDuration: z.number().default(20),
 
     /** Certificats d'Économie d'Énergie (CEE) */
     ceeAmount: z.number(),

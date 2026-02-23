@@ -56,6 +56,14 @@ function getPrimeANAH(codePostal: string, rfr: number): number {
     return 0;
 }
 
+const TYPOLOGY_MULTIPLIERS = {
+    Studio: 0.5,
+    T2: 0.75,
+    T3: 1.0,
+    T4: 1.25,
+    T5: 1.5,
+};
+
 export default function PersonalSimulator({ result }: { result: DiagnosticResult }) {
     const [tantiemes, setTantiemes] = useState(100);
     const [totalTantiemes, setTotalTantiemes] = useState(1000);
@@ -72,9 +80,14 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
     const [optionLocAvantages, setOptionLocAvantages] = useState(
         result.input.optionLocAvantages ?? false
     );
+    const [shareMethod, setShareMethod] = useState<"tantiemes" | "typology">("tantiemes");
+    const [typology, setTypology] = useState<"Studio" | "T2" | "T3" | "T4" | "T5">("T3");
+    const [ptzDuration, setPtzDuration] = useState(result.input.ecoPtzDuration ?? 20);
 
     const personal = useMemo(() => {
-        const ratio = totalTantiemes > 0 ? tantiemes / totalTantiemes : 0;
+        const avgTantiemes = totalTantiemes / Math.max(1, result.input.numberOfUnits);
+        const computedTantiemes = shareMethod === "tantiemes" ? tantiemes : avgTantiemes * TYPOLOGY_MULTIPLIERS[typology];
+        const ratio = totalTantiemes > 0 ? computedTantiemes / totalTantiemes : 0;
         const { financing, valuation } = result;
 
         const totalTTC = financing.totalCostTTC * ratio;
@@ -87,10 +100,13 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
         const loanAmount = financing.ecoPtzAmount * ratio;
         const racBrut = financing.remainingCost * ratio;
         const cashDown = Math.max(0, racBrut - loanAmount);
-        const monthlyPayment = financing.monthlyPayment * ratio;
+
+        // Recalculate monthly payment locally if PTZ duration changes
+        const monthlyPayment = ptzDuration > 0 ? loanAmount / (ptzDuration * 12) : 0;
+
         const greenValue = valuation.greenValueGain * ratio;
         const monthlySavings = financing.monthlyEnergySavings * ratio;
-        const netCashflow = financing.netMonthlyCashFlow * ratio;
+        const netCashflow = monthlySavings - monthlyPayment;
 
         // ── Déficit Foncier — CGI Art. 31 & 156 ─────────────────────────────
         // Assiette = RAC brut (part travaux nets de subventions, emprunt inclus).
@@ -125,7 +141,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
             deficitFoncier,
             primeANAH,
         };
-    }, [tantiemes, totalTantiemes, result, tmi, fiscalRegime, revenusFonciers, investorType, codePostal, rfr, optionLocAvantages]);
+    }, [tantiemes, totalTantiemes, result, tmi, fiscalRegime, revenusFonciers, investorType, codePostal, rfr, optionLocAvantages, shareMethod, typology, ptzDuration]);
 
     const inputCls =
         "w-full h-10 px-3 text-sm text-oxford bg-white border border-border rounded-md " +
@@ -165,53 +181,116 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
             {/* ── Controls ────────────────────────────────────── */}
             <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5 mb-8 flex-wrap">
 
-                {/* Tantièmes Input Group */}
-                <div className="flex gap-4">
-                    <div className="flex-1">
-                        <label
-                            htmlFor="tantiemes"
-                            className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate mb-2"
-                        >
-                            Vos tantièmes
-                        </label>
-                        <input
-                            id="tantiemes"
-                            type="number"
-                            min={1}
-                            className={inputCls}
-                            value={tantiemes || ""}
-                            onChange={(e) => {
-                                const v = parseInt(e.target.value);
-                                setTantiemes(isNaN(v) ? 0 : v);
-                            }}
-                        />
-                    </div>
-                    <div className="flex-1">
-                        <label
-                            htmlFor="totalTantiemes"
-                            className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate mb-2"
-                        >
-                            Total copro
-                        </label>
-                        <div className="relative">
-                            <input
-                                id="totalTantiemes"
-                                type="number"
-                                min={1}
-                                className={inputCls}
-                                value={totalTantiemes || ""}
-                                onChange={(e) => {
-                                    const v = parseInt(e.target.value);
-                                    setTotalTantiemes(isNaN(v) ? 0 : v);
-                                }}
-                            />
-                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                <span className="text-[10px] font-semibold text-slate-400">
-                                    {(personal.ratio * 100).toFixed(1)}%
-                                </span>
-                            </div>
+                {/* Typology vs Tantièmes Toggle & Inputs */}
+                <div className="flex flex-col gap-4">
+                    <div>
+                        <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate mb-2">
+                            Mode de calcul quote-part
+                        </span>
+                        <div className="flex p-1 bg-slate-100 rounded-md border border-slate-200 gap-1 w-fit">
+                            <button
+                                type="button"
+                                onClick={() => setShareMethod("tantiemes")}
+                                className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide rounded transition-all duration-300 ${shareMethod === "tantiemes"
+                                    ? "bg-white text-navy shadow-sm ring-1 ring-border"
+                                    : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
+                                    }`}
+                            >
+                                Tantièmes
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setShareMethod("typology")}
+                                className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide rounded transition-all duration-300 ${shareMethod === "typology"
+                                    ? "bg-white text-navy shadow-sm ring-1 ring-border"
+                                    : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
+                                    }`}
+                            >
+                                Typologie
+                            </button>
                         </div>
                     </div>
+
+                    {shareMethod === "tantiemes" ? (
+                        <div className="flex gap-4">
+                            <div className="flex-1 min-w-[120px]">
+                                <label
+                                    htmlFor="tantiemes"
+                                    className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate mb-2"
+                                >
+                                    Vos tantièmes
+                                </label>
+                                <input
+                                    id="tantiemes"
+                                    type="number"
+                                    min={1}
+                                    className={inputCls}
+                                    value={tantiemes || ""}
+                                    onChange={(e) => {
+                                        const v = parseInt(e.target.value);
+                                        setTantiemes(isNaN(v) ? 0 : v);
+                                    }}
+                                />
+                            </div>
+                            <div className="flex-1 min-w-[120px]">
+                                <label
+                                    htmlFor="totalTantiemes"
+                                    className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate mb-2"
+                                >
+                                    Total copro
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        id="totalTantiemes"
+                                        type="number"
+                                        min={1}
+                                        className={inputCls}
+                                        value={totalTantiemes || ""}
+                                        onChange={(e) => {
+                                            const v = parseInt(e.target.value);
+                                            setTotalTantiemes(isNaN(v) ? 0 : v);
+                                        }}
+                                    />
+                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                        <span className="text-[10px] font-semibold text-slate-400">
+                                            {(personal.ratio * 100).toFixed(1)}%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex gap-4">
+                            <div className="flex-1 min-w-[140px]">
+                                <label
+                                    htmlFor="typology"
+                                    className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate mb-2"
+                                >
+                                    Type d&apos;appartement
+                                </label>
+                                <select
+                                    id="typology"
+                                    className={selectCls + " w-full h-10 text-sm"}
+                                    value={typology}
+                                    onChange={(e) => setTypology(e.target.value as "Studio" | "T2" | "T3" | "T4" | "T5")}
+                                >
+                                    <option value="Studio">Studio</option>
+                                    <option value="T2">T2</option>
+                                    <option value="T3">T3</option>
+                                    <option value="T4">T4</option>
+                                    <option value="T5">T5 (ou +)</option>
+                                </select>
+                            </div>
+                            <div className="flex-1 flex flex-col justify-end min-w-[120px]">
+                                <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate mb-2">Quote-part estimée</span>
+                                <div className="h-10 flex items-center px-3 bg-slate-50 border border-border rounded-md">
+                                    <span className="text-sm font-semibold text-oxford">
+                                        {(personal.ratio * 100).toFixed(1)}%
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Investor Type Toggle */}
@@ -263,6 +342,29 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                         onChange={(e) => setCodePostal(e.target.value.replace(/\D/g, ""))}
                     />
                 </div>
+
+                {/* PTZ Duration */}
+                <div>
+                    <label
+                        htmlFor="ptzDuration-sim"
+                        className="block text-[10px] font-semibold uppercase tracking-[0.05em] text-slate mb-1.5"
+                    >
+                        Durée Éco-PTZ
+                        <span className="ml-1 normal-case font-normal text-subtle">(années)</span>
+                    </label>
+                    <input
+                        id="ptzDuration-sim"
+                        type="number"
+                        min={1}
+                        max={25}
+                        className={`${inputCls} w-28`}
+                        value={ptzDuration || ""}
+                        onChange={(e) => {
+                            const v = parseInt(e.target.value);
+                            setPtzDuration(isNaN(v) ? 20 : v);
+                        }}
+                    />
+                </div>
             </div>
 
             {/* ── ANAH Prime Info Banner (si code postal saisi) ── */}
@@ -307,7 +409,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                     <span className="text-3xl font-serif font-bold text-oxford tabular-nums">
                         {formatCurrency(personal.monthlyPayment)}
                     </span>
-                    <span className="text-[10px] text-subtle mt-auto pt-3">/ mois pendant 20 ans</span>
+                    <span className="text-[10px] text-subtle mt-auto pt-3">/ mois pendant {ptzDuration} ans</span>
                 </div>
 
                 {/* Card 3: Potentiel de Valorisation Patrimoniale */}
@@ -319,7 +421,12 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                     <span className="text-3xl font-serif font-bold text-gain tabular-nums">
                         + {formatCurrency(personal.greenValue)}
                     </span>
-                    <span className="text-[10px] text-subtle mt-auto pt-3">Valorisation patrimoniale estimée</span>
+                    <div className="flex flex-col mt-auto pt-3 text-center">
+                        <span className="text-[10px] text-subtle">Valorisation patrimoniale estimée</span>
+                        <span className="text-[8px] text-slate-400 mt-1 italic leading-tight max-w-[140px]">
+                            Basé sur une estimation moyenne de +{Math.round(result.valuation.greenValueGainPercent * 100)}% de valorisation après travaux.
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -334,6 +441,14 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                     green
                 />
             </div>
+
+            {/* Gain Fiscal explicit for Bailleur */}
+            {investorType === "bailleur" && fiscalRegime === "reel" && (
+                <div className="mb-6 flex items-center justify-between p-4 bg-gain-light/30 border border-gain/20 rounded-lg">
+                    <span className="text-sm font-semibold text-oxford">Gain Fiscal estimé (Année 1)</span>
+                    <span className="text-lg font-bold text-gain tabular-nums">+{formatCurrency(personal.deficitFoncier)}</span>
+                </div>
+            )}
 
             {/* ── Bailleur: Primes & Déficit Foncier Block ─── */}
             <div

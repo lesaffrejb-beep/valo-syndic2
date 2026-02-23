@@ -76,7 +76,8 @@ export function mapBackendToFrontend(backendData: AuditFlashResult): DiagnosticR
         revenusFonciersExistants: 0,
         montantTravauxAmeliorationHT: 0,
         statutLot: 'occupant',
-        optionLocAvantages: false
+        optionLocAvantages: false,
+        ecoPtzDuration: 20 // Added for build pass
     };
 
     // 2. Génération d'une base cohérente via le calculateur existant

@@ -138,7 +138,8 @@ export function simulateFinancing(
     montantHonorairesSyndicHT?: number,   // Optionnel — override du taux forfaitaire 3%
     montantTravauxAmeliorationHT: number = 0,  // Travaux amélioration TVA 10%
     devisValide: boolean = false,              // Conditions Dérogatoire: devis signé avant 31/12/2026
-    revenusFonciersExistants: number = 0       // Bailleur: revenus fonciers existants (€/an)
+    revenusFonciersExistants: number = 0,       // Bailleur: revenus fonciers existants (€/an)
+    ecoPtzDuration: number = 20
 ): FinancingPlan {
     // Guard: prevent division by zero
     if (!nbLots || nbLots <= 0) {
@@ -195,20 +196,9 @@ export function simulateFinancing(
     // ==========================================================
     // 2. AMO : Subvention ANAH 50% (Art. L. 321-1)
     // ==========================================================
-    // L'ANAH subventionne 50% de la prestation AMO, plafonnée.
+    // L'ANAH subventionne 50% de la prestation AMO, plafonnée à 300€ par lot.
     // Le reste (amoNetCostHT) reste à la charge de la copropriété.
-    const amoCeilingPerLot = nbLots <= AMO_PARAMS.smallCoproThreshold
-        ? AMO_PARAMS.ceilingPerLotSmall
-        : AMO_PARAMS.ceilingPerLotLarge;
-    const amoCeilingGlobal = nbLots * amoCeilingPerLot;
-    const eligibleBaseAMO = Math.min(amoCostHT, amoCeilingGlobal);
-    // FIX AUDIT FEV 2026 (S3) : plafonnement de la subvention AMO à 100% du coût réel
-    // L'ANAH ne peut pas subventionner au-delà du coût du service réellement facturé.
-    // Le plancher de 3 000€ peut dépasser le coût AMO pour les toutes petites copros (< 6 lots).
-    const amoSubvention = Math.min(
-        Math.max(eligibleBaseAMO * AMO_PARAMS.aidRate, AMO_PARAMS.minTotal),
-        amoCostHT  // Cap à 100% du coût réel
-    );
+    const amoSubvention = Math.min(amoCostHT * AMO_PARAMS.aidRate, nbLots * AMO_PARAMS.ceilingPerLotLarge);
     const amoNetCostHT = Math.max(0, amoCostHT - amoSubvention);  // Restant finançable
     const amoAmount = amoSubvention; // Alias pour la sortie (subvention, pas le coût)
 
@@ -265,7 +255,8 @@ export function simulateFinancing(
         extraSubsidies,
         fondsTravauxMobilise,
         ecoPtzEligibleHT,    // Assiette Éco-PTZ éligible (CGI Art. 244 quater U)
-        mprRate              // Taux final incluant bonus sortie passoire si applicable
+        mprRate,             // Taux final incluant bonus sortie passoire si applicable
+        ecoPtzDuration       // Durée du prêt Éco-PTZ en années
     );
 
     // ==========================================================
@@ -335,16 +326,16 @@ export function simulateFinancing(
 
     const perUnit = {
         // Avertissement AG obligatoire : à recalculer selon millièmes du règlement
-        coutParLotTTC: Math.round(totalCostTTC / nbLots),
-        mprParLot: Math.round(metrics.subsidies.mpr / Math.max(1, residentialLots)),
-        ceeParLot: Math.round(metrics.subsidies.cee / Math.max(1, residentialLots)),
-        ecoPtzParLot: Math.round(metrics.financing.loanAmount / nbLots),
-        mensualiteParLot: Math.round(metrics.financing.monthlyLoanPayment / nbLots),
-        cashflowNetParLot: Math.round(metrics.kpi.netMonthlyCashFlow / nbLots),
-        racBrutParLot,               // RAC brut incluant amélioration + honoraires syndic
-        racComptantParLot,           // Appel immédiat en AG (hors Éco-PTZ)
+        coutParLotTTC: totalCostTTC / nbLots,
+        mprParLot: metrics.subsidies.mpr / Math.max(1, residentialLots),
+        ceeParLot: metrics.subsidies.cee / Math.max(1, residentialLots),
+        ecoPtzParLot: metrics.financing.loanAmount / nbLots,
+        mensualiteParLot: metrics.financing.monthlyLoanPayment / nbLots,
+        cashflowNetParLot: metrics.kpi.netMonthlyCashFlow / nbLots,
+        racBrutParLot: (metrics.financing.initialRac + ameliorationTTC + syndicTTC) / nbLots,
+        racComptantParLot: cashDownTotal / nbLots,           // Appel immédiat en AG (hors Éco-PTZ)
         avantagesFiscauxAnnee1,      // Économie fiscale Bailleur (CGI Art. 31 & 156)
-        valeurVerteParLot,
+        valeurVerteParLot: metrics.kpi.greenValueIncrease / nbLots,
     };
 
     return {
@@ -363,6 +354,7 @@ export function simulateFinancing(
         mprRate,
         exitPassoireBonus,
         ecoPtzAmount: Math.round(metrics.financing.loanAmount),
+        ecoPtzDuration,
         ceeAmount: Math.round(metrics.subsidies.cee),
         remainingCost: Math.round(metrics.financing.initialRac + ameliorationTTC + syndicTTC),
         cashDownPayment: cashDownTotal,
@@ -547,7 +539,8 @@ export function generateDiagnostic(input: DiagnosticInput): DiagnosticResult {
         input.montantHonorairesSyndicHT,            // TVA 20% — hors subv./prêt (Loi 65)
         input.montantTravauxAmeliorationHT ?? 0,    // TVA 10% — hors éligibilité MPR/Éco-PTZ
         input.devisValide ?? false,                  // Condition suspensive plafond 21 400 €
-        input.revenusFonciersExistants ?? 0          // Bailleur — revenus fonciers existants
+        input.revenusFonciersExistants ?? 0,         // Bailleur — revenus fonciers existants
+        input.ecoPtzDuration ?? 20
     );
 
     // 3. Coût de l'inaction

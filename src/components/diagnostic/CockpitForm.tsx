@@ -8,7 +8,7 @@
  * Connected to useDiagnosticStore (Zustand).
  */
 
-import { useState, useCallback, type FormEvent } from "react";
+import { useState, useCallback, useEffect, useRef, type FormEvent } from "react";
 import { TrendingUp } from "lucide-react";
 import { useDiagnosticStore } from "@/stores/useDiagnosticStore";
 import MethodologieModal from "@/components/ui/MethodologieModal";
@@ -67,10 +67,8 @@ export default function CockpitForm() {
             if (isValid && !isCalculating) {
                 runDiagnostic();
                 if (window.innerWidth >= 1024) {
-                    // Desktop: results visible alongside — scroll sidebar to top
                     window.scrollTo({ top: 0, behavior: "smooth" });
                 } else {
-                    // Mobile: results are below the form — scroll down to show them
                     setTimeout(() => {
                         document.getElementById("diagnostic-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
                     }, 200);
@@ -79,6 +77,22 @@ export default function CockpitForm() {
         },
         [isValid, isCalculating, runDiagnostic]
     );
+
+    // Auto-save / auto-calculate effect
+    const prevInputRef = useRef(JSON.stringify(input));
+    useEffect(() => {
+        const currentData = JSON.stringify(input);
+        if (currentData !== prevInputRef.current) {
+            prevInputRef.current = currentData;
+            // Only auto-run if already valid and we already generated once (to avoid running on incomplete form during first fill)
+            if (isValid && useDiagnosticStore.getState().result) {
+                const timer = setTimeout(() => {
+                    runDiagnostic();
+                }, 800);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [input, isValid, runDiagnostic]);
 
     // Generic number handler — sets to undefined when empty to keep Partial<> clean
     const handleNumber = useCallback(
@@ -161,10 +175,8 @@ export default function CockpitForm() {
                 <AdvancedDPESelector
                     currentDPE={input.currentDPE}
                     targetDPE={input.targetDPE}
-                    dpeProjete={input.dpeProjete}
                     onChangeCurrent={(dpe) => updateInput({ currentDPE: dpe })}
                     onChangeTarget={(dpe) => updateInput({ targetDPE: dpe })}
-                    onChangeProjete={(dpe) => updateInput({ dpeProjete: dpe })}
                 />
             </div>
 

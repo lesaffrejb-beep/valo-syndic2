@@ -332,8 +332,8 @@ export default function DiagnosticPDF({ result }: { result: DiagnosticResult }) 
     const perUnit = financing.perUnit;
     const now = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
-    const monthlyPerLot = Math.round(financing.monthlyPayment / n);
-    const savingsPerLot = Math.round(financing.monthlyEnergySavings / n);
+    const monthlyPerLot = perUnit?.mensualiteParLot ?? (financing.monthlyPayment / n);
+    const savingsPerLot = financing.monthlyEnergySavings / n;
     const effortReel = monthlyPerLot - savingsPerLot;
 
     const totalAids = financing.mprAmount + financing.ceeAmount + financing.localAidAmount + financing.amoAmount;
@@ -382,11 +382,11 @@ export default function DiagnosticPDF({ result }: { result: DiagnosticResult }) 
                 <View style={s.heroBox}>
                     <Text style={s.heroLabel}>Effort Réel par Lot et par Mois</Text>
                     <Text style={s.heroValue}>
-                        {effortReel > 0 ? `${effortReel} €` : `+ ${Math.abs(effortReel)} €`}
+                        {effortReel > 0 ? `${formatCurrency(effortReel)}` : `+ ${formatCurrency(Math.abs(effortReel))}`}
                     </Text>
                     <Text style={s.heroUnit}>/ mois</Text>
                     <Text style={s.heroCaption}>
-                        Mensualité Éco-PTZ ({monthlyPerLot} €) − Économie énergie ({savingsPerLot} €)
+                        Mensualité Éco-PTZ ({formatCurrency(monthlyPerLot)}) − Économie énergie ({formatCurrency(savingsPerLot)})
                     </Text>
                 </View>
 
@@ -442,14 +442,12 @@ export default function DiagnosticPDF({ result }: { result: DiagnosticResult }) 
                 {financing.localAidAmount > 0 && (
                     <AidRow label="Aides locales" amount={formatCurrency(financing.localAidAmount)} />
                 )}
-                {(input.alurFund ?? 0) > 0 && (
-                    <AidRow label="Fonds Travaux ALUR" amount={formatCurrency(input.alurFund ?? 0)} />
-                )}
-                <SubtotalRow label="TOTAL AIDES" amount={formatCurrency(totalAids)} isAid />
-
                 {/* Group 3: Financing */}
                 <Text style={s.sectionTitle}>Financement</Text>
                 <LedgerRow label="Reste à charge brut" amount={formatCurrency(financing.remainingCost)} />
+                {(input.alurFund ?? 0) > 0 && (
+                    <AidRow label="Fonds Travaux ALUR (Mobilisé)" amount={formatCurrency(input.alurFund ?? 0)} />
+                )}
                 <AidRow label="Éco-PTZ accordé (20 ans, 0%)" amount={formatCurrency(financing.ecoPtzAmount)} />
 
                 {/* Final */}
@@ -499,7 +497,7 @@ export default function DiagnosticPDF({ result }: { result: DiagnosticResult }) 
                         </View>
                         <View style={s.card}>
                             <Text style={s.cardLabel}>Mensualité / lot</Text>
-                            <Text style={s.cardValue}>{perUnit.mensualiteParLot} € / mois</Text>
+                            <Text style={s.cardValue}>{formatCurrency(perUnit.mensualiteParLot)} / mois</Text>
                         </View>
                         <View style={s.card}>
                             <Text style={s.cardLabel}>Valeur Verte / lot</Text>

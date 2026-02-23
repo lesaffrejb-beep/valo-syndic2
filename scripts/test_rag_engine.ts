@@ -26,6 +26,7 @@ const testInput: DiagnosticInput = {
     montantTravauxAmeliorationHT: 0,
     statutLot: 'occupant' as const,
     optionLocAvantages: false,
+    ecoPtzDuration: 20
 };
 
 const result = generateDiagnostic(testInput);

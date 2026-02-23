@@ -147,25 +147,28 @@ function KpiCard({
     label: string;
     value: string;
     unit: string;
-    accent?: "default" | "positive" | "negative" | "warning";
+    accent?: "default" | "positive" | "negative" | "warning" | "neutral";
 }) {
     const borderStyles: Record<string, string> = {
         default: "border-l-navy/60",
         positive: "border-l-gain",
         negative: "border-l-cost",
         warning: "border-l-amber-500",
+        neutral: "border-l-slate-400",
     };
     const valueStyles: Record<string, string> = {
         default: "text-oxford",
         positive: "text-gain",
         negative: "text-cost",
         warning: "text-amber-700",
+        neutral: "text-slate-900",
     };
     const dotStyles: Record<string, string> = {
         default: "bg-navy/60",
         positive: "bg-gain",
         negative: "bg-cost",
         warning: "bg-amber-500",
+        neutral: "bg-slate-400",
     };
     return (
         <div className={`flex flex-col items-center justify-center p-5 rounded-card border border-border border-l-4 ${borderStyles[accent]} bg-white text-center relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md`}>
@@ -371,10 +374,10 @@ export default function DiagnosticResults() {
                     accent={savingsAccent}
                 />
                 <KpiCard
-                    label="Flux net mensuel"
-                    value={`${cashflowPerLot > 0 ? "+" : ""}${cashflowPerLot} €`}
+                    label="Effort net mensuel estimé"
+                    value={`${cashflowPerLot > 0 ? "↗" : "↘"} ${Math.abs(cashflowPerLot)} €`}
                     unit="par lot / mois"
-                    accent={cashflowAccent}
+                    accent="neutral"
                 />
             </div>
 
@@ -391,30 +394,30 @@ export default function DiagnosticResults() {
 
                 <div className="space-y-0.5 rounded-lg border border-border overflow-hidden mb-2">
                     <LedgerRow
-                        label="Travaux HT"
+                        label="Travaux énergétiques (TVA 5,5 %)"
                         amount={financing.worksCostHT}
-                        subNote="Assiette des travaux énergétiques éligibles MPR et Éco-PTZ. TVA 5,5 % appliquée (Art. 279-0 bis A CGI)."
+                        subNote="Assiette éligible MPR et Éco-PTZ. Taxe sur La Valeur Ajoutée (Art. 279-0 bis A CGI)."
                     />
                     <LedgerRow
-                        label="Honoraires Syndic (3 %)"
+                        label="Honoraires Syndic (TVA 20 %)"
                         amount={financing.syndicFees}
                         tag="Art. 18-1 A Loi 65"
-                        subNote="Hors assiette MPR et Éco-PTZ — non subventionnable, non finançable par prêt collectif. TVA 20 %. Remplacé par le montant saisi si renseigné."
+                        subNote="Base de calcul : 3% du montant des travaux ou Forfait estimatif saisi. Hors assiette MPR et Éco-PTZ — non finançable par prêt collectif."
                     />
                     <LedgerRow
-                        label="Assurance DO (2 %)"
+                        label="Assurance DO (Taxe 9 %)"
                         amount={financing.doFees}
-                        subNote="Dommages-Ouvrage — obligatoire pour chantier > 2 ans (Art. L. 242-1 Code Assurances). Taxe sur conventions d'assurance 9 % (Art. 991 CGI)."
+                        subNote="Base de calcul : 2% du montant des travaux. Obligatoire pour chantier > 2 ans (Art. L. 242-1 Code Assurances)."
                     />
                     <LedgerRow
-                        label="Provision Aléas (5 %)"
+                        label="Provision Aléas (TVA latente 5,5 %)"
                         amount={financing.contingencyFees}
-                        subNote="Imprévus de chantier. TVA latente 5,5 % intégrée (dépense future probable). Non déductible en Déficit Foncier (dépense non engagée — BOI-RFPI-BASE-20-60)."
+                        subNote="Base de calcul : 5% du montant des travaux. Dépense future probable. Non déductible en Déficit Foncier (dépense non engagée)."
                     />
                     <LedgerRow
-                        label="AMO Ingénierie"
+                        label="AMO Ingénierie (TVA 20 %)"
                         amount={financing.amoCostTTC}
-                        subNote="Assistance à Maîtrise d'Ouvrage — 600 € HT/lot. Subventionnée à 50 % par l'ANAH (Art. L. 321-1). TVA 20 %."
+                        subNote="Assistance à Maîtrise d'Ouvrage — 600 € HT/lot. Subventionnée par l'ANAH (Art. L. 321-1)."
                     />
                     <LedgerRow label="TOTAL TTC" amount={financing.totalCostTTC} variant="subtotal-cost" />
                 </div>
@@ -470,6 +473,7 @@ export default function DiagnosticResults() {
                             variant="subtotal-aid"
                             tag={mprRateLabel}
                             alertBadge="Sous réserve décrets LFI 2026"
+                            subNote="Subvention calculée sur l'assiette des travaux énergétiques HT, conditionnée à l'atteinte du gain énergétique cible. ℹ️ Aide soumise aux quotas votés par l'État."
                         />
                     )}
                     <LedgerRow
@@ -477,12 +481,13 @@ export default function DiagnosticResults() {
                         amount={financing.ceeAmount}
                         variant="subtotal-aid"
                         alertBadge="Indicatif — à contractualiser"
-                        subNote="Estimation basée sur 8% des travaux HT (taux moyen de marché). Le montant CEE réel est fixé par contrat avec un opérateur selon les fiches standardisées ATEE/PNCEE."
+                        subNote="Estimation basée sur 8% des travaux HT (taux moyen de marché). Le montant CEE exact sera fixé par le contrat avec l'opérateur (fiches ATEE/PNCEE). ℹ️ Les volumes peuvent varier selon le marché des certificats."
                     />
                     <LedgerRow
-                        label="Subvention AMO (50%)"
+                        label="Subvention AMO (50 %)"
                         amount={financing.amoAmount}
                         variant="subtotal-aid"
+                        subNote="L'ANAH subventionne 50% de la prestation intellectuelle (AMO) limitant ainsi le reste à charge pour le syndicat. ℹ️ Plafonné statutairement."
                     />
                     {financing.localAidAmount > 0 && (
                         <LedgerRow
@@ -491,16 +496,22 @@ export default function DiagnosticResults() {
                             variant="subtotal-aid"
                         />
                     )}
-                    {(input.alurFund ?? 0) > 0 && (
-                        <LedgerRow
-                            label="Fonds Travaux ALUR"
-                            amount={input.alurFund ?? 0}
-                            variant="subtotal-aid"
-                        />
-                    )}
                     <LedgerRow label="TOTAL AIDES" amount={totalAids} variant="subtotal-aid" />
 
+                    <div className="h-1 border-t border-dashed border-slate-300" />
                     <div className="h-1" />
+
+                    {(input.alurFund ?? 0) > 0 && (
+                        <>
+                            <LedgerRow
+                                label="Fonds Travaux ALUR (Mobilisé)"
+                                amount={input.alurFund ?? 0}
+                                variant="loan"
+                                subNote="Déjà provisionné par les copropriétaires, déduit du besoin de financement total pour cet unique exercice."
+                            />
+                            <div className="h-2 border-t border-dashed border-slate-300" />
+                        </>
+                    )}
 
                     {/* Éco-PTZ */}
                     <LedgerRow
@@ -513,10 +524,10 @@ export default function DiagnosticResults() {
                                     <span className="text-sm font-semibold text-navy italic">
                                         − {formatCurrency(financing.monthlyPayment)} / mois
                                     </span>
-                                    <span className="text-[10px] text-slate-400 italic">sur 20 ans</span>
+                                    <span className="text-[10px] text-slate-400 italic">sur {financing.ecoPtzDuration} ans</span>
                                 </div>
                                 <p className="text-[9px] text-subtle leading-relaxed italic pr-4">
-                                    Prêt à taux zéro — remboursé en 240 mensualités. Inclut provision 2,5% frais de garantie SACICAP. Plafonné à 50 000 € / lot — Rénovation globale.
+                                    Prêt à taux zéro — remboursé en {financing.ecoPtzDuration * 12} mensualités. Inclut forfait de garantie 500 €. Plafonné selon les travaux globaux / lots.
                                 </p>
                             </div>
                         }
@@ -545,9 +556,8 @@ export default function DiagnosticResults() {
 
                 <p className="text-[10px] text-subtle mt-4 leading-relaxed">
                     <strong className="text-slate-600">Logique financière :</strong> RAF = TTC − Σ Subventions.
-                    Le RAF se décompose en Éco-PTZ (prêt à taux zéro, 240 mensualités) + Apport Cash immédiat.
+                    Le RAF se décompose en Éco-PTZ + Apport Cash immédiat.
                     Les aides (MPR, CEE, AMO) sont versées a posteriori — le syndicat préfinance via l&rsquo;Appel de Fonds Initial (Loi 65).
-                    TVA appliquée ligne par ligne : 5,5% travaux énergétiques, 9% assurance DO, 20% honoraires syndic et AMO (Art. 279-0 bis CGI).
                 </p>
 
                 {/* ── Feature 2 : Legal Disclosure Accordion ───── */}
@@ -597,7 +607,7 @@ export default function DiagnosticResults() {
                         <Scale className="w-3.5 h-3.5 text-slate flex-shrink-0 mt-0.5" />
                         <p className="text-[10px] text-slate leading-relaxed">
                             <strong>Déficit Foncier (CGI Art. 156) :</strong> L&apos;avantage fiscal An 1 est
-                            déductible du revenu global dans la limite de <strong>10 700 €/an par contribuable</strong>.
+                            déductible du revenu global dans la limite de <strong>{formatCurrency(financing.plafondImputationDeductible ?? 10700)}/an par contribuable</strong>.
                             L&apos;excédent est reportable sur les revenus fonciers des 10 années suivantes.
                             Applicable au <strong>régime réel uniquement</strong> — bailleurs investisseurs uniquement.
                         </p>
