@@ -556,6 +556,7 @@ export default function CockpitForm() {
                                 <FieldLabel htmlFor="logoUpload">Logo (PNG / SVG, max 200 Ko)</FieldLabel>
                                 <div className="flex items-center gap-3">
                                     {brand.logoUrl && (
+                                        /* eslint-disable-next-line @next/next/no-img-element */
                                         <img
                                             src={brand.logoUrl}
                                             alt="Logo"
