@@ -56,6 +56,8 @@ export default function CockpitForm() {
     const [methodologieOpen, setMethodologieOpen] = useState(false);
 
     const isValid =
+        !!input.address && input.address.trim() !== "" &&
+        !!input.codePostalImmeuble && input.codePostalImmeuble.length === 5 &&
         input.numberOfUnits !== undefined &&
         input.numberOfUnits >= 2 &&
         input.currentDPE !== undefined &&
@@ -147,7 +149,7 @@ export default function CockpitForm() {
                         maxLength={5}
                         pattern="\d{5}"
                         className={inputCls}
-                        placeholder="Ex : 75001"
+                        placeholder="75001"
                         value={input.codePostalImmeuble || ""}
                         onChange={(e) => {
                             const val = e.target.value.replace(/\D/g, "");
@@ -196,7 +198,7 @@ export default function CockpitForm() {
                         type="number"
                         min={0}
                         className={inputCls}
-                        placeholder="Ex : 350 000"
+                        placeholder="350 000"
                         value={input.estimatedCostHT || ""}
                         onChange={handleNumber("estimatedCostHT")}
                     />
@@ -211,7 +213,7 @@ export default function CockpitForm() {
                         type="number"
                         min={0}
                         className={inputCls}
-                        placeholder="Ex : 45 000"
+                        placeholder="45 000"
                         value={input.currentEnergyBill || ""}
                         onChange={handleNumber("currentEnergyBill")}
                     />
@@ -225,7 +227,7 @@ export default function CockpitForm() {
                         type="number"
                         min={0}
                         className={inputCls}
-                        placeholder="Ex : 15 000"
+                        placeholder="15 000"
                         value={input.montantTravauxAmeliorationHT ?? ""}
                         onChange={handleNumber("montantTravauxAmeliorationHT")}
                     />
@@ -443,7 +445,7 @@ export default function CockpitForm() {
 
                 {!isValid && (
                     <p className="mb-3 text-[11px] text-slate-500 text-center">
-                        Renseignez le nombre de lots, le DPE actuel et le DPE cible.
+                        Renseignez l'adresse, le code postal, le nombre de lots et les diagnostics.
                     </p>
                 )}
 

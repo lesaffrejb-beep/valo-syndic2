@@ -269,12 +269,12 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                             </button>
                         </div>
                         <div className="flex items-center justify-between gap-2 mt-auto">
-                            <label htmlFor="codePostal-sim" className="text-[10px] font-semibold text-slate whitespace-nowrap">Code postal</label>
+                            <label htmlFor="codePostal-sim" className="text-[10px] font-semibold text-slate whitespace-nowrap cursor-help" title="Nécessaire pour le calcul des primes ANAH (barème Île-de-France vs Province)">Code postal</label>
                             <input
                                 id="codePostal-sim"
                                 type="text"
                                 maxLength={5}
-                                placeholder="ex: 75014"
+                                placeholder="75014"
                                 className={`${inputCls} h-9 text-xs w-24 text-right px-2`}
                                 value={codePostal}
                                 onChange={(e) => setCodePostal(e.target.value.replace(/\D/g, ""))}
@@ -437,7 +437,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                                         id="rfr-sim"
                                         type="number"
                                         min={0}
-                                        placeholder="ex: 20000"
+                                        placeholder="20000"
                                         className={`${inputCls} w-32`}
                                         value={rfr || ""}
                                         onChange={(e) => {
@@ -575,9 +575,9 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
 // ── Mini stat helper ─────────────────────────────────────────────────────────
 function MiniStat({ label, value, green }: { label: string; value: string; green?: boolean }) {
     return (
-        <div className="flex flex-col gap-1.5 px-2 sm:pl-4 sm:first:pl-0 sm:last:pr-0">
-            <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate leading-tight">{label}</span>
-            <span className={`text-xl font-serif font-bold tabular-nums whitespace-nowrap mt-1 ${green ? "text-gain" : "text-oxford"}`}>
+        <div className="flex flex-col justify-between h-full px-2 sm:pl-4 sm:first:pl-0 sm:last:pr-0">
+            <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate leading-tight mb-2">{label}</span>
+            <span className={`text-xl font-serif font-bold tabular-nums whitespace-nowrap ${green ? "text-gain" : "text-oxford"}`}>
                 {value}
             </span>
         </div>

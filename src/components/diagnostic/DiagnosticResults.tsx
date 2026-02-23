@@ -108,7 +108,7 @@ function LedgerRow({
                     {alertBadge && <AlertBadge label={alertBadge} />}
                 </div>
                 {variant === "default" ? (
-                    <div className="hidden sm:block flex-1 border-b border-dotted border-slate-300 mx-4 opacity-40 group-hover:opacity-60 relative -top-1 transition-opacity" />
+                    <div className="hidden sm:block flex-1 border-t border-dotted border-slate-300 mx-4 opacity-40 group-hover:opacity-60 transition-opacity" />
                 ) : (
                     <div className="flex-1" />
                 )}

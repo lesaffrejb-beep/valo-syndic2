@@ -14,7 +14,6 @@ const DEFAULT_INPUT: Partial<DiagnosticInput> = {
     averagePricePerSqm: 3200,
     currentDPE: "F",
     targetDPE: "C",
-    numberOfUnits: 20,
     commercialLots: 0,
     estimatedCostHT: 0,         // 0 → auto-estimated as surface × 850
     localAidAmount: 0,
