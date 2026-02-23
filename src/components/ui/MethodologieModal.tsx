@@ -219,9 +219,81 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
                     </Section>
 
                     {/* ══════════════════════════════════════════════════════════
-                        3. GAIN ÉNERGÉTIQUE (DPE)
+                        3. PRIMES INDIVIDUELLES ANAH
                         ══════════════════════════════════════════════════════════ */}
-                    <Section title="3. Gain énergétique — Calcul DPE">
+                    <Section title="3. Primes individuelles ANAH (Profils Modestes)">
+                        <p className="text-[12px] leading-relaxed">
+                            Aides complémentaires versées au syndicat mais <strong>déduites individuellement</strong>
+                            de la quote-part des copropriétaires éligibles (résidence principale uniquement).
+                        </p>
+
+                        <Formula>
+                            Prime Profil Bleu (Très Modeste) = 3 000 € / logement<br />
+                            Prime Profil Jaune (Modeste) = 1 500 € / logement<br />
+                            Autres profils (Intermédiaire, Supérieur) = 0 €
+                        </Formula>
+
+                        <div className="space-y-1">
+                            <ValRow label="Barème Très Modeste (IDF / Province) - 1 pers" value="≤ 24 031 € / ≤ 17 363 €" note="Revenu Fiscal de Référence (RFR)" />
+                            <ValRow label="Barème Modeste (IDF / Province) - 1 pers" value="≤ 29 253 € / ≤ 22 259 €" note="Guide ANAH — Édition Février 2026" />
+                        </div>
+
+                        <p className="text-[11px] text-subtle italic">
+                            Ces primes sont bloquées si le propriétaire bénéficie déjà d&rsquo;une aide type Loc&apos;Avantages, ou s&rsquo;il s&rsquo;agit d&rsquo;une résidence secondaire / location nue standard.
+                        </p>
+                    </Section>
+
+                    {/* ══════════════════════════════════════════════════════════
+                        4. MAPRIMEADAPT' (PARTIES COMMUNES)
+                        ══════════════════════════════════════════════════════════ */}
+                    <Section title="4. MaPrimeAdapt' (Parties communes)">
+                        <p className="text-[12px] leading-relaxed">
+                            Aide de l&rsquo;ANAH destinée à financer les travaux d&rsquo;<strong>accessibilité sur les parties communes</strong> (ascenseurs, rampes, élargissement de portes).
+                        </p>
+
+                        <Formula>
+                            Subvention MaPrimeAdapt' = min(Coût des travaux d'accessibilité, 10 000 €)
+                        </Formula>
+
+                        <div className="space-y-1">
+                            <ValRow label="Aide maximale par copropriété" value="10 000 €" note="ANAH Panorama des aides 2025" />
+                            <ValRow label="Cumulabilité" value="Oui" note="Cumulable avec MPR Copropriété" />
+                        </div>
+
+                        <p className="text-[11px] text-subtle italic">
+                            Nécessite la présence d&rsquo;au moins un bénéficiaire éligible : personne ≥ 70 ans, personne de 60–69 ans avec GIR 1–4, ou personne avec taux d&rsquo;incapacité ≥ 50%.
+                        </p>
+                    </Section>
+
+                    {/* ══════════════════════════════════════════════════════════
+                        5. PRÊT AVANCE MUTATION (PAR+)
+                        ══════════════════════════════════════════════════════════ */}
+                    <Section title="5. Prêt Avance Mutation (PAR+)">
+                        <p className="text-[12px] leading-relaxed">
+                            Prêt hypothécaire à <strong>taux 0 %</strong> destiné aux copropriétaires modestes (Profils Bleu et Jaune) pour financer le reste à charge de leurs <strong>parties privatives</strong> sans effort de trésorerie immédiat.
+                        </p>
+
+                        <Formula>
+                            Remboursement du capital = In fine (lors de la vente ou succession)<br />
+                            Taux d'intérêt = 0 % (pendant 10 ans, pris en charge par l'État)
+                        </Formula>
+
+                        <div className="space-y-1">
+                            <ValRow label="Plafond (Rénovation globale)" value="50 000 €" note="CGI Art. 244 quater U" />
+                            <ValRow label="Plafond (Bouquet 2 gestes)" value="25 000 €" note="" />
+                            <ValRow label="Plafond (1 geste isol. autre)" value="15 000 €" note="" />
+                            <ValRow label="Plafond (Parois vitrées seules)" value="7 000 €" note="" />
+                        </div>
+
+                        <p className="text-[11px] text-subtle italic">
+                            Incompatible avec l&rsquo;éco-PTZ sur les mêmes postes de travaux. Valable uniquement pour le financement des quotes-parts de travaux privatifs / intérêt collectif.
+                        </p>
+                    </Section>
+
+                    {/* ══════════════════════════════════════════════════════════
+                        6. GAIN ÉNERGÉTIQUE (DPE)
+                        ══════════════════════════════════════════════════════════ */}
+                    <Section title="6. Gain énergétique — Calcul DPE">
                         <p className="text-[12px] leading-relaxed">
                             Le gain est estimé à partir des <strong>consommations moyennes par classe DPE</strong>
                             (kWh/m²/an en énergie primaire), conformément au référentiel 3CL-DPE 2021.
@@ -246,9 +318,9 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
                     </Section>
 
                     {/* ══════════════════════════════════════════════════════════
-                        4. CEE
+                        7. CEE
                         ══════════════════════════════════════════════════════════ */}
-                    <Section title="4. CEE — Certificats d'Économie d'Énergie">
+                    <Section title="7. CEE — Certificats d'Économie d'Énergie">
                         <p className="text-[12px] leading-relaxed">
                             Les CEE sont des primes versées par des fournisseurs d&rsquo;énergie (obligés) en
                             contrepartie de la réalisation de travaux d&rsquo;efficacité énergétique. Le
@@ -273,9 +345,9 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
                     </Section>
 
                     {/* ══════════════════════════════════════════════════════════
-                        5. AMO
+                        8. AMO
                         ══════════════════════════════════════════════════════════ */}
-                    <Section title="5. AMO — Assistance à Maîtrise d'Ouvrage">
+                    <Section title="8. AMO — Assistance à Maîtrise d'Ouvrage">
                         <p className="text-[12px] leading-relaxed">
                             L&rsquo;AMO accompagne le syndicat dans le montage du dossier ANAH,
                             la coordination des travaux et le suivi financier. L&rsquo;ANAH subventionne
@@ -298,9 +370,9 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
                     </Section>
 
                     {/* ══════════════════════════════════════════════════════════
-                        6. ÉCO-PTZ COPROPRIÉTÉ
+                        9. ÉCO-PTZ COPROPRIÉTÉ
                         ══════════════════════════════════════════════════════════ */}
-                    <Section title="6. Éco-PTZ Copropriété — Prêt collectif à taux zéro">
+                    <Section title="9. Éco-PTZ Copropriété — Prêt collectif à taux zéro">
                         <p className="text-[12px] leading-relaxed">
                             Prêt sans intérêts souscrit par le syndicat et remboursé par les copropriétaires
                             via les charges. Il finance le <strong>Reste à Financer après subventions</strong>,
@@ -331,9 +403,9 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
                     </Section>
 
                     {/* ══════════════════════════════════════════════════════════
-                        7. RESTE À CHARGE — WATERFALL
+                        10. RESTE À CHARGE — WATERFALL
                         ══════════════════════════════════════════════════════════ */}
-                    <Section title="7. Calcul du Reste à Charge — Cascade financière">
+                    <Section title="10. Calcul du Reste à Charge — Cascade financière">
                         <p className="text-[12px] leading-relaxed">
                             Le moteur applique une <strong>cascade (waterfall)</strong> pour répartir le
                             financement dans un ordre logique réglementaire et budgétaire.
@@ -359,9 +431,9 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
                     </Section>
 
                     {/* ══════════════════════════════════════════════════════════
-                        8. DÉFICIT FONCIER
+                        11. DÉFICIT FONCIER
                         ══════════════════════════════════════════════════════════ */}
-                    <Section title="8. Déficit Foncier — Avantage fiscal Bailleurs">
+                    <Section title="11. Déficit Foncier — Avantage fiscal Bailleurs">
                         <p className="text-[12px] leading-relaxed">
                             Mécanisme fiscal réservé aux <strong>bailleurs au régime réel</strong>
                             (propriétaires qui louent et déclarent leurs revenus fonciers réels,
@@ -397,9 +469,9 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
                     </Section>
 
                     {/* ══════════════════════════════════════════════════════════
-                        9. VALEUR VERTE
+                        12. VALEUR VERTE
                         ══════════════════════════════════════════════════════════ */}
-                    <Section title="9. Valeur Verte — Valorisation patrimoniale">
+                    <Section title="12. Valeur Verte — Valorisation patrimoniale">
                         <p className="text-[12px] leading-relaxed">
                             La &laquo; Valeur Verte &raquo; est la <strong>plus-value patrimoniale</strong>
                             apportée par l&rsquo;amélioration du DPE, documentée par les études des Notaires
@@ -430,9 +502,9 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
                     </Section>
 
                     {/* ══════════════════════════════════════════════════════════
-                        10. COÛT DE L'INACTION
+                        13. COÛT DE L'INACTION
                         ══════════════════════════════════════════════════════════ */}
-                    <Section title="10. Coût de l'inaction — Impact du report à 3 ans">
+                    <Section title="13. Coût de l'inaction — Impact du report à 3 ans">
                         <p className="text-[12px] leading-relaxed">
                             Si le syndicat ne vote pas les travaux aujourd&rsquo;hui, deux effets cumulatifs
                             s&rsquo;aggravent : l&rsquo;<strong>inflation des coûts BTP</strong> et
@@ -458,9 +530,9 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
                     </Section>
 
                     {/* ══════════════════════════════════════════════════════════
-                        11. CALENDRIER LOI CLIMAT
+                        14. CALENDRIER LOI CLIMAT
                         ══════════════════════════════════════════════════════════ */}
-                    <Section title="11. Loi Climat & Résilience — Calendrier d'interdictions">
+                    <Section title="14. Loi Climat & Résilience — Calendrier d'interdictions">
                         <p className="text-[12px] leading-relaxed">
                             La Loi Climat &amp; Résilience du 22 août 2021 <Ref>n° 2021-1104</Ref> instaure
                             un calendrier progressif d&rsquo;interdiction de location des logements
@@ -482,9 +554,9 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
                     </Section>
 
                     {/* ══════════════════════════════════════════════════════════
-                        12. ESTIMATION AUTOMATIQUE DU BUDGET
+                        15. ESTIMATION AUTOMATIQUE DU BUDGET
                         ══════════════════════════════════════════════════════════ */}
-                    <Section title="12. Estimation automatique du budget travaux">
+                    <Section title="15. Estimation automatique du budget travaux">
                         <p className="text-[12px] leading-relaxed">
                             Si aucun budget n&rsquo;est saisi dans le formulaire, le moteur estime
                             automatiquement le coût des travaux à partir de la surface totale.
