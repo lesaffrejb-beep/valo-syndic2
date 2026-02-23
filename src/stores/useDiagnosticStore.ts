@@ -37,6 +37,8 @@ interface DiagnosticState {
     error: string | null;
     /** View mode toggle: pilotage (cockpit) vs presentation (projector) */
     viewMode: "pilotage" | "presentation";
+    /** True when input has changed since last successful run — triggers dirty badge + blur */
+    isDirty: boolean;
     /** Merge a partial patch into the current input */
     updateInput: (patch: Partial<DiagnosticInput>) => void;
     /** Reset input to defaults */
@@ -45,6 +47,8 @@ interface DiagnosticState {
     runDiagnostic: () => Promise<void>;
     /** Toggle view mode */
     setViewMode: (mode: "pilotage" | "presentation") => void;
+    /** Manually set the dirty flag */
+    setIsDirty: (v: boolean) => void;
 }
 
 // ─── Store ───────────────────────────────────────────────────────────────────
@@ -54,6 +58,7 @@ export const useDiagnosticStore = create<DiagnosticState>((set, get) => ({
     isCalculating: false,
     error: null,
     viewMode: "pilotage",
+    isDirty: false,
 
     updateInput: (patch) => {
         set((state) => ({
@@ -69,6 +74,10 @@ export const useDiagnosticStore = create<DiagnosticState>((set, get) => ({
         set({ viewMode: mode });
     },
 
+    setIsDirty: (v) => {
+        set({ isDirty: v });
+    },
+
     runDiagnostic: async () => {
         const { input } = get();
 
@@ -78,7 +87,7 @@ export const useDiagnosticStore = create<DiagnosticState>((set, get) => ({
             return;
         }
 
-        set({ isCalculating: true, error: null });
+        set({ isCalculating: true, error: null, isDirty: false });
 
         try {
             // ── Fill smart defaults (Minimal pre-processing before Zod) ────────
@@ -147,7 +156,7 @@ export const useDiagnosticStore = create<DiagnosticState>((set, get) => ({
                 },
             };
 
-            set({ result: parsedResult, isCalculating: false, error: null });
+            set({ result: parsedResult, isCalculating: false, error: null, isDirty: false });
         } catch (error) {
             console.error("[DiagnosticStore] Échec inattendu du calcul:", error);
             set({

@@ -33,7 +33,7 @@ export function ViewModeToggle({ className, totalUnits = 20, avgSurface = 65 }: 
         const x = e.clientX - rect.left;
         const pct = Math.max(0, Math.min(100, (x / rect.width) * 100));
         const tantiemes = Math.round((pct / 100) * 1000);
-        
+
         setUserTantiemes(Math.max(1, tantiemes));
         if (tantiemes >= 995) {
             setViewMode('immeuble');
@@ -112,8 +112,8 @@ export function ViewModeToggle({ className, totalUnits = 20, avgSurface = 65 }: 
                 <motion.div
                     className={cn(
                         "absolute left-0 top-0 bottom-0 transition-colors duration-500",
-                        isFullBuilding 
-                            ? "bg-gradient-to-r from-white/90 to-white" 
+                        isFullBuilding
+                            ? "bg-gradient-to-r from-white/90 to-white"
                             : "bg-gradient-to-r from-gold/80 via-gold to-gold/90"
                     )}
                     initial={false}
@@ -151,9 +151,9 @@ export function ViewModeToggle({ className, totalUnits = 20, avgSurface = 65 }: 
                 >
                     <div className={cn(
                         "px-2 py-1 rounded-full text-xs font-bold backdrop-blur-md shadow-lg transition-colors duration-200",
-                        percentage < 50 
-                            ? "bg-gold text-black" 
-                            : percentage > 90 
+                        percentage < 50
+                            ? "bg-gold text-black"
+                            : percentage > 90
                                 ? "bg-black/40 text-white"
                                 : "bg-black/30 text-white"
                     )}>
@@ -164,13 +164,13 @@ export function ViewModeToggle({ className, totalUnits = 20, avgSurface = 65 }: 
 
             {/* Labels sous la barre */}
             <div className="flex justify-between mt-2 px-1">
-                <span className="text-[9px] uppercase tracking-widest text-white/30">
-                    {userTantiemes} tantièmes
+                <span className="text-[9px] uppercase tracking-widest text-white/30 truncate max-w-[120px]">
+                    {userTantiemes} en quote-part (tantièmes)
                 </span>
                 <span className="text-[9px] uppercase tracking-widest text-white/30">
-                    {isFullBuilding 
-                        ? `${totalUnits} lots · ${totalSurface} m²` 
-                        : `~${lotSurface} m² · ${Math.round((userTantiemes/1000)*totalUnits)} lots env.`}
+                    {isFullBuilding
+                        ? `${totalUnits} lots · ${totalSurface} m²`
+                        : `~${lotSurface} m² · ${Math.round((userTantiemes / 1000) * totalUnits)} lots env.`}
                 </span>
             </div>
 

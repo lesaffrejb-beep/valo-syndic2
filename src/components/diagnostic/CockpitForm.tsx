@@ -14,6 +14,9 @@ import { useDiagnosticStore } from "@/stores/useDiagnosticStore";
 import MethodologieModal from "@/components/ui/MethodologieModal";
 import { DPE_COLORS, type DPELetter } from "@/lib/constants";
 import AdvancedDPESelector from "./AdvancedDPESelector";
+import { AlertTriangle } from "lucide-react";
+import { useBrandStore } from "@/stores/useBrandStore";
+import { Briefcase } from "lucide-react";
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
@@ -50,10 +53,12 @@ function HelperText({ children }: { children: React.ReactNode }) {
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function CockpitForm() {
-    const { input, updateInput, runDiagnostic, isCalculating, error } = useDiagnosticStore();
+    const { input, updateInput, runDiagnostic, isCalculating, error, result, isDirty, setIsDirty } = useDiagnosticStore();
+    const { brand, updateBrand } = useBrandStore();
     const [advancedOpen, setAdvancedOpen] = useState(false);
     const [heatingMenuOpen, setHeatingMenuOpen] = useState(false);
     const [methodologieOpen, setMethodologieOpen] = useState(false);
+    const [brandingOpen, setBrandingOpen] = useState(false);
 
     const isValid =
         !!input.address && input.address.trim() !== "" &&
@@ -80,21 +85,33 @@ export default function CockpitForm() {
         [isValid, isCalculating, runDiagnostic]
     );
 
-    // Auto-save / auto-calculate effect
-    const prevInputRef = useRef(JSON.stringify(input));
+    // Auto-save disabled to allow the "Dirty" badge indicator UX to be visible
+    // and to compel manual clicks for generating the analysis.
+
+    // ── Dirty state tracking ─────────────────────────────────────────────────
+    // Snapshot the input that produced the last result.
+    // When the input diverges from that snapshot (and a result exists), mark dirty.
+    const lastCommitRef = useRef<string | null>(null);
+
+    // Capture the snapshot when a result is freshly produced
     useEffect(() => {
-        const currentData = JSON.stringify(input);
-        if (currentData !== prevInputRef.current) {
-            prevInputRef.current = currentData;
-            // Only auto-run if already valid and we already generated once (to avoid running on incomplete form during first fill)
-            if (isValid && useDiagnosticStore.getState().result) {
-                const timer = setTimeout(() => {
-                    runDiagnostic();
-                }, 800);
-                return () => clearTimeout(timer);
-            }
+        if (result && !isCalculating) {
+            lastCommitRef.current = JSON.stringify(input);
+            // result just arrived — clear dirty flag
+            setIsDirty(false);
         }
-    }, [input, isValid, runDiagnostic]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [result, isCalculating]);
+
+    // Detect when the user changes a field AFTER a result was already displayed
+    useEffect(() => {
+        if (!result || !lastCommitRef.current) return;
+        const currentSnapshot = JSON.stringify(input);
+        if (currentSnapshot !== lastCommitRef.current) {
+            setIsDirty(true);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [input]);
 
     // Generic number handler — sets to undefined when empty to keep Partial<> clean
     const handleNumber = useCallback(
@@ -491,11 +508,107 @@ export default function CockpitForm() {
                         </div>
                     </div>
                 )}
+                {/* ── Section Branding PDF ─────────────────────────────── */}
+                <div className="border-t border-border pt-5 mt-1">
+                    <button
+                        type="button"
+                        onClick={() => setBrandingOpen(v => !v)}
+                        className="flex w-full items-center justify-between group mb-1"
+                        aria-expanded={brandingOpen}
+                    >
+                        <div className="flex items-center gap-2">
+                            <Briefcase className="w-3.5 h-3.5 text-slate-400" strokeWidth={1.5} />
+                            <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-400 group-hover:text-navy transition-colors">
+                                Export PDF — Branding
+                            </span>
+                        </div>
+                        <span className={`text-slate-300 text-xs transition-transform duration-200 ${brandingOpen ? "rotate-90" : ""}`}>›</span>
+                    </button>
+
+                    {brandingOpen && (
+                        <div className="mt-3 space-y-3">
+                            {/* Dossier ref */}
+                            <div>
+                                <FieldLabel htmlFor="dossierRef">Nom du dossier / Réf. client</FieldLabel>
+                                <input
+                                    id="dossierRef"
+                                    type="text"
+                                    value={brand.dossierRef}
+                                    onChange={e => updateBrand({ dossierRef: e.target.value })}
+                                    placeholder="Ex : Copro Les Lilas — AG juin 2026"
+                                    className={inputCls}
+                                />
+                            </div>
+                            {/* Agency name */}
+                            <div>
+                                <FieldLabel htmlFor="agencyName">Cabinet / Nom du Syndic</FieldLabel>
+                                <input
+                                    id="agencyName"
+                                    type="text"
+                                    value={brand.agencyName}
+                                    onChange={e => updateBrand({ agencyName: e.target.value })}
+                                    placeholder="Ex : Syndic ABC"
+                                    className={inputCls}
+                                />
+                            </div>
+                            {/* Logo upload */}
+                            <div>
+                                <FieldLabel htmlFor="logoUpload">Logo (PNG / SVG, max 200 Ko)</FieldLabel>
+                                <div className="flex items-center gap-3">
+                                    {brand.logoUrl && (
+                                        <img
+                                            src={brand.logoUrl}
+                                            alt="Logo"
+                                            className="h-8 w-auto rounded border border-border object-contain bg-white p-0.5"
+                                        />
+                                    )}
+                                    <label
+                                        htmlFor="logoUpload"
+                                        className="flex-1 flex items-center justify-center gap-1.5 h-9 px-3 rounded-md border border-dashed border-slate-300 text-[11px] text-slate-500 hover:border-navy/40 hover:text-navy cursor-pointer transition-colors"
+                                    >
+                                        {brand.logoUrl ? "🔄 Remplacer" : "📎 Ajouter un logo"}
+                                        <input
+                                            id="logoUpload"
+                                            type="file"
+                                            accept="image/png,image/svg+xml,image/jpeg"
+                                            className="sr-only"
+                                            onChange={e => {
+                                                const file = e.target.files?.[0];
+                                                if (!file || file.size > 204800) return; // 200 Ko max
+                                                const reader = new FileReader();
+                                                reader.onload = ev => updateBrand({ logoUrl: ev.target?.result as string });
+                                                reader.readAsDataURL(file);
+                                            }}
+                                        />
+                                    </label>
+                                    {brand.logoUrl && (
+                                        <button
+                                            type="button"
+                                            onClick={() => updateBrand({ logoUrl: null })}
+                                            className="text-slate-400 hover:text-red-500 text-xs transition-colors px-1"
+                                            title="Supprimer le logo"
+                                        >×</button>
+                                    )}
+                                </div>
+                                <HelperText>Appearât dans l’en-tête de l’export PDF</HelperText>
+                            </div>
+                        </div>
+                    )}
+                </div>
 
                 {!isValid && (
                     <p className="mb-3 text-[11px] text-slate-500 text-center">
                         Renseignez l&apos;adresse, le code postal, le nombre de lots et les diagnostics.
                     </p>
+                )}
+
+
+                {/* ── Dirty Badge ─────────────────────────────────────────── */}
+                {isDirty && result && (
+                    <div className="mb-3 flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-amber-50 border border-amber-200 text-amber-800 animate-pulse-subtle">
+                        <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2} />
+                        <span className="text-[11px] font-semibold leading-none">Calcul à mettre à jour</span>
+                    </div>
                 )}
 
                 <button

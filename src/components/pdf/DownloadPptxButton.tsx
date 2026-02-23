@@ -50,9 +50,9 @@ export function DownloadPptxButton({ result, className = "" }: DownloadPptxButto
         setError(null);
 
         try {
-                // Import dynamique pour éviter d'alourdir le bundle initial
-                const { default: PptxGenJS } = await import('pptxgenjs');
-                const pptx = new PptxGenJS();
+            // Import dynamique pour éviter d'alourdir le bundle initial
+            const { default: PptxGenJS } = await import('pptxgenjs');
+            const pptx = new PptxGenJS();
 
             // Metadata
             pptx.author = brand.agencyName;
@@ -190,7 +190,7 @@ export function DownloadPptxButton({ result, className = "" }: DownloadPptxButto
                 x: 2, y: 1.4, w: 6, h: 0.8,
                 fontSize: 36, fontFace: "Arial", bold: true, color: COLORS.success, align: "center",
             });
-            slide3.addText("pour 100 tantièmes (Éco-PTZ 0% sur 20 ans)", {
+            slide3.addText("pour 100 en quote-part (tantièmes) (Éco-PTZ 0% sur 20 ans)", {
                 x: 2, y: 2.2, w: 6, h: 0.5,
                 fontSize: 12, fontFace: "Arial", color: COLORS.white, align: "center",
             });

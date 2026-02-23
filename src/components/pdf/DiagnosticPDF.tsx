@@ -326,7 +326,7 @@ const s = StyleSheet.create({
 
 // ─── Document ────────────────────────────────────────────────────────────────
 
-export default function DiagnosticPDF({ result }: { result: DiagnosticResult }) {
+export default function DiagnosticPDF({ result, dossierRef }: { result: DiagnosticResult; dossierRef?: string }) {
     const { input, financing, valuation } = result;
     const n = input.numberOfUnits;
     const perUnit = financing.perUnit;
@@ -348,7 +348,10 @@ export default function DiagnosticPDF({ result }: { result: DiagnosticResult }) 
                ──────────────────────────────────────────────────── */}
             <Page size="A4" style={s.page}>
                 <View style={s.header}>
-                    <Text style={s.headerLabel}>Diagnostic Patrimonial &amp; Financier</Text>
+                    <View>
+                        <Text style={s.headerLabel}>Diagnostic Patrimonial &amp; Financier</Text>
+                        {dossierRef ? <Text style={[s.headerDate, { marginTop: 2 }]}>{dossierRef}</Text> : null}
+                    </View>
                     <Text style={s.headerDate}>{now}</Text>
                 </View>
 

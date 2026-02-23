@@ -13,7 +13,7 @@
 
 import { useDiagnosticStore } from "@/stores/useDiagnosticStore";
 import { formatCurrency } from "@/lib/calculator";
-import { FileText, AlertTriangle, ShieldCheck, Scale, ChevronDown } from "lucide-react";
+import { FileText, AlertTriangle, ShieldCheck, Scale, ChevronDown, Info } from "lucide-react";
 import PersonalSimulator from "@/components/diagnostic/PersonalSimulator";
 import PDFDownloadButton from "@/components/pdf/PDFDownloadButton";
 import DiagnosticPDF from "@/components/pdf/DiagnosticPDF";
@@ -135,7 +135,7 @@ function KpiCard({
     unit,
     accent = "default",
 }: {
-    label: string;
+    label: string | React.ReactNode;
     value: string;
     unit: string;
     accent?: "default" | "positive" | "negative" | "warning" | "neutral";
@@ -237,8 +237,8 @@ function ExpertSummary({
 
 function LegalDisclosureAccordion({ onOpenModal }: { onOpenModal: () => void }) {
     return (
-        <details className="mt-4 rounded-md border border-slate-200 bg-slate-50 group">
-            <summary className="cursor-pointer flex items-center justify-between px-4 py-3 text-[10px] font-semibold text-slate-600 select-none list-none">
+        <details className="mt-4 rounded-md border border-slate-200 bg-slate-50 group transition-all duration-200">
+            <summary className="cursor-pointer flex items-center justify-between px-4 py-3 text-[10px] font-semibold text-slate-600 select-none list-none [&::-webkit-details-marker]:hidden">
                 <span>⚖️ Lire les mentions légales complètes &amp; RGPD</span>
                 <ChevronDown
                     className="w-3.5 h-3.5 text-slate-400 transition-transform duration-200 group-open:rotate-180 flex-shrink-0"
@@ -375,12 +375,46 @@ export default function DiagnosticResults() {
                     unit="par lot / mois (Base DPE post-travaux)"
                     accent={savingsAccent}
                 />
-                <KpiCard
-                    label="Effort net mensuel estimé"
-                    value={formatCurrency(Math.abs(cashflowPerLot))}
-                    unit="par lot / mois"
-                    accent={netEffortAccent}
-                />
+                <div className="relative group/effortnet cursor-help" tabIndex={0}>
+                    <KpiCard
+                        label={
+                            <span className="flex items-center gap-1 border-b border-dotted border-slate-400/60 pb-0.5">
+                                Effort net mensuel estimé
+                                <Info className="w-3 h-3 text-slate-400 group-hover/effortnet:text-navy transition-colors" />
+                            </span>
+                        }
+                        value={formatCurrency(Math.abs(cashflowPerLot))}
+                        unit="par lot / mois"
+                        accent={netEffortAccent}
+                    />
+                    {/* Popover CSS-only — visible au survol du groupe */}
+                    <div
+                        aria-hidden="true"
+                        className="
+                            pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50
+                            w-max max-w-[260px]
+                            bg-oxford text-white text-[10px] leading-snug
+                            rounded-md px-3 py-2.5 shadow-lg
+                            opacity-0 group-hover/effortnet:opacity-100
+                            transition-opacity duration-150
+                        "
+                    >
+                        <p className="font-semibold mb-1 text-white/70 uppercase tracking-[0.06em] text-[9px]">Détail calcul</p>
+                        <p>
+                            Mensualité PTZ&nbsp;<strong className="text-white">{formatCurrency(perUnit?.mensualiteParLot ?? 0)}/mois</strong>
+                        </p>
+                        <p className="text-white/60 my-0.5">−</p>
+                        <p>
+                            Éco. énergie&nbsp;<strong className="text-white">{formatCurrency(monthlySavingsPerLot)}/mois</strong>
+                        </p>
+                        <div className="mt-1.5 pt-1.5 border-t border-white/20 flex items-center justify-between gap-3">
+                            <span className="text-white/60">= Effort net</span>
+                            <strong className="text-white tabular-nums">{formatCurrency(Math.abs(cashflowPerLot))}/mois</strong>
+                        </div>
+                        {/* Arrow */}
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-oxford" />
+                    </div>
+                </div>
             </div>
 
             {/* ── Financial Ledger ────────────────────────────── */}
@@ -421,39 +455,47 @@ export default function DiagnosticResults() {
                         amount={financing.amoCostTTC}
                         subNote="Assistance à Maîtrise d'Ouvrage — 600 € HT/lot. Subventionnée par l'ANAH (Art. L. 321-1)."
                     />
+                    {/* Item 5 — Sous-total HT (discret, avant TTC) */}
+                    <div className="flex items-center justify-between px-4 py-1.5 border-t border-slate-200/70">
+                        <span className="text-[11px] text-slate-500 leading-none">Total Travaux &amp; Honoraires HT</span>
+                        <span className="text-[11px] text-slate-500 tabular-nums leading-none">{formatCurrency(financing.totalCostHT)}</span>
+                    </div>
                     <LedgerRow label="TOTAL TTC" amount={financing.totalCostTTC} variant="subtotal-cost" />
                 </div>
 
                 {/* ── Plan de Financement & Trésorerie ── */}
 
                 {/* FIX AUDIT FEV 2026 : Toggle Plan Sécurisé / Plan Optimisé */}
-                <div className="flex flex-col sm:flex-row p-1 bg-slate-100 rounded-lg mb-6 border border-slate-200 gap-0.5">
-                    <button
-                        onClick={() => setSecurePlan(true)}
-                        aria-pressed={securePlan}
-                        className={`flex-1 px-4 py-2.5 rounded-md text-center transition-all duration-200 ${securePlan
-                            ? "bg-navy text-white shadow-md ring-1 ring-navy font-semibold"
-                            : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
-                            }`}
-                    >
-                        <div className="font-serif font-bold text-sm">Plan Sécurisé</div>
-                        <div className={`text-[10px] mt-0.5 ${securePlan ? "text-white/90" : "text-slate-400"}`}>
-                            Soutien modéré, sans MPR (+10% inclus)
-                        </div>
-                    </button>
-                    <button
-                        onClick={() => setSecurePlan(false)}
-                        aria-pressed={!securePlan}
-                        className={`flex-1 px-4 py-2.5 rounded-md text-center transition-all duration-200 ${!securePlan
-                            ? "bg-navy text-white shadow-md ring-1 ring-navy font-semibold"
-                            : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
-                            }`}
-                    >
-                        <div className="font-serif font-bold text-sm">Plan Optimisé</div>
-                        <div className={`text-[10px] mt-0.5 ${!securePlan ? "text-white/90" : "text-slate-400"}`}>
-                            Soutien maximal, MPR incluse (LFI)
-                        </div>
-                    </button>
+                <div className="flex flex-col mb-6 gap-1.5">
+                    <div className="flex flex-col sm:flex-row p-1 bg-slate-100 rounded-lg border border-slate-200 gap-0.5">
+                        <button
+                            onClick={() => setSecurePlan(true)}
+                            aria-pressed={securePlan}
+                            className={`flex-1 px-4 py-2.5 rounded-md text-center transition-all duration-200 ${securePlan
+                                ? "bg-navy text-white shadow-md ring-1 ring-navy font-semibold"
+                                : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
+                                }`}
+                        >
+                            <div className="font-serif font-bold text-sm">Plan Sécurisé</div>
+                        </button>
+                        <button
+                            onClick={() => setSecurePlan(false)}
+                            aria-pressed={!securePlan}
+                            className={`flex-1 px-4 py-2.5 rounded-md text-center transition-all duration-200 ${!securePlan
+                                ? "bg-navy text-white shadow-md ring-1 ring-navy font-semibold"
+                                : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
+                                }`}
+                        >
+                            <div className="font-serif font-bold text-sm">Plan Optimisé</div>
+                        </button>
+                    </div>
+                    {/* Item 3 — Micro-copy sous le switch */}
+                    <p className="text-[10px] text-slate-500 italic text-center animate-fadeInUp" style={{ animationDuration: "200ms" }}>
+                        {securePlan
+                            ? "Aides socles uniquement (MPR Copro + Éco-PTZ standard)"
+                            : "Inclut la dérogation Déficit Foncier dérogatoire (devis signé avant le 31/12/2026)"
+                        }
+                    </p>
                 </div>
 
                 <div className="space-y-0.5 rounded-lg border border-border overflow-hidden mb-2">

@@ -14,7 +14,7 @@ import { Monitor, LayoutDashboard } from "lucide-react";
 import { DownloadPdfButton } from "@/components/pdf/DownloadPdfButton";
 
 export default function DiagnosticPage() {
-    const { viewMode, setViewMode, result } = useDiagnosticStore();
+    const { viewMode, setViewMode, result, isDirty } = useDiagnosticStore();
 
     // ── Presentation Mode ────────────────────────────────────
     if (viewMode === "presentation") {
@@ -96,7 +96,13 @@ export default function DiagnosticPage() {
                     </aside>
 
                     {/* ── Right Column: Results ──────────────────────── */}
-                    <section id="diagnostic-results" className="lg:col-span-8">
+                    <section
+                        id="diagnostic-results"
+                        className={`lg:col-span-8 transition-all duration-300 ${isDirty && result
+                                ? "opacity-60 blur-[1px] pointer-events-none select-none"
+                                : "opacity-100 blur-0"
+                            }`}
+                    >
                         <DiagnosticResults />
                     </section>
 

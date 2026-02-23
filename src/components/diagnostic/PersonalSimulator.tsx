@@ -174,7 +174,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                     <strong>Calcul estimatif lissé.</strong> La répartition légale exacte sera appliquée selon les grilles
                     de votre Règlement de Copropriété{" "}
                     <strong>(Art. 10 Loi 65 : Charges générales vs Utilité)</strong>.
-                    Tantièmes et clés de répartition peuvent différer selon la nature des travaux.
+                    Quote-part (tantièmes) et clés de répartition peuvent différer selon la nature des travaux.
                 </p>
             </div>
 
@@ -193,7 +193,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                                     onClick={() => setShareMethod("tantiemes")}
                                     className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider rounded transition-all ${shareMethod === "tantiemes" ? "bg-white text-navy shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
                                 >
-                                    Tantièmes
+                                    Quote-part (tantièmes)
                                 </button>
                                 <button
                                     type="button"
@@ -210,7 +210,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                                     id="tantiemes"
                                     type="number"
                                     min={1}
-                                    placeholder="Vos tantièmes"
+                                    placeholder="Votre quote-part"
                                     className={`${inputCls} h-9 text-xs flex-1`}
                                     value={tantiemes || ""}
                                     onChange={(e) => setTantiemes(parseInt(e.target.value) || 0)}
@@ -304,7 +304,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
             </div>
 
             {/* ── Results Grid ────────────────────────────────── */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+            <div className={`grid grid-cols-1 gap-5 mb-8 ${investorType === "bailleur" ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
 
                 {/* Card 1 : Reste au comptant */}
                 <div className="flex flex-col items-center justify-between p-6 min-h-[120px] rounded-xl bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100/50 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-shadow duration-300 text-center relative overflow-hidden group">
@@ -351,6 +351,27 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                         </span>
                     </div>
                 </div>
+
+                {/* Item 4 — Carte KPI Économie d'impôt — uniquement si Bailleur */}
+                {investorType === "bailleur" && (
+                    <div className="flex flex-col items-center justify-between p-6 min-h-[120px] rounded-xl bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-slate-100/50 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-shadow duration-300 text-center relative overflow-hidden group">
+                        <div className="absolute top-0 inset-x-0 h-1 bg-gain opacity-80 group-hover:opacity-100 transition-opacity" />
+                        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate mb-3 mt-1 leading-tight">
+                            Économie d&apos;impôt estimée
+                            <br />
+                            <span className="font-normal normal-case tracking-normal text-[9px] text-subtle">(Déficit Foncier – CGI art. 156)</span>
+                        </span>
+                        <span className="text-3xl font-serif font-bold text-gain tabular-nums whitespace-nowrap">
+                            {fiscalRegime === "micro"
+                                ? <span className="text-slate-400 text-lg">Non applicable (Micro)</span>
+                                : personal.deficitFoncier > 0
+                                    ? `+ ${formatCurrency(personal.deficitFoncier)}`
+                                    : <span className="text-slate-400 text-xl">selon votre TMI</span>
+                            }
+                        </span>
+                        <span className="text-[10px] text-subtle mt-auto pt-3">Gain fiscal Année 1 estimé</span>
+                    </div>
+                )}
             </div>
 
             {/* ── Summary Line Items (Ledger Style) ────────────────────── */}

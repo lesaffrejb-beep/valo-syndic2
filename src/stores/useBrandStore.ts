@@ -7,6 +7,8 @@ export interface BrandSettings {
     primaryColor: string;
     contactEmail: string;
     contactPhone: string;
+    /** Référence du dossier / nom client — affiché dans le header PDF */
+    dossierRef: string;
 }
 
 interface BrandState {
@@ -21,6 +23,7 @@ const DEFAULT_BRAND: BrandSettings = {
     primaryColor: "#0f172a", // slate-900 default
     contactEmail: "contact@valo-syndic.fr",
     contactPhone: "01 23 45 67 89",
+    dossierRef: "",
 };
 
 export const useBrandStore = create<BrandState>()(
