@@ -505,9 +505,9 @@ export default function CockpitForm() {
                     className="flex items-center justify-between cursor-pointer group select-none"
                 >
                     <div className="flex items-center gap-2.5">
-                        <Briefcase className="w-4 h-4 text-navy flex-shrink-0" strokeWidth={1.5} />
+                        <div className="w-0.5 h-5 bg-navy rounded-full flex-shrink-0" />
                         <h3 className="font-serif text-base font-semibold text-oxford tracking-tight">
-                            Export PDF — Branding
+                            Export PDF
                         </h3>
                     </div>
                     <svg

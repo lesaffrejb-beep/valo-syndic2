@@ -188,22 +188,24 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
                     <Section title="2. MaPrimeRénov' Copropriété (MPR) — ANAH 2026">
                         <p className="text-[12px] leading-relaxed">
                             Aide de l&rsquo;ANAH calculée sur les <strong>travaux HT purs (hors honoraires et
-                            frais annexes)</strong>. Versée au syndicat après validation du dossier.
+                                frais annexes)</strong>. Versée au syndicat après validation du dossier.
                         </p>
 
                         <Formula>
                             MPR = min(Travaux HT × Taux MPR, Plafond par lot × Nombre de lots résidentiels)<br /><br />
-                            Taux MPR = Taux de base + Bonus Sortie Passoire<br />
+                            Taux MPR = Taux de base + Bonus Sortie Passoire + Bonus Copropriété Fragile<br />
                             Taux de base = 30 % si gain ≥ 35 % et gain &lt; 50 %<br />
                             Taux de base = 45 % si gain ≥ 50 %<br />
                             Taux de base =  0 % si gain &lt; 35 % (non éligible)<br />
-                            Bonus Sortie Passoire = +10 % si DPE initial F ou G → D ou mieux
+                            Bonus Sortie Passoire = +10 % si DPE initial F ou G → D ou mieux<br />
+                            Bonus Copropriété Fragile = +20 % (Impayés ≥ 8% ou NPNRU) — Cession CEE à l&apos;ANAH
                         </Formula>
 
                         <div className="space-y-1">
                             <ValRow label="Taux standard (gain 35–50 %)" value="30 %" note="Art. D. 321-13 CCH" />
                             <ValRow label="Taux haute performance (gain > 50 %)" value="45 %" note="Art. D. 321-13 CCH" />
                             <ValRow label="Bonus sortie de passoire (F/G → D ou mieux)" value="+10 %" note="Décret n° 2022-510" />
+                            <ValRow label="Bonus Copropriété Fragile" value="+20 %" note="Plafonné à 65% globalement (Instruction ANAH 2023 §6)" />
                             <ValRow label="Plafond assiette par lot résidentiel" value="25 000 € HT" note="Guide ANAH — Édition Février 2026" />
                             <ValRow label="Gain énergétique minimum d'éligibilité" value="≥ 35 %" note="Condition sine qua non" />
                         </div>
@@ -266,7 +268,7 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
                         <p className="text-[11px] text-subtle italic">
                             Le montant réel des CEE n&rsquo;est fixé qu&rsquo;au moment de la signature du
                             contrat avec l&rsquo;opérateur, en fonction du volume de kWh cumac générés
-                            par les travaux. L&rsquo;estimation à 8 % est conservatrice.
+                            par les travaux. L&rsquo;estimation à 8 % est conservatrice. En cas de Copropriété Fragile, les CEE sont cédés à l&apos;ANAH (valeur 0 € pour le syndicat).
                         </p>
                     </Section>
 
@@ -307,7 +309,7 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
 
                         <Formula>
                             Assiette Éco-PTZ TTC = (Travaux HT + AMO nette HT) × 1,055<br />
-                            RAC éligible = min(RAC total, Assiette Éco-PTZ TTC − MPR − CEE)<br />
+                            RAC éligible = min(RAC total, Assiette Éco-PTZ − MPR − CEE)<br />
                             Montant Éco-PTZ = min(RAC éligible, Plafond total − Frais garantie)<br />
                             Mensualité = Montant Éco-PTZ / 240<br />
                             Reste au comptant = RAC total − Montant Éco-PTZ
@@ -368,12 +370,11 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
                         </p>
 
                         <Formula>
-                            Assiette déductible / lot = (Travaux éligibles TTC − Subventions reçues) / Nombre de lots<br /><br />
-                            Travaux éligibles = Total TTC<br />
-                            &nbsp;&nbsp;− Provision Aléas TTC (dépense non engagée)<br />
-                            &nbsp;&nbsp;− Amélioration standard TTC (hors réno énergétique)<br />
-                            &nbsp;&nbsp;− Honoraires Syndic TTC (gestion, non déductibles Art. 31)<br />
-                            &nbsp;&nbsp;− MPR reçue − CEE reçus − Subvention AMO − Aides locales<br /><br />
+                            Assiette déductible / lot = (HT Éligible − Subventions reçues) / Nombre de lots<br /><br />
+                            HT Éligible (Exclusion stricte de la TVA)<br />
+                            &nbsp;&nbsp;= Travaux HT + Assurance DO HT + AMO HT<br />
+                            Subventions reçues<br />
+                            &nbsp;&nbsp;= MPR reçue + CEE reçus + Subvention AMO + Aides locales<br /><br />
                             Imputation revenu global = min(Assiette, Plafond applicable)<br />
                             Économie fiscale (revenu global) = Imputation × TMI<br />
                             Économie fiscale (revenus fonciers) = Excédent × (TMI + 17,2 %)
