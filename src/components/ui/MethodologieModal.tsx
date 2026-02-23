@@ -270,7 +270,7 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
                         </p>
 
                         <Formula>
-                            Subvention MaPrimeAdapt' = min(Coût des travaux d'accessibilité, 10 000 €)
+                            Subvention MaPrimeAdapt&apos; = min(Coût des travaux d&apos;accessibilité, 10 000 €)
                         </Formula>
 
                         <div className="space-y-1">
@@ -293,7 +293,7 @@ export default function MethodologieModal({ isOpen, onClose }: { isOpen: boolean
 
                         <Formula>
                             Remboursement du capital = In fine (lors de la vente ou succession)<br />
-                            Taux d'intérêt = 0 % (pendant 10 ans, pris en charge par l'État)
+                            Taux d&apos;intérêt = 0 % (pendant 10 ans, pris en charge par l&apos;État)
                         </Formula>
 
                         <div className="space-y-1">
