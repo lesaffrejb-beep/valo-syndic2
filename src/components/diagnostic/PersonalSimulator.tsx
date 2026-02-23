@@ -72,7 +72,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
     const [fiscalRegime, setFiscalRegime] = useState<FiscalRegime>("reel");
 
     // ── Nouveaux states 2026 ─────────────────────────────────────────────────
-    const [codePostal, setCodePostal] = useState(result.input.codePostalImmeuble ?? "");
+    const codePostal = result.input.codePostalImmeuble || "";
     const [rfr, setRfr] = useState(0);           // Revenu Fiscal de Référence (bailleur ou occupant)
     const [revenusFonciers, setRevenusFonciers] = useState(
         result.input.revenusFonciersExistants ?? 0
@@ -268,18 +268,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                                 Bailleur
                             </button>
                         </div>
-                        <div className="flex items-center justify-between gap-2 mt-auto">
-                            <label htmlFor="codePostal-sim" className="text-[10px] font-semibold text-slate whitespace-nowrap cursor-help" title="Nécessaire pour le calcul des primes ANAH (barème Île-de-France vs Province)">Code postal</label>
-                            <input
-                                id="codePostal-sim"
-                                type="text"
-                                maxLength={5}
-                                placeholder="75014"
-                                className={`${inputCls} h-9 text-xs w-24 text-right px-2`}
-                                value={codePostal}
-                                onChange={(e) => setCodePostal(e.target.value.replace(/\D/g, ""))}
-                            />
-                        </div>
+
                     </div>
 
                     {/* Financement Éco-PTZ & ANAH Banner */}
