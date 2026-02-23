@@ -13,7 +13,7 @@
 
 import { useDiagnosticStore } from "@/stores/useDiagnosticStore";
 import { formatCurrency } from "@/lib/calculator";
-import { FileText, AlertTriangle, ShieldCheck, Sparkles, Scale, ChevronDown } from "lucide-react";
+import { FileText, AlertTriangle, ShieldCheck, Scale, ChevronDown } from "lucide-react";
 import PersonalSimulator from "@/components/diagnostic/PersonalSimulator";
 import PDFDownloadButton from "@/components/pdf/PDFDownloadButton";
 import DiagnosticPDF from "@/components/pdf/DiagnosticPDF";
@@ -48,15 +48,6 @@ function AlertBadge({ label }: { label: string }) {
     );
 }
 
-function SectionHeader({ title, accent = "primary" }: { title: string; accent?: "primary" | "secondary" }) {
-    const isPrimary = accent === "primary";
-    return (
-        <div className="flex items-center gap-3 mb-5">
-            <div className={`w-0.5 h-5 rounded-full flex-shrink-0 ${isPrimary ? "bg-navy" : "bg-navy/40"}`} />
-            <h2 className={`text-base font-serif font-semibold tracking-tight ${isPrimary ? "text-oxford" : "text-slate"}`}>{title}</h2>
-        </div>
-    );
-}
 
 function LedgerRow({
     label,
@@ -106,8 +97,8 @@ function LedgerRow({
 
     return (
         <div>
-            <div className={`flex items-center px-4 rounded-md group ${rowStyles[variant]}`}>
-                <div className="flex items-center flex-wrap gap-3 min-w-0">
+            <div className={`flex flex-col gap-1.5 sm:gap-0 sm:flex-row sm:items-center px-4 rounded-md group ${rowStyles[variant]}`}>
+                <div className="flex items-center flex-wrap gap-2 sm:gap-3 min-w-0">
                     <span className={`${labelStyles[variant]} leading-snug`}>{label}</span>
                     {tag && (
                         <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-border">
@@ -117,11 +108,11 @@ function LedgerRow({
                     {alertBadge && <AlertBadge label={alertBadge} />}
                 </div>
                 {variant === "default" ? (
-                    <div className="flex-1 border-b border-dotted border-slate-300 mx-4 opacity-40 group-hover:opacity-60 relative -top-1 transition-opacity" />
+                    <div className="hidden sm:block flex-1 border-b border-dotted border-slate-300 mx-4 opacity-40 group-hover:opacity-60 relative -top-1 transition-opacity" />
                 ) : (
                     <div className="flex-1" />
                 )}
-                <span className={`${amountStyles[variant]} ml-3 flex-shrink-0 text-right`}>
+                <span className={`${amountStyles[variant]} sm:ml-3 flex-shrink-0 text-right self-end sm:self-auto`}>
                     {isDeduction ? `− ${formatCurrency(Math.abs(amount))}` : formatCurrency(amount)}
                 </span>
             </div>
@@ -171,12 +162,12 @@ function KpiCard({
         neutral: "bg-slate-400",
     };
     return (
-        <div className={`flex flex-col items-center justify-center p-5 rounded-card border border-border border-l-4 ${borderStyles[accent]} bg-white text-center relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md`}>
+        <div className={`flex flex-col items-center justify-center p-5 min-h-[138px] rounded-card border border-border border-l-4 ${borderStyles[accent]} bg-white text-center relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md`}>
             <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate mb-2 flex items-center gap-1.5">
                 <span className={`inline-block w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotStyles[accent]}`} />
                 {label}
             </span>
-            <span className={`text-2xl md:text-3xl font-serif font-bold tabular-nums ${valueStyles[accent]}`}>
+            <span className={`text-[clamp(1.6rem,2.9vw,2.2rem)] leading-none font-serif font-bold tabular-nums whitespace-nowrap ${valueStyles[accent]}`}>
                 {value}
             </span>
             <span className="text-[10px] text-subtle mt-1.5">{unit}</span>
@@ -210,7 +201,7 @@ function ExpertSummary({
                 {/* Adresse */}
                 <div className="flex flex-col gap-0.5">
                     <span className="text-[9px] uppercase tracking-widest text-subtle">Copropriété</span>
-                    <span className="text-[11px] font-semibold text-oxford leading-snug truncate max-w-[180px]">
+                    <span title={address || ""} className="text-[11px] font-semibold text-oxford leading-snug truncate max-w-[220px]">
                         {address || "—"}
                     </span>
                 </div>
@@ -321,7 +312,7 @@ export default function DiagnosticResults() {
     const numberOfUnits = input.numberOfUnits;
 
     const monthlySavingsPerLot = numberOfUnits > 0
-        ? Math.round(financing.monthlyEnergySavings / numberOfUnits)
+        ? financing.monthlyEnergySavings / numberOfUnits
         : 0;
 
     const cashflowPerLot = perUnit?.cashflowNetParLot ?? 0;
@@ -343,8 +334,8 @@ export default function DiagnosticResults() {
     // ── KPI semaphore logic ──────────────────────────────────
     const savingsAccent: "positive" | "warning" =
         monthlySavingsPerLot > 0 ? "positive" : "warning";
-    const cashflowAccent: "positive" | "negative" =
-        cashflowPerLot >= 0 ? "positive" : "negative";
+    const netEffortAccent: "positive" | "negative" =
+        cashflowPerLot <= 0 ? "positive" : "negative";
 
     return (
         <div className="space-y-6 animate-fadeInUp">
@@ -358,26 +349,35 @@ export default function DiagnosticResults() {
                 cashDownPayment={financing.cashDownPayment}
             />
 
+            <div className="rounded-card border border-border bg-white px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate">Secteur DPE</span>
+                <StatusBadge label={compliance.statusLabel} color={compliance.statusColor} />
+                {compliance.prohibitionDate && (
+                    <span className="text-[10px] text-subtle">
+                        Interdiction location : {new Date(compliance.prohibitionDate).toLocaleDateString("fr-FR")}
+                    </span>
+                )}
+            </div>
 
             {/* ── Feature 4 : Macro KPIs with Semaphores ──────── */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <KpiCard
                     label="Mensualité Éco-PTZ"
-                    value={perUnit ? `${perUnit.mensualiteParLot} €` : "—"}
+                    value={perUnit ? formatCurrency(perUnit.mensualiteParLot) : "—"}
                     unit="par lot / mois"
                     accent="default"
                 />
                 <KpiCard
                     label="Économie énergie théorique"
-                    value={`${monthlySavingsPerLot} €`}
+                    value={formatCurrency(monthlySavingsPerLot)}
                     unit="par lot / mois (Base DPE post-travaux)"
                     accent={savingsAccent}
                 />
                 <KpiCard
                     label="Effort net mensuel estimé"
-                    value={`${cashflowPerLot > 0 ? "↗" : "↘"} ${Math.abs(cashflowPerLot)} €`}
+                    value={`${cashflowPerLot > 0 ? "↗" : "↘"} ${formatCurrency(Math.abs(cashflowPerLot))}`}
                     unit="par lot / mois"
-                    accent="neutral"
+                    accent={netEffortAccent}
                 />
             </div>
 
@@ -394,9 +394,9 @@ export default function DiagnosticResults() {
 
                 <div className="space-y-0.5 rounded-lg border border-border overflow-hidden mb-2">
                     <LedgerRow
-                        label="Travaux énergétiques (TVA 5,5 %)"
+                        label="Travaux énergétiques HT"
                         amount={financing.worksCostHT}
-                        subNote="Assiette éligible MPR et Éco-PTZ. Taxe sur La Valeur Ajoutée (Art. 279-0 bis A CGI)."
+                        subNote="Assiette éligible MPR et Éco-PTZ. TVA énergétique (5,5 %) appliquée dans le total TTC (Art. 279-0 bis A CGI)."
                     />
                     <LedgerRow
                         label="Honoraires Syndic (TVA 20 %)"
