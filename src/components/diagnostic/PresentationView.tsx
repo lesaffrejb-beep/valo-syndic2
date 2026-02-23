@@ -207,7 +207,7 @@ function MacroCard({
             <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate mb-3">
                 {label}
             </span>
-            <span className={`text-3xl md:text-4xl font-serif font-bold tabular-nums ${textColors[accent || 'slate']}`}>
+            <span className={`text-3xl md:text-4xl font-serif font-bold tabular-nums whitespace-nowrap ${textColors[accent || 'slate']}`}>
                 {value}
             </span>
             <span className="text-[11px] font-medium text-subtle mt-2.5 max-w-[200px] leading-tight">{sublabel}</span>

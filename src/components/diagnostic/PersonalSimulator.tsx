@@ -178,207 +178,141 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                 </p>
             </div>
 
-            {/* ── Controls ────────────────────────────────────── */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5 mb-8 flex-wrap">
-
-                {/* Typology vs Tantièmes Toggle & Inputs */}
-                <div className="flex flex-col gap-4">
-                    <div>
-                        <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate mb-2">
-                            Mode de calcul quote-part
-                        </span>
-                        <div className="flex p-1 bg-slate-100 rounded-md border border-slate-200 gap-1 w-fit">
-                            <button
-                                type="button"
-                                onClick={() => setShareMethod("tantiemes")}
-                                className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide rounded transition-all duration-300 ${shareMethod === "tantiemes"
-                                    ? "bg-white text-navy shadow-sm ring-1 ring-border"
-                                    : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
-                                    }`}
-                            >
-                                Tantièmes
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setShareMethod("typology")}
-                                className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide rounded transition-all duration-300 ${shareMethod === "typology"
-                                    ? "bg-white text-navy shadow-sm ring-1 ring-border"
-                                    : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
-                                    }`}
-                            >
-                                Typologie
-                            </button>
-                        </div>
-                    </div>
-
-                    {shareMethod === "tantiemes" ? (
-                        <div className="flex gap-4">
-                            <div className="flex-1 min-w-[120px]">
-                                <label
-                                    htmlFor="tantiemes"
-                                    className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate mb-2"
+            {/* ── Paramètres de calcul (Format expert) ──────────── */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 sm:p-5 mb-6 shadow-sm">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Mode & Quote-part */}
+                    <div className="flex flex-col gap-3 lg:border-r lg:border-slate-200 lg:pr-6">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate">
+                                Quote-part
+                            </span>
+                            <div className="flex bg-slate-200/60 p-0.5 rounded">
+                                <button
+                                    type="button"
+                                    onClick={() => setShareMethod("tantiemes")}
+                                    className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider rounded transition-all ${shareMethod === "tantiemes" ? "bg-white text-navy shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
                                 >
-                                    Vos tantièmes
-                                </label>
+                                    Tantièmes
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShareMethod("typology")}
+                                    className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider rounded transition-all ${shareMethod === "typology" ? "bg-white text-navy shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                                >
+                                    Typologie
+                                </button>
+                            </div>
+                        </div>
+                        {shareMethod === "tantiemes" ? (
+                            <div className="flex items-center gap-2">
                                 <input
                                     id="tantiemes"
                                     type="number"
                                     min={1}
-                                    className={inputCls}
+                                    placeholder="Vos tantièmes"
+                                    className={`${inputCls} h-9 text-xs flex-1`}
                                     value={tantiemes || ""}
-                                    onChange={(e) => {
-                                        const v = parseInt(e.target.value);
-                                        setTantiemes(isNaN(v) ? 0 : v);
-                                    }}
+                                    onChange={(e) => setTantiemes(parseInt(e.target.value) || 0)}
+                                />
+                                <span className="text-slate flex-shrink-0 text-xs">/</span>
+                                <input
+                                    id="totalTantiemes"
+                                    type="number"
+                                    min={1}
+                                    placeholder="Total copro"
+                                    className={`${inputCls} h-9 text-xs flex-1`}
+                                    value={totalTantiemes || ""}
+                                    onChange={(e) => setTotalTantiemes(parseInt(e.target.value) || 0)}
                                 />
                             </div>
-                            <div className="flex-1 min-w-[120px]">
-                                <label
-                                    htmlFor="totalTantiemes"
-                                    className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate mb-2"
-                                >
-                                    Total copro
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        id="totalTantiemes"
-                                        type="number"
-                                        min={1}
-                                        className={inputCls}
-                                        value={totalTantiemes || ""}
-                                        onChange={(e) => {
-                                            const v = parseInt(e.target.value);
-                                            setTotalTantiemes(isNaN(v) ? 0 : v);
-                                        }}
-                                    />
-                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                        <span className="text-[10px] font-semibold text-slate-400">
-                                            {(personal.ratio * 100).toFixed(1)}%
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
+                        ) : (
+                            <select
+                                id="typology"
+                                className={`${selectCls} h-9 text-xs w-full`}
+                                value={typology}
+                                onChange={(e) => setTypology(e.target.value as any)}
+                            >
+                                <option value="Studio">Studio</option>
+                                <option value="T2">T2</option>
+                                <option value="T3">T3</option>
+                                <option value="T4">T4</option>
+                                <option value="T5">T5 (ou +)</option>
+                            </select>
+                        )}
+                        <div className="text-[10px] font-semibold text-right text-navy bg-navy/5 py-1.5 px-2 rounded-md ml-auto mt-auto">
+                            Quote-part : {(personal.ratio * 100).toFixed(1)}%
                         </div>
-                    ) : (
-                        <div className="flex gap-4">
-                            <div className="flex-1 min-w-[140px]">
-                                <label
-                                    htmlFor="typology"
-                                    className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate mb-2"
-                                >
-                                    Type d&apos;appartement
-                                </label>
-                                <select
-                                    id="typology"
-                                    className={selectCls + " w-full h-10 text-sm"}
-                                    value={typology}
-                                    onChange={(e) => setTypology(e.target.value as "Studio" | "T2" | "T3" | "T4" | "T5")}
-                                >
-                                    <option value="Studio">Studio</option>
-                                    <option value="T2">T2</option>
-                                    <option value="T3">T3</option>
-                                    <option value="T4">T4</option>
-                                    <option value="T5">T5 (ou +)</option>
-                                </select>
-                            </div>
-                            <div className="flex-1 flex flex-col justify-end min-w-[120px]">
-                                <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate mb-2">Quote-part estimée</span>
-                                <div className="h-10 flex items-center px-3 bg-slate-50 border border-border rounded-md">
-                                    <span className="text-sm font-semibold text-oxford">
-                                        {(personal.ratio * 100).toFixed(1)}%
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                    </div>
 
-                {/* Investor Type Toggle */}
-                <div>
-                    <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate mb-2">
-                        Statut du lot
-                    </span>
-                    <div className="flex p-1 bg-slate-100 rounded-md border border-slate-200 gap-1">
-                        <button
-                            type="button"
-                            onClick={() => setInvestorType("occupant")}
-                            className={`flex-1 px-4 py-2 text-[11px] font-bold uppercase tracking-wide rounded transition-all duration-300 ${investorType === "occupant"
-                                ? "bg-white text-navy shadow-sm ring-1 ring-border"
-                                : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
-                                }`}
-                        >
-                            Occupant
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setInvestorType("bailleur")}
-                            className={`flex-1 px-4 py-2 text-[11px] font-bold uppercase tracking-wide rounded transition-all duration-300 ${investorType === "bailleur"
-                                ? "bg-navy text-white shadow-sm ring-1 ring-navy"
-                                : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/70"
-                                }`}
-                        >
-                            Bailleur
-                        </button>
+                    {/* Statut & Localisation */}
+                    <div className="flex flex-col gap-3 lg:border-r lg:border-slate-200 lg:pr-6">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate">
+                                Statut & Localisation
+                            </span>
+                        </div>
+                        <div className="flex bg-slate-200/60 p-0.5 rounded">
+                            <button
+                                type="button"
+                                onClick={() => setInvestorType("occupant")}
+                                className={`flex-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded transition-all ${investorType === "occupant" ? "bg-white text-navy shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                            >
+                                Occupant
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setInvestorType("bailleur")}
+                                className={`flex-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded transition-all ${investorType === "bailleur" ? "bg-navy text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
+                            >
+                                Bailleur
+                            </button>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 mt-auto">
+                            <label htmlFor="codePostal-sim" className="text-[10px] font-semibold text-slate whitespace-nowrap">Code postal</label>
+                            <input
+                                id="codePostal-sim"
+                                type="text"
+                                maxLength={5}
+                                placeholder="ex: 75014"
+                                className={`${inputCls} h-9 text-xs w-24 text-right px-2`}
+                                value={codePostal}
+                                onChange={(e) => setCodePostal(e.target.value.replace(/\D/g, ""))}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Financement Éco-PTZ & ANAH Banner */}
+                    <div className="flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate">
+                                Emprunt Collectif
+                            </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                            <label htmlFor="ptzDuration-sim" className="text-[10px] font-semibold text-slate whitespace-nowrap">Durée Éco-PTZ</label>
+                            <div className="flex items-center gap-1 w-24 relative">
+                                <input
+                                    id="ptzDuration-sim"
+                                    type="number"
+                                    min={1}
+                                    max={25}
+                                    className={`${inputCls} h-9 text-xs w-full pl-2 pr-6 text-right`}
+                                    value={ptzDuration || ""}
+                                    onChange={(e) => setPtzDuration(parseInt(e.target.value) || 20)}
+                                />
+                                <span className="absolute right-2 text-[10px] text-slate-400 pointer-events-none">ans</span>
+                            </div>
+                        </div>
+                        {codePostal.length === 5 && (
+                            <div className={`mt-auto rounded-md border px-2.5 py-1.5 text-[9px] font-medium leading-tight ${isIDF(codePostal) ? "border-navy/20 bg-navy/5 text-navy/80" : "border-moss/20 bg-moss/5 text-moss/80"}`}>
+                                <span className="font-bold">Barème {isIDF(codePostal) ? "IDF" : "Province"} appliqué</span> —
+                                Saisissez votre RFR pour voir la prime.
+                            </div>
+                        )}
                     </div>
                 </div>
-
-                {/* Code Postal — géo-routage ANAH */}
-                <div>
-                    <label
-                        htmlFor="codePostal-sim"
-                        className="block text-[10px] font-semibold uppercase tracking-[0.05em] text-slate mb-1.5"
-                    >
-                        Code postal
-                        <span className="ml-1 normal-case font-normal text-subtle">(barème ANAH)</span>
-                    </label>
-                    <input
-                        id="codePostal-sim"
-                        type="text"
-                        maxLength={5}
-                        pattern="\d{5}"
-                        placeholder="ex: 75014"
-                        className={`${inputCls} w-28`}
-                        value={codePostal}
-                        onChange={(e) => setCodePostal(e.target.value.replace(/\D/g, ""))}
-                    />
-                </div>
-
-                {/* PTZ Duration */}
-                <div>
-                    <label
-                        htmlFor="ptzDuration-sim"
-                        className="block text-[10px] font-semibold uppercase tracking-[0.05em] text-slate mb-1.5"
-                    >
-                        Durée Éco-PTZ
-                        <span className="ml-1 normal-case font-normal text-subtle">(années)</span>
-                    </label>
-                    <input
-                        id="ptzDuration-sim"
-                        type="number"
-                        min={1}
-                        max={25}
-                        className={`${inputCls} w-28`}
-                        value={ptzDuration || ""}
-                        onChange={(e) => {
-                            const v = parseInt(e.target.value);
-                            setPtzDuration(isNaN(v) ? 20 : v);
-                        }}
-                    />
-                </div>
             </div>
-
-            {/* ── ANAH Prime Info Banner (si code postal saisi) ── */}
-            {codePostal.length === 5 && (
-                <div className={`flex items-center gap-2 rounded-md border px-3.5 py-2 mb-5 text-[10px] ${isIDF(codePostal)
-                    ? "border-navy/20 bg-navy/5 text-navy/80"
-                    : "border-moss/20 bg-moss/5 text-moss/80"
-                    }`}>
-                    <span className="font-semibold">
-                        Barème {isIDF(codePostal) ? "Île-de-France" : "Province"} appliqué
-                    </span>
-                    <span className="text-subtle">— Saisissez votre RFR N−1 pour voir votre prime individuelle</span>
-                </div>
-            )}
 
             {/* ── Results Grid ────────────────────────────────── */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
@@ -389,7 +323,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                     <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate mb-3 mt-1">
                         Reste au comptant
                     </span>
-                    <span className="text-3xl font-serif font-bold text-oxford tabular-nums">
+                    <span className="text-3xl font-serif font-bold text-oxford tabular-nums whitespace-nowrap">
                         {formatCurrency(personal.cashDown)}
                     </span>
                     {personal.primeANAH > 0 && (
@@ -406,7 +340,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                     <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate mb-3 mt-1">
                         Mensualité Éco-PTZ
                     </span>
-                    <span className="text-3xl font-serif font-bold text-oxford tabular-nums">
+                    <span className="text-3xl font-serif font-bold text-oxford tabular-nums whitespace-nowrap">
                         {formatCurrency(personal.monthlyPayment)}
                     </span>
                     <span className="text-[10px] text-subtle mt-auto pt-3">/ mois pendant {ptzDuration} ans</span>
@@ -418,7 +352,7 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                     <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate mb-3 mt-1">
                         Valeur Verte
                     </span>
-                    <span className="text-3xl font-serif font-bold text-gain tabular-nums">
+                    <span className="text-3xl font-serif font-bold text-gain tabular-nums whitespace-nowrap">
                         + {formatCurrency(personal.greenValue)}
                     </span>
                     <div className="flex flex-col mt-auto pt-3 text-center">
@@ -430,16 +364,18 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
                 </div>
             </div>
 
-            {/* ── Summary Line Items ─────────────────────────── */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-2 mb-6 px-1">
-                <MiniStat label="Coût TTC" value={formatCurrency(personal.totalTTC)} />
-                <MiniStat label="Total Aides" value={`− ${formatCurrency(personal.subsidies)}`} green />
-                <MiniStat label="Éco-PTZ" value={formatCurrency(personal.loanAmount)} />
-                <MiniStat
-                    label="Éco. énergie théorique / mois"
-                    value={`+ ${formatCurrency(personal.monthlySavings)}`}
-                    green
-                />
+            {/* ── Summary Line Items (Ledger Style) ────────────────────── */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 mb-8">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-6 sm:gap-y-0 divide-y sm:divide-y-0 sm:divide-x divide-slate-200/60">
+                    <MiniStat label="Coût TTC" value={formatCurrency(personal.totalTTC)} />
+                    <MiniStat label="Total Aides" value={`− ${formatCurrency(personal.subsidies)}`} green />
+                    <MiniStat label="Éco-PTZ" value={formatCurrency(personal.loanAmount)} />
+                    <MiniStat
+                        label="Éco. énergie théorique / mois"
+                        value={`+ ${formatCurrency(personal.monthlySavings)}`}
+                        green
+                    />
+                </div>
             </div>
 
             {/* Gain Fiscal explicit for Bailleur */}
@@ -639,9 +575,9 @@ export default function PersonalSimulator({ result }: { result: DiagnosticResult
 // ── Mini stat helper ─────────────────────────────────────────────────────────
 function MiniStat({ label, value, green }: { label: string; value: string; green?: boolean }) {
     return (
-        <div className="flex flex-col gap-0.5">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.07em] text-slate">{label}</span>
-            <span className={`text-sm font-semibold tabular-nums ${green ? "text-gain" : "text-oxford"}`}>
+        <div className="flex flex-col gap-1.5 px-2 sm:pl-4 sm:first:pl-0 sm:last:pr-0">
+            <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate leading-tight">{label}</span>
+            <span className={`text-xl font-serif font-bold tabular-nums whitespace-nowrap mt-1 ${green ? "text-gain" : "text-oxford"}`}>
                 {value}
             </span>
         </div>

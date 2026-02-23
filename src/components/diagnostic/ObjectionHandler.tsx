@@ -30,7 +30,13 @@ const OBJECTIONS: Objection[] = [
             const monthly = r.financing.monthlyPayment / r.input.numberOfUnits;
             const savings = r.financing.monthlyEnergySavings / r.input.numberOfUnits;
             const effort = Math.round(monthly - savings);
-            return `L'effort réel n'est que de ${effort} €/mois par lot. Le prêt Éco-PTZ à 0% de ${formatCurrency(r.financing.ecoPtzAmount)} absorbe le choc. Les aides couvrent ${formatCurrency(r.financing.mprAmount + r.financing.ceeAmount)} du montant.`;
+            const totalAides = r.financing.mprAmount + r.financing.ceeAmount + r.financing.localAidAmount + r.financing.amoAmount;
+
+            const effortText = effort > 0
+                ? `L'effort réel n'est que de ${effort} €/mois par lot après déduction des économies d'énergie.`
+                : `Il n'y a aucun effort de trésorerie : vous gagnez même ${Math.abs(effort)} €/mois par lot grâce aux économies d'énergie.`;
+
+            return `${effortText} Le prêt Éco-PTZ à 0% de ${formatCurrency(r.financing.ecoPtzAmount)} absorbe le choc initial. Les subventions collectives couvrent ${formatCurrency(totalAides)} du projet.`;
         },
     },
     {
@@ -38,9 +44,8 @@ const OBJECTIONS: Objection[] = [
         trigger: "\"Je vends bientôt, ça ne me concerne pas.\"",
         icon: "🏠",
         getAnswer: (r) => {
-            const decote = formatCurrency(r.inactionCost.valueDepreciation);
-            const gain = formatCurrency(r.valuation.greenValueGain);
-            return `Un DPE ${r.input.currentDPE} subit une décote de ${decote} sur le marché actuel. En rénovant vers ${r.input.targetDPE}, votre bien gagne ${gain} en Valeur Verte. Même en revendant, vous gagnez de l'argent.`;
+            const gainPerLot = formatCurrency(r.valuation.greenValueGain / r.input.numberOfUnits);
+            return `La location des passoires thermiques (F/G) est/sera bientôt interdite, ce qui entraîne une forte décote à la revente. En rénovant vers un DPE ${r.input.targetDPE}, votre lot gagne en moyenne ${gainPerLot} en Valeur Verte (soit +${Math.round(r.valuation.greenValueGainPercent * 100)}%). L'investissement est donc rentable à la revente.`;
         },
     },
     {
@@ -49,9 +54,8 @@ const OBJECTIONS: Objection[] = [
         icon: "🏛️",
         getAnswer: (r) => {
             const ptz = formatCurrency(r.financing.ecoPtzAmount);
-            const mpr = formatCurrency(r.financing.mprAmount);
-            const rate = Math.round(r.financing.mprRate * 100);
-            return `L'Éco-PTZ de ${ptz} est garanti par l'État à taux 0%. MaPrimeRénov' Copropriété (${mpr}, soit ${rate}%) est directement déduite du devis par l'ANAH. Ces aides ne sont pas conditionnées aux revenus individuels.`;
+            const subventions = formatCurrency(r.financing.mprAmount + r.financing.ceeAmount);
+            return `L'Éco-PTZ de ${ptz} est garanti par l'État à 0% sans condition de santé. Les subventions collectives majeures (MPR et CEE, soit ${subventions}) sont acquises pour le syndicat et attribuées sans condition de revenus individuels.`;
         },
     },
     {
@@ -59,8 +63,9 @@ const OBJECTIONS: Objection[] = [
         trigger: "\"On attendra l'obligation.\"",
         icon: "⏳",
         getAnswer: (r) => {
-            const surcharge = formatCurrency(r.inactionCost.projectedCost3Years - r.inactionCost.currentCost);
-            return `La location des DPE G est déjà interdite depuis 2025. Les DPE F seront interdits en 2028. D'ici là, les travaux auront augmenté de ${surcharge} (inflation BTP). Agir maintenant, c'est verrouiller les aides au taux actuel.`;
+            const surchargeTotal = r.inactionCost.projectedCost3Years - r.inactionCost.currentCost;
+            const surchargePerLot = formatCurrency(surchargeTotal / r.input.numberOfUnits);
+            return `La location des DPE G est interdite depuis 2025 (F dès 2028). D'ici 3 ans, le coût des travaux aura augmenté d'au moins ${formatCurrency(surchargeTotal)} (${surchargePerLot} par lot) avec l'inflation BTP. Agir maintenant, c'est fixer le prix et garantir les aides actuelles.`;
         },
     },
 ];

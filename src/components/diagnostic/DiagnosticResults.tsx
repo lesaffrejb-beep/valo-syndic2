@@ -375,7 +375,7 @@ export default function DiagnosticResults() {
                 />
                 <KpiCard
                     label="Effort net mensuel estimé"
-                    value={`${cashflowPerLot > 0 ? "↗" : "↘"} ${formatCurrency(Math.abs(cashflowPerLot))}`}
+                    value={formatCurrency(Math.abs(cashflowPerLot))}
                     unit="par lot / mois"
                     accent={netEffortAccent}
                 />

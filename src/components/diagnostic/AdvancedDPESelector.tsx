@@ -73,19 +73,23 @@ export default function AdvancedDPESelector({
                 <div className="space-y-2">
                     <div className="flex items-center justify-between px-1">
                         <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate">Après Travaux</span>
-                        {sautDeClasse > 0 && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                <Sparkles className="w-2.5 h-2.5" />
-                                +{sautDeClasse} classe{sautDeClasse > 1 ? 's' : ''} {sautDeClasse >= 2 && currentDPE && ["F", "G"].includes(currentDPE) ? "(Éligible Bonus Passoire)" : ""}
-                            </span>
-                        )}
-                        {sautDeClasse < 0 && (
-                            <span className="text-[10px] text-red-600 font-semibold px-2 py-0.5">⚠️ Invalide</span>
-                        )}
                     </div>
                     <div className="flex items-center justify-between bg-slate-50 rounded-[2rem] px-2 py-2 border border-slate-200 shadow-inner">
                         {ALL_DPE.map(letter => renderRowItem(letter, targetDPE, onChangeTarget))}
                     </div>
+                    {sautDeClasse > 0 && (
+                        <div className="flex justify-center pt-2">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-sm animate-fadeIn">
+                                <Sparkles className="w-3 h-3" />
+                                +{sautDeClasse} classe{sautDeClasse > 1 ? 's' : ''} {sautDeClasse >= 2 && currentDPE && ["F", "G"].includes(currentDPE) ? "(Éligible Bonus Passoire)" : ""}
+                            </span>
+                        </div>
+                    )}
+                    {sautDeClasse < 0 && (
+                        <div className="flex justify-center pt-1">
+                            <span className="text-[10px] text-red-600 font-semibold px-2 py-0.5 whitespace-nowrap">⚠️ Invalide (DPE cible &gt; DPE actuel)</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
