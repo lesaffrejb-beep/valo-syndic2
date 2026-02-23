@@ -445,7 +445,7 @@ export default function CockpitForm() {
 
                 {!isValid && (
                     <p className="mb-3 text-[11px] text-slate-500 text-center">
-                        Renseignez l'adresse, le code postal, le nombre de lots et les diagnostics.
+                        Renseignez l&apos;adresse, le code postal, le nombre de lots et les diagnostics.
                     </p>
                 )}
 
